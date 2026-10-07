@@ -29,9 +29,11 @@
 | 9 | Email flow image sends the **host** an email when Karina cancels; spec only emails registrants (E9) | Spec wins for now; flagged for you |
 | 10 | Host wireframe H3b has the host pick **one registrant** per contact request; spec E10 shares **all** registrant names and emails | Spec wins (no registrant column on contact_requests); flagged for you |
 | 11 | Spec says tokens are "mapped in `tailwind.config`"; current Tailwind (v4) has no config file | Tokens live only in `app/globals.css` (CSS variables + `@theme`), which keeps the spirit: one place |
+| 12 | E2 (email flow image) has an "Edit your event" link, but the spec only creates the private link on approval | Request changes also creates a private link and puts it in E2, so the host can fix and resubmit. Approving later replaces it with a new link in E4 |
 
 ## Open questions (flagged, not decided)
 - Does a second team member get an admin login? (Schema supports many admins.)
 - Exact review time promised to hosts (currently "24–48 hours").
 - Should Karina cancelling also email the host (conflict 9)?
 - Should a contact request share one registrant or all of them (conflict 10)?
+- Host emails say "you can reply to this email" but come from a no-reply address. Set `EMAIL_REPLY_TO` to the inbox replies should reach.

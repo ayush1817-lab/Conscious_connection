@@ -14,7 +14,9 @@
     "seed": "tsx scripts/seed.ts",
     "test:rls": "tsx scripts/test-rls.ts",
     "test:auth": "tsx scripts/e2e/auth.ts",
-    "test:overview": "tsx scripts/e2e/events-overview.ts"
+    "test:overview": "tsx scripts/e2e/events-overview.ts",
+    "test:transitions": "tsx scripts/test-transitions.ts",
+    "test:review": "tsx scripts/e2e/review-flow.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

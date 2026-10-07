@@ -34,6 +34,8 @@ npm run dev                 # http://localhost:3000/admin
 | `npm run test:rls` | Check Row Level Security against seeded data |
 | `npm run test:auth` | Browser test of login, log out, non-admin block and forgot password (app must be running) |
 | `npm run test:overview` | Browser test of the admin home and events overview (re-seeds first; app must be running) |
+| `npm run test:review` | Browser test of approve, request changes and decline, and their emails (re-seeds first; app must be running) |
+| `npm run test:transitions` | Checks every event status change against the rules, and the email templates and providers |
 | `npm run lint` | TypeScript type check |
 
 ## Database and migrations
@@ -59,6 +61,13 @@ Row Level Security is on for every table. Private tables (host details, registra
 **Hosted Supabase settings** (Authentication in the dashboard):
 - **Sign In / Providers:** turn off **Allow new users to sign up**. (Local dev already has `enable_signup = false` in `supabase/config.toml`.)
 - **URL Configuration:** set **Site URL** to the site address and add `https://<your-domain>/auth/confirm` to **Redirect URLs**.
+
+## Reviewing events and emails
+
+- **Status changes** all go through one function, `transitionEvent()` in [`lib/events/transitions.ts`](lib/events/transitions.ts). It holds the allowed moves from the spec (for example pending → live, pending → declined), requires a reason where the spec does, and refuses a change if someone else changed the event first. `npm run test:transitions` checks every combination.
+- **Approve** creates the host's private link (`{SITE_URL}/host/{token}`). Only a SHA-256 hash of the token is stored, so the link is shown to Karina once, on the "Approved." screen, and emailed to the host. **Request changes** also emails a fresh private link, so the host can fix the event.
+- **Emails** go through the `EmailService` in [`lib/email/`](lib/email/). Every email is recorded in the `email_log` table, including failures. Without `RESEND_API_KEY` emails are only printed to the server console. With it they are sent through [Resend](https://resend.com) (verify your sending domain there first). Templates live in `lib/email/templates.ts`.
+- If an email fails, the action still happens and Karina is told to contact the host herself.
 
 ## Creating an admin
 
