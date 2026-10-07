@@ -1,0 +1,73 @@
+@import "tailwindcss";
+
+/*
+ * Theme tokens: the ONLY place colours, radii and fonts are defined.
+ * This is a temporary calm, neutral theme (spec section 3); swap the values
+ * below to restyle the whole app. Components use the Tailwind names from the
+ * @theme block (bg-primary, text-muted, rounded-card, ...), never raw colours.
+ */
+:root {
+  --color-primary: #4f7a65;
+  --color-primary-hover: #3e6251;
+  --color-on-primary: #ffffff;
+
+  --color-background: #faf8f5;
+  --color-surface: #ffffff;
+  --color-border: #e5e1da;
+
+  --color-text: #1f1f1f;
+  --color-muted: #6b6b6b;
+
+  --color-success: #2f7d4f;
+  --color-warning: #b7791f;
+  --color-danger: #b42318;
+
+  /* Background behind host private details ("Only visible to you"). */
+  --color-private: #fff7ec;
+
+  --radius-control: 0.5rem;
+  --radius-card: 0.75rem;
+
+  --font-body: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  /* Accessibility minimums from the spec. */
+  --size-tap-target: 44px;
+}
+
+@theme inline {
+  --color-primary: var(--color-primary);
+  --color-primary-hover: var(--color-primary-hover);
+  --color-on-primary: var(--color-on-primary);
+  --color-background: var(--color-background);
+  --color-surface: var(--color-surface);
+  --color-border: var(--color-border);
+  --color-text: var(--color-text);
+  --color-muted: var(--color-muted);
+  --color-success: var(--color-success);
+  --color-warning: var(--color-warning);
+  --color-danger: var(--color-danger);
+  --color-private: var(--color-private);
+
+  --radius-control: var(--radius-control);
+  --radius-card: var(--radius-card);
+
+  --font-sans: var(--font-body);
+
+  --spacing-tap: var(--size-tap-target);
+}
+
+html {
+  font-size: 16px; /* minimum body text */
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  line-height: 1.5;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+}
