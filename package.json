@@ -12,13 +12,16 @@
     "db:push": "supabase db push",
     "db:types": "supabase gen types typescript --local > lib/supabase/database.types.ts",
     "seed": "tsx scripts/seed.ts",
+    "retention": "tsx scripts/retention.ts",
     "test:rls": "tsx scripts/test-rls.ts",
     "test:auth": "tsx scripts/e2e/auth.ts",
     "test:overview": "tsx scripts/e2e/events-overview.ts",
     "test:transitions": "tsx scripts/test-transitions.ts",
     "test:review": "tsx scripts/e2e/review-flow.ts",
     "test:live": "tsx scripts/e2e/live-and-attention.ts",
-    "test:content": "tsx scripts/e2e/content.ts"
+    "test:content": "tsx scripts/e2e/content.ts",
+    "test:a11y": "tsx scripts/e2e/accessibility.ts",
+    "test:retention": "tsx scripts/test-retention.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
@@ -33,6 +36,7 @@
     "@types/node": "^26.6.4",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "axe-core": "^4.14.0",
     "dotenv": "^18.0.6",
     "playwright-core": "^1.63.0",
     "postcss": "^8.5.29",

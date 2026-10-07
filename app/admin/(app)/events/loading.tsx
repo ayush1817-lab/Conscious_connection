@@ -1,8 +1,8 @@
-import { Skeleton } from "@/components/ui/skeleton";
+import { Loading, Skeleton } from "@/components/ui/skeleton";
 
 export default function EventsLoading() {
   return (
-    <div className="space-y-6" aria-busy="true" aria-label="Loading events">
+    <Loading label="Loading events…" className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <Skeleton className="h-9 w-56" />
         <div className="grid grid-cols-3 gap-2 sm:flex sm:gap-3">
@@ -19,6 +19,6 @@ export default function EventsLoading() {
           ))}
         </div>
       ))}
-    </div>
+    </Loading>
   );
 }

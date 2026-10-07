@@ -31,6 +31,8 @@
 | 11 | Spec says tokens are "mapped in `tailwind.config`"; current Tailwind (v4) has no config file | Tokens live only in `app/globals.css` (CSS variables + `@theme`), which keeps the spirit: one place |
 | 12 | E2 (email flow image) has an "Edit your event" link, but the spec only creates the private link on approval | Request changes also creates a private link and puts it in E2, so the host can fix and resubmit. Approving later replaces it with a new link in E4 |
 
+| 13 | Spec section 6 lists what retention deletes but not `email_log`, which keeps registrants' emails (E9, E10) forever | The cleanup also deletes email records 30 days after sending (long enough to answer "did the host get my email?"). Flagged for ayush |
+
 ## Decided with ayush
 - Taking down an event emails only the host (E11), not registered people (2026-10-07).
 

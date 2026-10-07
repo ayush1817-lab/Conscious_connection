@@ -540,6 +540,7 @@ export type Database = {
     };
     Functions: {
       is_admin: { Args: Record<PropertyKey, never>; Returns: boolean };
+      run_retention: { Args: Record<PropertyKey, never>; Returns: Json };
     };
     Enums: {
       activity_actor: "admin" | "host" | "system";

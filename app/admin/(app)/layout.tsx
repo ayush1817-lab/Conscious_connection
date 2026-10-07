@@ -6,8 +6,16 @@ export default async function AdminAppLayout({ children }: { children: React.Rea
   const admin = await requireAdmin();
   return (
     <>
+      <a
+        href="#main"
+        className="sr-only z-50 rounded-control bg-surface px-4 py-3 font-medium text-primary shadow-lg focus:not-sr-only focus:fixed focus:top-2 focus:left-2"
+      >
+        Skip to main content
+      </a>
       <TopBar displayName={admin.displayName} />
-      <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
+      <main id="main" tabIndex={-1} className="mx-auto max-w-6xl px-4 py-8 focus:outline-none">
+        {children}
+      </main>
     </>
   );
 }
