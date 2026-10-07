@@ -36,4 +36,5 @@
 - Exact review time promised to hosts (currently "24–48 hours").
 - Should Karina cancelling also email the host (conflict 9)?
 - Should a contact request share one registrant or all of them (conflict 10)?
+- Taking down an event emails only the host (E11), as the spec says. Should registered people be told too? Right now they aren't.
 - Host emails say "you can reply to this email" but come from a no-reply address. Set `EMAIL_REPLY_TO` to the inbox replies should reach.

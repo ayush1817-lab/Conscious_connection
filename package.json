@@ -16,7 +16,8 @@
     "test:auth": "tsx scripts/e2e/auth.ts",
     "test:overview": "tsx scripts/e2e/events-overview.ts",
     "test:transitions": "tsx scripts/test-transitions.ts",
-    "test:review": "tsx scripts/e2e/review-flow.ts"
+    "test:review": "tsx scripts/e2e/review-flow.ts",
+    "test:live": "tsx scripts/e2e/live-and-attention.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

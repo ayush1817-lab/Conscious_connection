@@ -35,6 +35,7 @@ npm run dev                 # http://localhost:3000/admin
 | `npm run test:auth` | Browser test of login, log out, non-admin block and forgot password (app must be running) |
 | `npm run test:overview` | Browser test of the admin home and events overview (re-seeds first; app must be running) |
 | `npm run test:review` | Browser test of approve, request changes and decline, and their emails (re-seeds first; app must be running) |
+| `npm run test:live` | Browser test of live events (take down, cancel, new host link) and every attention item type (re-seeds first; app must be running) |
 | `npm run test:transitions` | Checks every event status change against the rules, and the email templates and providers |
 | `npm run lint` | TypeScript type check |
 
@@ -68,6 +69,8 @@ Row Level Security is on for every table. Private tables (host details, registra
 - **Approve** creates the host's private link (`{SITE_URL}/host/{token}`). Only a SHA-256 hash of the token is stored, so the link is shown to Karina once, on the "Approved." screen, and emailed to the host. **Request changes** also emails a fresh private link, so the host can fix the event.
 - **Emails** go through the `EmailService` in [`lib/email/`](lib/email/). Every email is recorded in the `email_log` table, including failures. Without `RESEND_API_KEY` emails are only printed to the server console. With it they are sent through [Resend](https://resend.com) (verify your sending domain there first). Templates live in `lib/email/templates.ts`.
 - If an email fails, the action still happens and Karina is told to contact the host herself.
+- **Live events** (event page): **Take down** needs a reason and emails the host (E11). **Cancel event** asks for confirmation and emails every registrant (E9). **Regenerate host link** emails the host a new private link (E4) and the old one stops working. Taking down or cancelling also clears that event's open attention items.
+- **Attention items** each have their own page (`/admin/attention/[id]`). Host edits show what changed (before and after) with **Mark as seen** and **Take down**. Host cancellations have **Mark as seen**. Contact requests need a decision: **Share contact details** emails the host every registrant's name and email (E10), and **Decline** emails the host the reason (E10).
 
 ## Creating an admin
 

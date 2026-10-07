@@ -152,7 +152,7 @@ function Section({
 function AttentionItem({ item }: { item: AttentionRow }) {
   return (
     <li className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:gap-4">
-      <Link href={`/admin/events/${item.eventId}`} className="group flex min-h-tap flex-1 flex-col justify-center gap-1">
+      <Link href={`/admin/attention/${item.id}`} className="group flex min-h-tap flex-1 flex-col justify-center gap-1">
         <span className="flex flex-wrap items-center gap-2">
           <Badge tone={item.needsDecision ? "decision" : "neutral"}>{item.label}</Badge>
           <span className="font-medium group-hover:underline">{item.heading}</span>
@@ -166,13 +166,13 @@ function AttentionItem({ item }: { item: AttentionRow }) {
         <span className="text-sm text-muted">{timeAgo(item.createdAt)}</span>
         {item.needsDecision ? (
           <Link
-            href={`/admin/events/${item.eventId}`}
+            href={`/admin/attention/${item.id}`}
             className="inline-flex min-h-tap items-center rounded-control border border-control-border px-4 font-medium hover:bg-background"
           >
             Review
           </Link>
         ) : (
-          <form action={markAttentionSeen.bind(null, item.id)}>
+          <form action={markAttentionSeen.bind(null, item.id, null)}>
             <button
               type="submit"
               className="min-h-tap rounded-control border border-control-border px-4 font-medium hover:bg-background"

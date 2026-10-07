@@ -1,39 +1,26 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth/admin";
+import { AttentionError, markSeen } from "@/lib/events/attention";
 import { setFlash } from "@/lib/flash";
 import { createClient } from "@/lib/supabase/server";
 
-// "Mark as seen" on an Update (host edit or host cancellation). Contact requests
-// need a decision instead, so they can't be cleared this way.
-export async function markAttentionSeen(itemId: string) {
+// "Mark as seen" on an Update (host edit or host cancellation), from A2 or A7.
+// From A7 it goes back to the overview; from A2 it stays put.
+export async function markAttentionSeen(itemId: string, returnTo: string | null) {
   await requireAdmin();
   const supabase = await createClient();
-  const now = new Date().toISOString();
 
-  const { data: item, error } = await supabase
-    .from("attention_items")
-    .update({ seen_at: now, resolved_at: now })
-    .eq("id", itemId)
-    .eq("needs_decision", false)
-    .is("resolved_at", null)
-    .select("event_id, type, ref_id")
-    .maybeSingle();
-
-  if (error || !item) {
-    await setFlash("That update was already cleared, or it needs a decision instead.", "error");
-  } else {
-    if (item.type === "host_edited" && item.ref_id) {
-      await supabase.from("event_edits").update({ seen_at: now }).eq("id", item.ref_id);
-    }
-    await supabase.from("event_activity").insert({
-      event_id: item.event_id,
-      actor: "admin",
-      action: item.type === "host_edited" ? "Saw the host's changes" : "Saw the host's cancellation",
-    });
+  try {
+    await markSeen(supabase, itemId);
     await setFlash("Marked as seen.");
+  } catch (error) {
+    if (!(error instanceof AttentionError)) throw error;
+    await setFlash(error.message, "error");
   }
 
   revalidatePath("/admin", "layout");
+  if (returnTo) redirect(returnTo);
 }

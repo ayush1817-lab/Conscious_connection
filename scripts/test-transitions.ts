@@ -11,7 +11,17 @@ import { hashHostToken } from "../lib/events/host-token";
 import { TRANSITIONS, TransitionError, checkTransition, transitionEvent, type Actor } from "../lib/events/transitions";
 import type { EventStatus } from "../lib/events/status";
 import { ConsoleEmailService, ResendEmailService, sendAndLog } from "../lib/email/service";
-import { approvedEmail, declinedEmail, needsChangesEmail } from "../lib/email/templates";
+import {
+  approvedEmail,
+  contactDetailsDeclinedEmail,
+  contactDetailsSharedEmail,
+  declinedEmail,
+  eventCancelledEmail,
+  needsChangesEmail,
+  takenDownEmail,
+} from "../lib/email/templates";
+import { AttentionError, decideContactRequest } from "../lib/events/attention";
+import { HostLinkError, regenerateHostLink } from "../lib/events/host-link";
 import { serviceClient } from "./lib/env";
 
 const STATUSES: EventStatus[] = ["pending", "needs_changes", "declined", "live", "cancelled", "taken_down"];
@@ -36,6 +46,15 @@ function rejects(fn: () => unknown, pattern?: RegExp) {
     return false;
   } catch (e) {
     return e instanceof TransitionError && (!pattern || pattern.test(e.message));
+  }
+}
+
+async function rejectsLike(fn: () => Promise<unknown>, type: new (...args: never[]) => Error) {
+  try {
+    await fn();
+    return false;
+  } catch (e) {
+    return e instanceof type;
   }
 }
 
@@ -154,6 +173,25 @@ async function main() {
   const { data: raced } = await supabase.from("events").select("status").eq("id", d).single();
   check(raced?.status === "declined", "the other change is kept");
 
+  console.log("\nAttention and host links");
+  const e = await makeEvent("live");
+  const { data: cr } = await supabase.from("contact_requests").insert({ event_id: e, host_reason: "Test" }).select("id").single();
+  const { data: ai } = await supabase
+    .from("attention_items")
+    .insert({ event_id: e, type: "contact_request", ref_id: cr!.id, needs_decision: true })
+    .select("id")
+    .single();
+  await decideContactRequest(supabase, ai!.id, { status: "shared" });
+  check(
+    await rejectsLike(() => decideContactRequest(supabase, ai!.id, { status: "declined", reason: "No" }), AttentionError),
+    "a contact request can only be decided once",
+  );
+  const first = await regenerateHostLink(supabase, e);
+  const second = await regenerateHostLink(supabase, e);
+  const { data: linkRow } = await supabase.from("events").select("host_edit_token_hash").eq("id", e).single();
+  check(first.token !== second.token && linkRow?.host_edit_token_hash === hashHostToken(second.token), "regenerating replaces the host link");
+  check(await rejectsLike(() => regenerateHostLink(supabase, b), HostLinkError), "a declined event can't get a host link");
+
   console.log("\nEmails");
   const event = { title: `Tea & <b>Talk</b>`, county: "Co. Clare", start_at: "2026-06-14T10:00:00Z", end_at: "2026-06-14T12:00:00Z" };
   const e4 = approvedEmail({ hostName: "Mary O'Brien", event, eventUrl: "https://cc.ie/events/1", hostUrl: "https://cc.ie/host/abc" });
@@ -165,6 +203,14 @@ async function main() {
   check(e2.template === "E2" && e2.text.includes('"Say what to bring"') && e2.text.includes("https://cc.ie/host/xyz"), "E2 has the reason and the edit link");
   const e3 = declinedEmail({ hostName: "Mary", event, reason: "<script>alert(1)</script>" });
   check(e3.template === "E3" && !e3.html.includes("<script>") && e3.text.includes("<script>"), "E3 has the reason, escaped in HTML");
+  const e9 = eventCancelledEmail({ registrantName: "Niamh K.", event });
+  check(e9.template === "E9" && e9.text.includes("Hi Niamh,") && e9.text.includes("has been cancelled"), "E9 tells the registrant the event is cancelled");
+  const e10 = contactDetailsSharedEmail({ hostName: "Mary", event, registrants: [{ name: "<i>Sam</i>", email: "sam@example.com" }] });
+  check(e10.template === "E10" && e10.text.includes("- <i>Sam</i>: sam@example.com") && e10.html.includes("&lt;i&gt;Sam"), "E10 lists registrants, escaped in HTML");
+  const e10d = contactDetailsDeclinedEmail({ hostName: "Mary", event, reason: "Not needed" });
+  check(e10d.template === "E10" && e10d.text.includes('"Not needed"') && !e10d.text.includes("@"), "E10 decline has the reason and no contact details");
+  const e11 = takenDownEmail({ hostName: "Mary", event, reason: "Venue closed" });
+  check(e11.template === "E11" && e11.text.includes('"Venue closed"'), "E11 has the reason");
 
   const to = `transition-test-${Date.now()}@example.com`;
   const logged = await sendAndLog(supabase, new ConsoleEmailService(), to, e3);
