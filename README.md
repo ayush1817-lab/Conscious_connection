@@ -32,6 +32,7 @@ npm run dev                 # http://localhost:3000/admin
 | `npm run db:types` | Regenerate `lib/supabase/database.types.ts` after a schema change |
 | `npm run seed` | Reset event and content data and load sample data (safe to re-run) |
 | `npm run test:rls` | Check Row Level Security against seeded data |
+| `npm run test:auth` | Browser test of login, log out, non-admin block and forgot password (app must be running) |
 | `npm run lint` | TypeScript type check |
 
 ## Database and migrations
@@ -46,6 +47,17 @@ Row Level Security is on for every table. Private tables (host details, registra
 ## Seeding
 
 `npm run seed` deletes all events and content, then loads sample events in every status, registrations, a host edit, a host cancellation, a contact request, homepage sections, stories, podcasts and six placeholder gallery images. It also creates or updates the admin login from `SEED_ADMIN_EMAIL` and `SEED_ADMIN_PASSWORD`. **Never run it against a database whose data you want to keep.**
+
+## Login and access
+
+- Everything under `/admin` is guarded by `proxy.ts` (Next.js 16's name for middleware): logged-out visitors go to the login page (A0), signed-in users who aren't in `public.admins` see "You don't have access". Each admin page and server action also checks with `requireAdmin()` (`lib/auth/admin.ts`).
+- Sessions are kept in Supabase auth cookies, so Karina stays logged in between visits until she logs out.
+- **Forgot password** uses Supabase's reset email. The link lands on `/auth/confirm`, which signs her in and opens `/admin/reset-password`.
+- Browser tests (`npm run test:*` under `scripts/e2e/`) use Playwright's Chromium. Set `CHROMIUM_PATH` if it isn't installed in the default location.
+
+**Hosted Supabase settings** (Authentication in the dashboard):
+- **Sign In / Providers:** turn off **Allow new users to sign up**. (Local dev already has `enable_signup = false` in `supabase/config.toml`.)
+- **URL Configuration:** set **Site URL** to the site address and add `https://<your-domain>/auth/confirm` to **Redirect URLs**.
 
 ## Creating an admin
 
