@@ -15,8 +15,11 @@ type Client = Awaited<ReturnType<typeof createClient>>;
 
 const SAVED = "Saved. Your changes are live.";
 
+// Browsers send textarea line breaks as \r\n; store plain \n.
 function text(formData: FormData, name: string) {
-  return String(formData.get(name) ?? "").trim();
+  return String(formData.get(name) ?? "")
+    .replace(/\r\n?/g, "\n")
+    .trim();
 }
 
 function tooLong(value: string, max: number, label: string) {
