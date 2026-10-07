@@ -13,7 +13,8 @@
     "db:types": "supabase gen types typescript --local > lib/supabase/database.types.ts",
     "seed": "tsx scripts/seed.ts",
     "test:rls": "tsx scripts/test-rls.ts",
-    "test:auth": "tsx scripts/e2e/auth.ts"
+    "test:auth": "tsx scripts/e2e/auth.ts",
+    "test:overview": "tsx scripts/e2e/events-overview.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

@@ -33,6 +33,7 @@ npm run dev                 # http://localhost:3000/admin
 | `npm run seed` | Reset event and content data and load sample data (safe to re-run) |
 | `npm run test:rls` | Check Row Level Security against seeded data |
 | `npm run test:auth` | Browser test of login, log out, non-admin block and forgot password (app must be running) |
+| `npm run test:overview` | Browser test of the admin home and events overview (re-seeds first; app must be running) |
 | `npm run lint` | TypeScript type check |
 
 ## Database and migrations
