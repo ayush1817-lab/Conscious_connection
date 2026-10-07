@@ -2,16 +2,18 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PosterThumb } from "@/components/events/poster-thumb";
+import { ReviewActions } from "@/components/events/review-actions";
 import { StatusBadge } from "@/components/events/status-badge";
 import { requireAdmin } from "@/lib/auth/admin";
 import { retentionCutoff } from "@/lib/events/status";
 import { formatDate, formatDateTime, formatTimeRange, timeAgo } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
+import { approveEvent, reviewWithReason } from "./actions";
 
 export const metadata: Metadata = { title: "Event · Conscious Connections" };
 
-// Event detail. Milestone 3 shows the details and clears the "New" badge;
-// milestone 4 adds the review actions (A3) and milestone 5 the live-event tools (A6).
+// Event detail: A3 for a pending request (review actions), and the read-only
+// view for every other status. Milestone 5 adds the live-event tools (A6).
 export default async function EventDetailPage({ params }: { params: Promise<{ id: string }> }) {
   await requireAdmin();
   const { id } = await params;
@@ -95,6 +97,18 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
           )}
         </section>
       </div>
+
+      {event.status === "pending" && host ? (
+        <section aria-label="Review this request" className="rounded-card border border-border bg-surface p-4">
+          <ReviewActions
+            hostName={host.host_name}
+            hostEmail={host.host_email}
+            approve={approveEvent.bind(null, event.id)}
+            requestChanges={reviewWithReason.bind(null, event.id, "needs_changes")}
+            decline={reviewWithReason.bind(null, event.id, "declined")}
+          />
+        </section>
+      ) : null}
 
       {event.status === "live" ? (
         <section className="rounded-card border border-border bg-surface p-4">
