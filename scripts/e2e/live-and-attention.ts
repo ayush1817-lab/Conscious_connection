@@ -142,7 +142,8 @@ async function main() {
     console.log("\nA6 – Activity log and new host link");
     await page.goto(`${BASE_URL}/admin/events/${drum}`);
     for (const name of ["Take down", "Cancel event", "Regenerate host link"]) {
-      check(await page.getByRole("button", { name, exact: true }).isVisible(), `live event offers ${name}`);
+      const button = page.getByRole("button", { name, exact: true });
+      check(await button.waitFor().then(() => true, () => false), `live event offers ${name}`);
     }
     await page.getByRole("link", { name: /Activity log/ }).click();
     await page.waitForURL(/tab=activity/);

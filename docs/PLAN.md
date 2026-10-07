@@ -31,10 +31,12 @@
 | 11 | Spec says tokens are "mapped in `tailwind.config`"; current Tailwind (v4) has no config file | Tokens live only in `app/globals.css` (CSS variables + `@theme`), which keeps the spirit: one place |
 | 12 | E2 (email flow image) has an "Edit your event" link, but the spec only creates the private link on approval | Request changes also creates a private link and puts it in E2, so the host can fix and resubmit. Approving later replaces it with a new link in E4 |
 
+## Decided with ayush
+- Taking down an event emails only the host (E11), not registered people (2026-10-07).
+
 ## Open questions (flagged, not decided)
 - Does a second team member get an admin login? (Schema supports many admins.)
 - Exact review time promised to hosts (currently "24–48 hours").
 - Should Karina cancelling also email the host (conflict 9)?
 - Should a contact request share one registrant or all of them (conflict 10)?
-- Taking down an event emails only the host (E11), as the spec says. Should registered people be told too? Right now they aren't.
 - Host emails say "you can reply to this email" but come from a no-reply address. Set `EMAIL_REPLY_TO` to the inbox replies should reach.

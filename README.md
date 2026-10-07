@@ -36,6 +36,7 @@ npm run dev                 # http://localhost:3000/admin
 | `npm run test:overview` | Browser test of the admin home and events overview (re-seeds first; app must be running) |
 | `npm run test:review` | Browser test of approve, request changes and decline, and their emails (re-seeds first; app must be running) |
 | `npm run test:live` | Browser test of live events (take down, cancel, new host link) and every attention item type (re-seeds first; app must be running) |
+| `npm run test:content` | Browser test of website content: homepage, about, stories, podcasts and gallery, including image uploads (re-seeds first; app must be running) |
 | `npm run test:transitions` | Checks every event status change against the rules, and the email templates and providers |
 | `npm run lint` | TypeScript type check |
 
@@ -71,6 +72,16 @@ Row Level Security is on for every table. Private tables (host details, registra
 - If an email fails, the action still happens and Karina is told to contact the host herself.
 - **Live events** (event page): **Take down** needs a reason and emails the host (E11). **Cancel event** asks for confirmation and emails every registrant (E9). **Regenerate host link** emails the host a new private link (E4) and the old one stops working. Taking down or cancelling also clears that event's open attention items.
 - **Attention items** each have their own page (`/admin/attention/[id]`). Host edits show what changed (before and after) with **Mark as seen** and **Take down**. Host cancellations have **Mark as seen**. Contact requests need a decision: **Share contact details** emails the host every registrant's name and email (E10), and **Decline** emails the host the reason (E10).
+
+## Website content
+
+Under **Website content** (`/admin/content`) Karina edits what the public website shows. Everything goes live as soon as she saves.
+
+- **Homepage** and **About**: each section (top banner, introduction, invitation to host, about) has a heading, text with **bold** and *italic*, an optional image and a live preview.
+- **Stories** and **Podcasts** are saved as drafts first, then published or unpublished from their edit page. Podcasts take a YouTube link (watch, share, Shorts or embed links all work) and show the video as a preview.
+- **Gallery**: upload several images at once, add captions, move images earlier or later, and delete them.
+- **Images** are JPG, PNG or WebP up to 5MB. They upload straight from the browser to Supabase Storage (`content` and `gallery` buckets), so large files never pass through the server. Replaced or deleted images are removed from Storage.
+- Leaving a page with unsaved changes asks for confirmation first.
 
 ## Creating an admin
 
