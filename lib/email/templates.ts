@@ -3,7 +3,7 @@ import { formatDate, formatTimeRange } from "@/lib/format";
 // Email templates (spec section 9). Each is written once as a list of blocks,
 // which render to both a plain-text and a simple HTML version.
 
-export type TemplateId = "E2" | "E3" | "E4";
+export type TemplateId = "E2" | "E3" | "E4" | "E9" | "E10" | "E11";
 
 export type RenderedEmail = { template: TemplateId; subject: string; text: string; html: string };
 
@@ -12,6 +12,7 @@ type Block =
   | { kind: "quote"; label: string; text: string }
   | { kind: "details"; rows: [string, string][]; link?: { label: string; url: string } }
   | { kind: "button"; label: string; url: string }
+  | { kind: "list"; items: string[] }
   | { kind: "note"; text: string };
 
 type EventSummary = { title: string; county: string; start_at: string; end_at: string };
@@ -49,11 +50,24 @@ export function declinedEmail(args: { hostName: string; event: EventSummary; rea
 }
 
 // E4: Karina approves (or regenerates the host link).
-export function approvedEmail(args: { hostName: string; event: EventSummary; eventUrl: string; hostUrl: string }) {
+// With resent, it's the regenerated-link version: the old link no longer works.
+export function approvedEmail(args: {
+  hostName: string;
+  event: EventSummary;
+  eventUrl: string;
+  hostUrl: string;
+  resent?: boolean;
+}) {
   const { event } = args;
-  return render("E4", "Your event is now live!", "Your event is now live!", [
+  const heading = args.resent ? "Your new private link" : "Your event is now live!";
+  return render("E4", args.resent ? `Your new private link for "${event.title}"` : heading, heading, [
     { kind: "p", text: `Hi ${firstName(args.hostName)},` },
-    { kind: "p", text: `Great news! Your event "${event.title}" is now live on the Conscious Connections website.` },
+    {
+      kind: "p",
+      text: args.resent
+        ? `Here is a new private link to manage your event "${event.title}". The link we sent you before no longer works.`
+        : `Great news! Your event "${event.title}" is now live on the Conscious Connections website.`,
+    },
     {
       kind: "details",
       rows: [
@@ -74,6 +88,72 @@ export function approvedEmail(args: { hostName: string; event: EventSummary; eve
     },
     { kind: "p", text: "Thanks for being part of the community,\nConscious Connections" },
   ]);
+}
+
+// E9: Karina cancels a live event. Sent to each registrant.
+export function eventCancelledEmail(args: { registrantName: string; event: EventSummary }) {
+  const { event } = args;
+  return render("E9", `Cancelled: ${event.title}`, "This event has been cancelled", [
+    { kind: "p", text: `Hi ${firstName(args.registrantName)},` },
+    { kind: "p", text: `We're sorry to let you know that "${event.title}" has been cancelled.` },
+    { kind: "details", rows: whenWhere(event) },
+    { kind: "p", text: "You don't need to do anything. We're sorry for the inconvenience." },
+    { kind: "p", text: "Thanks for your understanding,\nConscious Connections" },
+  ]);
+}
+
+// E10: Karina shares registrants' contact details with the host.
+export function contactDetailsSharedEmail(args: {
+  hostName: string;
+  event: EventSummary;
+  registrants: { name: string; email: string }[];
+}) {
+  const count = args.registrants.length;
+  return render("E10", `Contact details for "${args.event.title}"`, "Here are the contact details you asked for", [
+    { kind: "p", text: `Hi ${firstName(args.hostName)},` },
+    {
+      kind: "p",
+      text: `Karina has shared the contact details of the ${count === 1 ? "person" : `${count} people`} registered for "${args.event.title}".`,
+    },
+    { kind: "list", items: args.registrants.map((r) => `${r.name}: ${r.email}`) },
+    {
+      kind: "note",
+      text: "Please only use these details to contact people about this event, and delete them once the event is over.",
+    },
+    { kind: "p", text: SIGN_OFF },
+  ]);
+}
+
+// E10: Karina declines the host's request for contact details.
+export function contactDetailsDeclinedEmail(args: { hostName: string; event: EventSummary; reason: string }) {
+  return render("E10", `About your request for "${args.event.title}"`, "About your contact details request", [
+    { kind: "p", text: `Hi ${firstName(args.hostName)},` },
+    {
+      kind: "p",
+      text: `Thanks for your request. Karina has decided not to share registrants' contact details for "${args.event.title}".`,
+    },
+    { kind: "quote", label: "Reason", text: args.reason },
+    { kind: "p", text: "If you have any questions, you can reply to this email." },
+    { kind: "p", text: SIGN_OFF },
+  ]);
+}
+
+// E11: Karina takes down a live event.
+export function takenDownEmail(args: { hostName: string; event: EventSummary; reason: string }) {
+  return render("E11", "Your event has been taken down", "Your event has been taken down", [
+    { kind: "p", text: `Hi ${firstName(args.hostName)},` },
+    { kind: "p", text: `Your event "${args.event.title}" has been removed from the Conscious Connections website.` },
+    { kind: "quote", label: "Reason", text: args.reason },
+    { kind: "p", text: "Your private link no longer works. If you have any questions, you can reply to this email." },
+    { kind: "p", text: SIGN_OFF },
+  ]);
+}
+
+function whenWhere(event: EventSummary): [string, string][] {
+  return [
+    ["When", `${formatDate(event.start_at)}, ${formatTimeRange(event.start_at, event.end_at)}`],
+    ["County", event.county],
+  ];
 }
 
 function render(template: TemplateId, subject: string, heading: string, blocks: Block[]): RenderedEmail {
@@ -98,6 +178,9 @@ function renderText(heading: string, blocks: Block[]) {
         break;
       case "button":
         parts.push(`${b.label}:\n${b.url}`);
+        break;
+      case "list":
+        parts.push(b.items.map((item) => `- ${item}`).join("\n"));
         break;
     }
   }
@@ -141,6 +224,8 @@ function renderHtml(subject: string, heading: string, blocks: Block[]) {
               ? `<tr><td></td><td style="padding:4px 0"><a href="${esc(b.link.url)}" style="color:${COLORS.primary}">${esc(b.link.label)}</a></td></tr>`
               : ""
           }</table>`;
+        case "list":
+          return `<ul style="${p};padding-left:20px">${b.items.map((item) => `<li>${esc(item)}</li>`).join("")}</ul>`;
         case "button":
           return `<p style="margin:0 0 8px"><a href="${esc(b.url)}" style="display:inline-block;padding:12px 20px;background:${COLORS.primary};color:#FFFFFF;border-radius:8px;font-weight:600;text-decoration:none">${esc(b.label)}</a></p><p style="margin:0 0 16px;font-size:13px;color:${COLORS.muted};word-break:break-all">${esc(b.url)}</p>`;
       }

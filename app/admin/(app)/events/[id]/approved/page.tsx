@@ -6,7 +6,7 @@ import { ButtonLink, buttonClass } from "@/components/ui/button";
 import { requireAdmin } from "@/lib/auth/admin";
 import { hostLinkUrl, publicEventUrl } from "@/lib/links";
 import { createClient } from "@/lib/supabase/server";
-import { hostLinkCookie } from "../host-link-cookie";
+import { hostLinkCookie, readHostLinkCookie } from "../host-link-cookie";
 
 export const metadata: Metadata = { title: "Approved · Conscious Connections" };
 
@@ -26,7 +26,7 @@ export default async function ApprovedPage({ params }: { params: Promise<{ id: s
   if (event.status !== "live") redirect(`/admin/events/${id}`);
 
   const hostName = event.event_private_details?.host_name ?? "The host";
-  const saved = readHostLink((await cookies()).get(hostLinkCookie(id).name)?.value);
+  const saved = readHostLinkCookie((await cookies()).get(hostLinkCookie(id).name)?.value);
 
   return (
     <div className="mx-auto max-w-xl space-y-6 py-4 text-center">
@@ -74,14 +74,4 @@ export default async function ApprovedPage({ params }: { params: Promise<{ id: s
       </div>
     </div>
   );
-}
-
-function readHostLink(raw: string | undefined): { token: string; emailed: boolean } | null {
-  if (!raw) return null;
-  try {
-    const value = JSON.parse(raw);
-    return typeof value.token === "string" ? { token: value.token, emailed: value.emailed !== false } : null;
-  } catch {
-    return null;
-  }
 }
