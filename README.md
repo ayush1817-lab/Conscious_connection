@@ -89,7 +89,25 @@ All colours, radii and fonts are defined once, in [`app/globals.css`](app/global
 
 ## Deploying to Vercel
 
-_To be completed in milestone 7._ In short: create a Supabase project and push migrations, import the repo in Vercel, and set the variables from `.env.example` (keep `SUPABASE_SERVICE_ROLE_KEY` server-only).
+1. **Create a Supabase project** at supabase.com, then apply the migrations from your machine:
+   `npx supabase link --project-ref <your-project-ref>` and `npm run db:push`.
+2. **Supabase auth settings** (see "Login and access" above): turn off sign-ups, set the Site URL and add `https://<your-domain>/auth/confirm` as a redirect URL.
+3. **Create Karina's login** (see "Creating an admin").
+4. **Vercel > Project > Settings > Environment Variables**, for Production and Preview:
+
+   | Variable | Where to find it |
+   |---|---|
+   | `NEXT_PUBLIC_SUPABASE_URL` | Supabase > Project Settings > API > Project URL |
+   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase > Project Settings > API > `anon` `public` key |
+   | `SUPABASE_SERVICE_ROLE_KEY` | Supabase > Project Settings > API > `service_role` key (secret: never prefix with `NEXT_PUBLIC_`) |
+   | `SITE_URL` | The site's address, e.g. `https://consciousconnections.ie` |
+   | `EMAIL_FROM` | e.g. `Conscious Connections <no-reply@consciousconnections.ie>` |
+   | `CRON_SECRET` | Any long random string (used from milestone 7) |
+   | `RESEND_API_KEY` | Optional; without it emails are only logged (from milestone 4) |
+
+5. **Redeploy.** `NEXT_PUBLIC_` values are built into the site, so they only take effect in a new deployment.
+
+`vercel.json` pins the Next.js framework preset. If the Supabase settings are missing, every page shows a "not connected to its database yet" page (`/setup`) listing which settings are missing, instead of a server error.
 
 ## Environment variables
 

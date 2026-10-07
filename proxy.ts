@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import type { Database } from "@/lib/supabase/database.types";
+import { isSupabaseConfigured, publicEnv } from "@/lib/env";
 
 // Pages under /admin that work without being logged in.
 const PUBLIC_ADMIN_PATHS = ["/admin/login", "/admin/forgot-password", "/admin/reset-password", "/admin/no-access"];
@@ -8,11 +9,16 @@ const PUBLIC_ADMIN_PATHS = ["/admin/login", "/admin/forgot-password", "/admin/re
 // Refreshes the Supabase session cookie on every request and guards /admin:
 // logged out -> A0 login; logged in but not an admin -> "You don't have access".
 export async function proxy(request: NextRequest) {
+  // A deployment without its Supabase settings shows a setup page, not a crash.
+  if (!isSupabaseConfigured()) {
+    return NextResponse.redirect(new URL("/setup", request.url));
+  }
+
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    publicEnv.supabaseUrl,
+    publicEnv.supabaseAnonKey,
     {
       cookies: {
         getAll() {
