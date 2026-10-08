@@ -16,6 +16,7 @@ export function ConfirmDialog({
   action,
   variant = "secondary",
   confirmVariant = "primary",
+  cancelLabel = "Go back",
 }: {
   trigger: string;
   title: string;
@@ -24,6 +25,7 @@ export function ConfirmDialog({
   action: ConfirmAction;
   variant?: "primary" | "secondary" | "danger";
   confirmVariant?: "primary" | "destructive";
+  cancelLabel?: string;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [state, formAction] = useActionState(action, {});
@@ -60,7 +62,7 @@ export function ConfirmDialog({
               onClick={() => dialogRef.current?.close()}
               className={buttonClass("secondary", "w-full sm:w-auto")}
             >
-              Go back
+              {cancelLabel}
             </button>
             <ConfirmButton label={confirmLabel} variant={confirmVariant} />
           </div>

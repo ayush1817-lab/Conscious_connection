@@ -547,6 +547,13 @@ export type Database = {
     Functions: {
       event_places_left: { Args: { event_ids: string[] }; Returns: { event_id: string; places_left: number }[] };
       hit_rate_limit: { Args: { p_key: string; p_limit: number; p_window: string }; Returns: boolean };
+      host_cancel_event: { Args: { p_event_id: string; p_token_hash: string }; Returns: string | null };
+      host_edit_event: {
+        Args: { p_event_id: string; p_token_hash: string; p_event: Json; p_details: Json; p_changes: Json };
+        Returns: string | null;
+      };
+      host_request_contact: { Args: { p_event_id: string; p_token_hash: string; p_reason: string }; Returns: string | null };
+      host_resubmit_event: { Args: { p_event_id: string; p_token_hash: string; p_event: Json; p_details: Json }; Returns: boolean };
       is_admin: { Args: Record<PropertyKey, never>; Returns: boolean };
       submit_event: {
         Args: {

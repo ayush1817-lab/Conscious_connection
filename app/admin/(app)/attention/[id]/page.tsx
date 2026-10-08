@@ -5,7 +5,7 @@ import { ReasonDialog } from "@/components/events/reason-dialog";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { requireAdmin } from "@/lib/auth/admin";
-import { FIELD_LABELS, retentionCutoff } from "@/lib/events/status";
+import { FIELD_LABELS, formatFieldValue, retentionCutoff } from "@/lib/events/status";
 import { formatDate, formatDateTime, formatTimeRange, timeAgo } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import { markAttentionSeen } from "../../events/actions";
@@ -102,8 +102,8 @@ export default async function AttentionItemPage({ params }: { params: Promise<{ 
                   {changes.map(([field, change]) => (
                     <tr key={field} className="border-b border-border align-top last:border-0">
                       <th scope="row" className="py-2 pr-4 font-medium">{FIELD_LABELS[field] ?? field}</th>
-                      <td className="py-2 pr-4 text-muted line-through decoration-muted/60">{show(field, change.before)}</td>
-                      <td className="py-2">{show(field, change.after)}</td>
+                      <td className="py-2 pr-4 text-muted line-through decoration-muted/60">{formatFieldValue(field, change.before)}</td>
+                      <td className="py-2">{formatFieldValue(field, change.after)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -211,14 +211,4 @@ function sortedChanges(raw: unknown): [string, Change][] {
   return Object.entries(raw as Record<string, Change>).sort(
     ([a], [b]) => (order.indexOf(a) + 1 || 99) - (order.indexOf(b) + 1 || 99),
   );
-}
-
-function show(field: string, value: unknown): string {
-  if (value === null || value === undefined || value === "") {
-    return field === "capacity" ? "No limit" : field === "poster_path" ? "No poster" : "(empty)";
-  }
-  if ((field === "start_at" || field === "end_at") && typeof value === "string") return formatDateTime(value);
-  if (field === "poster_path") return "Poster image";
-  if (field === "capacity") return `${value} people`;
-  return String(value);
 }
