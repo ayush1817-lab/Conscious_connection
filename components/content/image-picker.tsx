@@ -69,6 +69,7 @@ export function ImagePicker({
             type="file"
             accept="image/jpeg,image/png,image/webp"
             className="sr-only"
+            tabIndex={-1}
             aria-labelledby={`${id}-label`}
             aria-describedby={`${id}-hint`}
             onChange={(e) => pick(e.target.files?.[0])}

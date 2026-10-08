@@ -41,6 +41,9 @@ export function GalleryUploader({ addImages }: { addImages: (paths: string[]) =>
         multiple
         accept="image/jpeg,image/png,image/webp"
         className="sr-only"
+        // The visible button opens it; this keeps it out of the Tab order.
+        tabIndex={-1}
+        aria-label="Upload images"
         onChange={(e) => upload(e.target.files)}
       />
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">

@@ -31,12 +31,15 @@ npm run dev                 # http://localhost:3000/admin
 | `npm run db:push` | Apply migrations to the linked hosted project |
 | `npm run db:types` | Regenerate `lib/supabase/database.types.ts` after a schema change |
 | `npm run seed` | Reset event and content data and load sample data (safe to re-run) |
+| `npm run retention` | Run the daily data-retention cleanup once, against the database in `.env.local` |
 | `npm run test:rls` | Check Row Level Security against seeded data |
 | `npm run test:auth` | Browser test of login, log out, non-admin block and forgot password (app must be running) |
 | `npm run test:overview` | Browser test of the admin home and events overview (re-seeds first; app must be running) |
 | `npm run test:review` | Browser test of approve, request changes and decline, and their emails (re-seeds first; app must be running) |
 | `npm run test:live` | Browser test of live events (take down, cancel, new host link) and every attention item type (re-seeds first; app must be running) |
 | `npm run test:content` | Browser test of website content: homepage, about, stories, podcasts and gallery, including image uploads (re-seeds first; app must be running) |
+| `npm run test:a11y` | Accessibility scan (axe, WCAG 2.1 AA) of every admin screen on desktop and at 360px, plus keyboard checks (re-seeds first; app must be running) |
+| `npm run test:retention` | Checks the retention cleanup removes only private data of events that ended more than 7 days ago (re-seeds first; also checks the cron route if the app is running) |
 | `npm run test:transitions` | Checks every event status change against the rules, and the email templates and providers |
 | `npm run lint` | TypeScript type check |
 
@@ -83,6 +86,23 @@ Under **Website content** (`/admin/content`) Karina edits what the public websit
 - **Images** are JPG, PNG or WebP up to 5MB. They upload straight from the browser to Supabase Storage (`content` and `gallery` buckets), so large files never pass through the server. Replaced or deleted images are removed from Storage.
 - Leaving a page with unsaved changes asks for confirmation first.
 
+## Data retention
+
+Spec section 6 (GDPR). Every day at 03:00 UTC, Vercel Cron calls `/api/cron/retention` (scheduled in [`vercel.json`](vercel.json)). For every event that ended more than 7 days ago it deletes the registrations, host details, contact requests, host edits and attention items, and clears the host link. The event row itself (public-safe fields only) is kept for counting; admin pages already hide events 7 days after they end. Each run is logged in `event_activity` as `system`, with a note of what was removed.
+
+- The work is done by one database function, `public.run_retention()` ([`supabase/migrations/20261008000000_retention.sql`](supabase/migrations/20261008000000_retention.sql)), so it either all happens or none of it does. Only the service role can call it.
+- The route only runs when the request carries `Authorization: Bearer <CRON_SECRET>`, which Vercel adds automatically once `CRON_SECRET` is set. Without the variable it refuses to run.
+- To check it on Vercel: **Project > Settings > Cron Jobs** lists the job and has a **Run** button; its logs show what was removed. Locally, `npm run retention` runs it once.
+- The same run deletes copies of sent emails (`email_log`) 30 days after sending. They hold the same personal data (E10 lists registrants' emails) but aren't linked to an event. The spec doesn't cover this; see [`docs/PLAN.md`](docs/PLAN.md).
+
+## Accessibility
+
+- Every admin screen passes an automated WCAG 2.1 AA scan (`npm run test:a11y`), on desktop and at 360px wide.
+- Keyboard: a "Skip to main content" link comes first, every control shows a clear focus outline, and dialogs take focus when they open, close with Escape and hand focus back.
+- Forms have visible labels, errors are announced, and confirmation toasts are read out by screen readers.
+- Tap targets are at least 44px (`min-h-tap`), text is at least 16px, and colours meet contrast ratios (form outlines use `--color-control-border` for 3:1).
+- Loading skeletons are announced as "Loading…", and animation is switched off when the device asks for reduced motion.
+
 ## Creating an admin
 
 There is no public sign-up. To add an admin:
@@ -116,12 +136,12 @@ All colours, radii and fonts are defined once, in [`app/globals.css`](app/global
    | `SUPABASE_SERVICE_ROLE_KEY` | Supabase > Project Settings > API > `service_role` key (secret: never prefix with `NEXT_PUBLIC_`) |
    | `SITE_URL` | The site's address, e.g. `https://consciousconnections.ie` |
    | `EMAIL_FROM` | e.g. `Conscious Connections <no-reply@consciousconnections.ie>` |
-   | `CRON_SECRET` | Any long random string (used from milestone 7) |
+   | `CRON_SECRET` | Any long random string, e.g. from `openssl rand -hex 32`. Vercel sends it to the daily cleanup job |
    | `RESEND_API_KEY` | Optional; without it emails are only logged (from milestone 4) |
 
 5. **Redeploy.** `NEXT_PUBLIC_` values are built into the site, so they only take effect in a new deployment.
 
-`vercel.json` pins the Next.js framework preset. If the Supabase settings are missing, every page shows a "not connected to its database yet" page (`/setup`) listing which settings are missing, instead of a server error.
+`vercel.json` pins the Next.js framework preset and schedules the daily cleanup job (see "Data retention"). If the Supabase settings are missing, every page shows a "not connected to its database yet" page (`/setup`) listing which settings are missing, instead of a server error.
 
 ## Environment variables
 
@@ -133,9 +153,11 @@ See [`.env.example`](.env.example). `SUPABASE_SERVICE_ROLE_KEY` bypasses RLS and
 app/                 Next.js routes (admin screens under app/admin)
 components/          Shared UI components
 lib/supabase/        Browser, server and service-role clients + generated DB types
-lib/events/          Event business rules (status transitions, host link tokens)
-lib/email/           EmailService and templates (milestone 4)
-scripts/             seed and RLS test
+lib/events/          Event business rules (status transitions, host links, attention items, retention)
+lib/content/         Website content helpers (images, YouTube links, formatting)
+lib/email/           EmailService and templates
+app/api/cron/        Daily data-retention job (Vercel Cron)
+scripts/             Seed, retention runner and tests (browser tests in scripts/e2e/)
 supabase/migrations/ SQL migrations
 docs/                Spec, PRD, wireframes and plan
 ```

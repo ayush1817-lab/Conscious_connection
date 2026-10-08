@@ -89,7 +89,7 @@ export default async function AttentionItemPage({ params }: { params: Promise<{ 
           <h2 className="font-semibold">What the host changed</h2>
           <p className="text-sm text-muted">These changes are already live on the website.</p>
           {changes.length ? (
-            <div className="mt-3 overflow-x-auto">
+            <div className="mt-3 overflow-x-auto" tabIndex={0} role="region" aria-label="Changed fields">
               <table className="w-full min-w-[32rem] text-left">
                 <thead>
                   <tr className="border-b border-border text-sm text-muted">
