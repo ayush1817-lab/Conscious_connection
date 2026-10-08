@@ -7,29 +7,11 @@
  * link, visible focus, and that dialogs take and return focus.
  */
 import { execSync } from "node:child_process";
-import { readFileSync } from "node:fs";
-import type { Page } from "playwright-core";
 import { env, serviceClient } from "../lib/env";
+import { axe } from "./axe";
 import { BASE_URL, check, finish, launch } from "./browser";
 
-const AXE = readFileSync(require.resolve("axe-core/axe.min.js"), "utf8");
 const service = serviceClient();
-
-type Violation = { id: string; impact: string; help: string; nodes: { target: string[] }[] };
-
-async function axe(page: Page, label: string) {
-  await page.addScriptTag({ content: AXE });
-  const violations = (await page.evaluate(async () => {
-    const result = await (window as unknown as { axe: { run: (ctx: Document, opts: object) => Promise<{ violations: unknown[] }> } }).axe.run(document, {
-      runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "best-practice"] },
-    });
-    return result.violations;
-  })) as Violation[];
-  const detail = violations
-    .map((v) => `${v.impact} ${v.id}: ${v.help} [${v.nodes.slice(0, 3).map((n) => n.target.join(" ")).join(", ")}]`)
-    .join("; ");
-  check(violations.length === 0, `${label}: no accessibility problems`, detail);
-}
 
 async function idOf(query: PromiseLike<{ data: { id: string } | null }>) {
   const { data } = await query;
@@ -127,7 +109,12 @@ async function main() {
     }
 
     await page.goto(`${BASE_URL}/admin/events/00000000-0000-0000-0000-000000000000`);
-    check(await page.getByRole("heading", { name: "We can't find that page" }).isVisible(), "a missing event shows a friendly not-found page");
+    // The not-found page streams in after the loading skeleton, so wait for it.
+    const notFoundShown = await page
+      .getByRole("heading", { name: "We can't find that page" })
+      .waitFor({ timeout: 10_000 })
+      .then(() => true, () => false);
+    check(notFoundShown, "a missing event shows a friendly not-found page");
 
     await page.goto(`${BASE_URL}/admin/events/${live}`);
     await page.getByRole("button", { name: "Cancel event" }).click();

@@ -2,12 +2,16 @@
 
 The website for Conscious Connections, a community for women and non-binary people in rural Ireland.
 
-This phase builds the **admin website** Karina uses to review events and edit site content. The database schema already covers the whole product (public site and host pages come later).
+The app has two halves in one Next.js project and one Supabase database:
+
+- the **public website** visitors and hosts use (no logins), and
+- the **admin website** at `/admin` that Karina uses to review events and edit site content.
 
 - Spec: [`docs/admin-build-spec.md`](docs/admin-build-spec.md)
 - PRD: [`docs/conscious-connections-prd-lofi.md`](docs/conscious-connections-prd-lofi.md)
 - Wireframes: [`docs/lofi/`](docs/lofi/)
 - Build plan, spec/wireframe conflicts and open questions: [`docs/PLAN.md`](docs/PLAN.md)
+- Public site spec: [`docs/public-site-build-spec.md`](docs/public-site-build-spec.md), wireframes [`docs/lofi/public-wireframes.png`](docs/lofi/public-wireframes.png), plan and open questions [`docs/PUBLIC_PLAN.md`](docs/PUBLIC_PLAN.md)
 - `prototype/` holds the earlier Vite mockup of the public site, kept for reference. It is not part of the app.
 
 **Stack:** Next.js (App Router, TypeScript), Tailwind CSS v4, Supabase (Postgres, Auth, Storage), Vercel.
@@ -21,7 +25,7 @@ npm install
 npm run db:start            # starts local Supabase and applies migrations; prints the keys
 cp .env.example .env.local  # then paste the API URL, anon key and service_role key it printed
 npm run seed                # sample data + the admin login from SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD
-npm run dev                 # http://localhost:3000/admin
+npm run dev                 # public site at http://localhost:3000, admin at /admin
 ```
 
 | Script | What it does |
@@ -41,6 +45,7 @@ npm run dev                 # http://localhost:3000/admin
 | `npm run test:a11y` | Accessibility scan (axe, WCAG 2.1 AA) of every admin screen on desktop and at 360px, plus keyboard checks (re-seeds first; app must be running) |
 | `npm run test:retention` | Checks the retention cleanup removes only private data of events that ended more than 7 days ago (re-seeds first; also checks the cron route if the app is running) |
 | `npm run test:transitions` | Checks every event status change against the rules, and the email templates and providers |
+| `npm run test:public` | Browser test of the public website: every page on desktop and at 360px, accessibility, freshness after admin edits, drafts hidden (re-seeds first; app must be running) |
 | `npm run lint` | TypeScript type check |
 
 ## Database and migrations
@@ -75,6 +80,23 @@ Row Level Security is on for every table. Private tables (host details, registra
 - If an email fails, the action still happens and Karina is told to contact the host herself.
 - **Live events** (event page): **Take down** needs a reason and emails the host (E11). **Cancel event** asks for confirmation and emails every registrant (E9). **Regenerate host link** emails the host a new private link (E4) and the old one stops working. Taking down or cancelling also clears that event's open attention items.
 - **Attention items** each have their own page (`/admin/attention/[id]`). Host edits show what changed (before and after) with **Mark as seen** and **Take down**. Host cancellations have **Mark as seen**. Contact requests need a decision: **Share contact details** emails the host every registrant's name and email (E10), and **Decline** emails the host the reason (E10).
+
+## Public website
+
+Pages live under `app/(public)/` and share one header (with a mobile menu) and footer.
+
+| Route | Page |
+|---|---|
+| `/` | Homepage: Karina's sections, the next 3 events, latest stories, latest podcast, gallery strip |
+| `/about`, `/privacy` | About (from Website content) and a placeholder privacy page marked "Karina to review" |
+| `/stories`, `/stories/[slug]` | Published stories |
+| `/podcasts` | Published episodes; the YouTube player only loads when someone presses play |
+| `/gallery` | Gallery photos |
+
+- **Read-only and logged-out:** public pages read through the anon key (`lib/supabase/public.ts`), so Row Level Security decides what they can see: live upcoming events (public columns only) and published content. They never use the service role to read.
+- **Always fresh:** public pages render on every request, and admin saves call `revalidatePublicSite()` (`lib/revalidate.ts`), so edits show at once.
+- **Counties** are one list in `lib/counties.ts` (26 counties of the Republic of Ireland). The database stores `Co. Clare`; addresses use `clare`.
+- **Fonts:** Atkinson Hyperlegible Next for text and Fraunces for headings, self-hosted by `next/font` (no requests to Google from visitors).
 
 ## Website content
 
@@ -119,7 +141,7 @@ To remove admin access, delete that row from `public.admins` (and optionally the
 
 ## Theme tokens
 
-All colours, radii and fonts are defined once, in [`app/globals.css`](app/globals.css): CSS variables in `:root`, exposed to Tailwind through the `@theme inline` block (Tailwind v4 has no `tailwind.config` file). Components use the token names (`bg-primary`, `text-muted`, `bg-private`, `rounded-card`, `min-h-tap`), never raw colours, so restyling means editing that one file.
+The current theme (warm cream, heather plum and sage) is a stand-in until the real design system arrives. All colours, radii and fonts are defined once, in [`app/globals.css`](app/globals.css): CSS variables in `:root`, exposed to Tailwind through the `@theme inline` block (Tailwind v4 has no `tailwind.config` file). Components use the token names (`bg-primary`, `text-muted`, `bg-private`, `rounded-card`, `min-h-tap`), never raw colours, so restyling means editing that one file.
 
 ## Deploying to Vercel
 
@@ -150,8 +172,8 @@ See [`.env.example`](.env.example). `SUPABASE_SERVICE_ROLE_KEY` bypasses RLS and
 ## Project structure
 
 ```
-app/                 Next.js routes (admin screens under app/admin)
-components/          Shared UI components
+app/                 Next.js routes (public pages under app/(public), admin under app/admin)
+components/          Shared UI components (public site in components/public)
 lib/supabase/        Browser, server and service-role clients + generated DB types
 lib/events/          Event business rules (status transitions, host links, attention items, retention)
 lib/content/         Website content helpers (images, YouTube links, formatting)

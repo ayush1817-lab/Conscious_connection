@@ -2,35 +2,49 @@
 
 /*
  * Theme tokens: the ONLY place colours, radii and fonts are defined.
- * This is a temporary calm, neutral theme (spec section 3); swap the values
+ * This is a temporary warm theme (spec section 3) until the real design system arrives; swap the values
  * below to restyle the whole app. Components use the Tailwind names from the
  * @theme block (bg-primary, text-muted, rounded-card, ...), never raw colours.
  */
 :root {
-  --color-primary: #4f7a65;
-  --color-primary-hover: #3e6251;
+  /* Heather plum: the main colour (buttons, links, focus). White text on it is 8:1. */
+  --color-primary: #7a3b5d;
+  --color-primary-hover: #632f4b;
   --color-on-primary: #ffffff;
+  /* Deep sage: a second colour for small accents (icons, tags). */
+  --color-accent: #3f6b55;
 
-  --color-background: #faf8f5;
+  --color-background: #fbf6f0;
   --color-surface: #ffffff;
-  --color-border: #e5e1da;
+  --color-border: #eadfd3;
   /* Form-control outlines need 3:1 contrast (WCAG 1.4.11); --color-border is too light. */
-  --color-control-border: #8a857d;
+  --color-control-border: #8c7f73;
 
-  --color-text: #1f1f1f;
-  --color-muted: #6b6b6b;
+  --color-text: #2a2024;
+  --color-muted: #6b5d63;
 
   --color-success: #2f7d4f;
-  --color-warning: #b7791f;
+  --color-warning: #a35f00;
   --color-danger: #b42318;
 
-  /* Background behind host private details ("Only visible to you"). */
-  --color-private: #fff7ec;
+  /* Background behind host private details ("Only visible to Karina"). */
+  --color-private: #fff4e3;
+  --color-private-border: #e9c48f;
 
-  --radius-control: 0.5rem;
-  --radius-card: 0.75rem;
+  /* Public site: soft bands behind the hero and alternating sections. */
+  --color-hero: #f4e6ec;
+  --color-band: #f3e9dc;
+  /* Poster placeholder for events without a poster (gradient from/to). */
+  --color-poster-from: #e8d2dd;
+  --color-poster-to: #d9e4d6;
 
-  --font-body: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --radius-control: 0.625rem;
+  --radius-card: 1rem;
+
+  /* Atkinson Hyperlegible (body) was designed for low-vision readers; Fraunces gives headings warmth.
+     The --font-*-loaded variables come from next/font in app/layout.tsx. */
+  --font-body: var(--font-body-loaded), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-heading: var(--font-heading-loaded), Georgia, "Times New Roman", serif;
 
   /* Accessibility minimums from the spec. */
   --size-tap-target: 44px;
@@ -50,11 +64,18 @@
   --color-warning: var(--color-warning);
   --color-danger: var(--color-danger);
   --color-private: var(--color-private);
+  --color-private-border: var(--color-private-border);
+  --color-accent: var(--color-accent);
+  --color-hero: var(--color-hero);
+  --color-band: var(--color-band);
+  --color-poster-from: var(--color-poster-from);
+  --color-poster-to: var(--color-poster-to);
 
   --radius-control: var(--radius-control);
   --radius-card: var(--radius-card);
 
   --font-sans: var(--font-body);
+  --font-heading: var(--font-heading);
 
   --spacing-tap: var(--size-tap-target);
 }

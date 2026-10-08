@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { missingSettings, REQUIRED_SETTINGS } from "@/lib/env";
 
-export const metadata: Metadata = { title: "Setup needed · Conscious Connections" };
+export const metadata: Metadata = { title: { absolute: "Setup needed · Conscious Connections" }, robots: { index: false } };
 export const dynamic = "force-dynamic";
 
 // Shown instead of a bare "Internal Server Error" when the deployment is

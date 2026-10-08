@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePublicSite } from "@/lib/revalidate";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth/admin";
 import { contactDetailsDeclinedEmail, contactDetailsSharedEmail, sendEmail } from "@/lib/email";
@@ -29,7 +29,7 @@ async function finish(sent: { ok: boolean }, done: string, hostName: string, hos
   } else {
     await setFlash(`${done} But the email to ${hostName} couldn't be sent, so please contact them at ${hostEmail}.`, "error");
   }
-  revalidatePath("/admin", "layout");
+  revalidatePublicSite();
   redirect("/admin/events");
 }
 

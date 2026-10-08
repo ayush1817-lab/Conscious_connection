@@ -6,13 +6,17 @@ import { isSupabaseConfigured, publicEnv } from "@/lib/env";
 // Pages under /admin that work without being logged in.
 const PUBLIC_ADMIN_PATHS = ["/admin/login", "/admin/forgot-password", "/admin/reset-password", "/admin/no-access"];
 
-// Refreshes the Supabase session cookie on every request and guards /admin:
+// Sends every page to /setup until Supabase is configured. For /admin it also
+// refreshes the Supabase session cookie on every request and guards access:
 // logged out -> A0 login; logged in but not an admin -> "You don't have access".
 export async function proxy(request: NextRequest) {
   // A deployment without its Supabase settings shows a setup page, not a crash.
   if (!isSupabaseConfigured()) {
     return NextResponse.redirect(new URL("/setup", request.url));
   }
+
+  // The public site and host pages have no logins, so they skip the session work below.
+  if (!request.nextUrl.pathname.startsWith("/admin")) return NextResponse.next();
 
   let response = NextResponse.next({ request });
 
@@ -68,5 +72,6 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  // Everything except Next.js internals, static files and the setup page itself.
+  matcher: ["/((?!_next/|setup|favicon.ico|robots.txt|sitemap.xml|.*\\.(?:png|jpg|jpeg|svg|webp|ico)$).*)"],
 };
