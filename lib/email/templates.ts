@@ -23,6 +23,40 @@ function firstName(fullName: string) {
   return fullName.trim().split(/\s+/)[0] || "there";
 }
 
+// E1: a host submitted an event.
+export function submittedEmail(args: { hostName: string; event: EventSummary }) {
+  return render("E1", `We've received your event "${args.event.title}"`, "Thanks, we've got your event", [
+    { kind: "p", text: `Hi ${firstName(args.hostName)},` },
+    { kind: "p", text: `Thank you for submitting "${args.event.title}". Karina will review it, usually within 24–48 hours.` },
+    { kind: "details", rows: whenWhere(args.event) },
+    {
+      kind: "list",
+      items: [
+        "If it's approved, it goes live on the website.",
+        "You'll then get an email with a private link to manage your event: edit it, see who has registered, or cancel it.",
+        "If anything needs changing, we'll email you to explain.",
+      ],
+    },
+    { kind: "note", text: "Please check your spam folder if you don't hear from us, and keep our emails safe." },
+    { kind: "p", text: SIGN_OFF },
+  ]);
+}
+
+// E5: a new submission or a resubmission, to the admin(s).
+export function newSubmissionEmail(args: { event: EventSummary; hostName: string; about: string; resubmitted?: boolean; adminUrl: string }) {
+  const heading = args.resubmitted ? "An event was resubmitted" : "New event request";
+  return render("E5", `${heading}: ${args.event.title}`, heading, [
+    {
+      kind: "p",
+      text: args.resubmitted
+        ? `${args.hostName} has made the changes you asked for and resubmitted "${args.event.title}".`
+        : `${args.hostName} has submitted "${args.event.title}" for review.`,
+    },
+    { kind: "details", rows: [["Event", args.event.title], ...whenWhere(args.event), ["About the group", args.about]] },
+    { kind: "button", label: "Review the event", url: args.adminUrl },
+  ]);
+}
+
 // E2: Karina requests changes.
 export function needsChangesEmail(args: { hostName: string; event: EventSummary; reason: string; editUrl: string }) {
   return render("E2", "We need a few changes to your event", "We need a few changes", [

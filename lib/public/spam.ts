@@ -13,6 +13,7 @@ export const LIMITS = {
   submit: 5,
   register: 10,
   resend: 3,
+  posterUpload: 10,
 } as const;
 
 // Real people never see or fill the honeypot field; simple bots fill every field.
