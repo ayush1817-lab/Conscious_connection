@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePublicSite } from "@/lib/revalidate";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth/admin";
 import { IMAGE_TARGETS, isUploadedImagePath, type ImageTarget } from "@/lib/content/images";
@@ -41,7 +41,7 @@ async function removeImage(supabase: Client, target: ImageTarget, path: string |
 
 async function done(message = SAVED) {
   await setFlash(message);
-  revalidatePath("/admin/content", "layout");
+  revalidatePublicSite();
 }
 
 // ---------------------------------------------------------------------------

@@ -187,7 +187,7 @@ function renderText(heading: string, blocks: Block[]) {
   return `${parts.join("\n\n")}\n`;
 }
 
-const COLORS = { text: "#1F1F1F", muted: "#6B6B6B", primary: "#4F7A65", border: "#E5E1DA", tint: "#FFF7EC", bg: "#FAF8F5" };
+const COLORS = { text: "#2A2024", muted: "#6B5D63", primary: "#7A3B5D", border: "#EADFD3", tint: "#FFF4E3", bg: "#FBF6F0" };
 
 function esc(text: string) {
   return text

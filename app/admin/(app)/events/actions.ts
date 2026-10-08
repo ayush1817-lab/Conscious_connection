@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePublicSite } from "@/lib/revalidate";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth/admin";
 import { AttentionError, markSeen } from "@/lib/events/attention";
@@ -21,6 +21,6 @@ export async function markAttentionSeen(itemId: string, returnTo: string | null)
     await setFlash(error.message, "error");
   }
 
-  revalidatePath("/admin", "layout");
+  revalidatePublicSite();
   if (returnTo) redirect(returnTo);
 }

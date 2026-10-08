@@ -21,7 +21,8 @@
     "test:live": "tsx scripts/e2e/live-and-attention.ts",
     "test:content": "tsx scripts/e2e/content.ts",
     "test:a11y": "tsx scripts/e2e/accessibility.ts",
-    "test:retention": "tsx scripts/test-retention.ts"
+    "test:retention": "tsx scripts/test-retention.ts",
+    "test:public": "tsx scripts/e2e/public-site.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

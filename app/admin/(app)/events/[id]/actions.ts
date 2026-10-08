@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePublicSite } from "@/lib/revalidate";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth/admin";
@@ -39,7 +39,7 @@ export async function approveEvent(eventId: string) {
 
   const fail = async (message: string) => {
     await setFlash(message, "error");
-    revalidatePath("/admin", "layout");
+    revalidatePublicSite();
     redirect(`/admin/events/${eventId}`);
   };
   if (!host) return fail("This request has no host details, so the host can't be emailed.");
@@ -68,7 +68,7 @@ export async function approveEvent(eventId: string) {
   const cookie = hostLinkCookie(eventId);
   (await cookies()).set(cookie.name, JSON.stringify({ token, emailed: sent.ok }), cookie.options);
 
-  revalidatePath("/admin", "layout");
+  revalidatePublicSite();
   redirect(`/admin/events/${eventId}/approved`);
 }
 
@@ -108,7 +108,7 @@ export async function reviewWithReason(
       "error",
     );
   }
-  revalidatePath("/admin", "layout");
+  revalidatePublicSite();
   redirect("/admin/events");
 }
 
@@ -137,7 +137,7 @@ export async function takeDownEvent(eventId: string, _prev: ReasonFormState, for
       "error",
     );
   }
-  revalidatePath("/admin", "layout");
+  revalidatePublicSite();
   redirect(`/admin/events/${eventId}`);
 }
 
@@ -175,7 +175,7 @@ export async function cancelEvent(eventId: string, _prev: ReasonFormState, formD
   } else {
     await setFlash(`Event cancelled. ${failed} of ${count} emails to registered people couldn't be sent.`, "error");
   }
-  revalidatePath("/admin", "layout");
+  revalidatePublicSite();
   redirect(`/admin/events/${eventId}`);
 }
 
@@ -207,6 +207,6 @@ export async function regenerateLink(eventId: string, _prev: ReasonFormState, _f
   );
   const cookie = hostLinkCookie(eventId, "new-host-link");
   (await cookies()).set(cookie.name, JSON.stringify({ token: result.token, emailed: sent.ok }), cookie.options);
-  revalidatePath("/admin", "layout");
+  revalidatePublicSite();
   redirect(`/admin/events/${eventId}/new-host-link`);
 }
