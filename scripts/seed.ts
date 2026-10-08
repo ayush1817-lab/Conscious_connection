@@ -263,7 +263,7 @@ const events: SeedEvent[] = [
       opened_by_admin_at: ago(6 * DAY),
       approved_at: ago(6 * DAY),
     },
-    host: host("Orla Kenny", "orla@example.com", "Strandhill seafront, by the lifeguard hut", "Year-round sea swimming group"),
+    host: host("Orla Kenny", "orla.kenny@example.com", "Strandhill seafront, by the lifeguard hut", "Year-round sea swimming group"),
     registrants: ["Aoife", "Sam", "R.", "Jo"],
   },
   {

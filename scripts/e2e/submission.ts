@@ -104,6 +104,8 @@ async function main() {
     await admin.getByRole("button", { name: "Log in" }).click();
     await admin.getByRole("heading", { name: /Welcome/ }).waitFor();
     await admin.goto(`${BASE_URL}/admin/events`);
+    // The overview streams in after a loading skeleton.
+    await admin.getByRole("heading", { name: /^New requests/ }).first().waitFor();
     const requests = await admin.locator("main").innerText();
     check(/New requests \(3\)/.test(requests) && requests.includes(title), "it's listed under New requests");
     await admin.goto(`${BASE_URL}/admin/events/${saved?.id}`);

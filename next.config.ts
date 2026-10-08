@@ -9,6 +9,17 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
+        // Basic hardening for every page.
+        source: "/:path*",
+        headers: [
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), interest-cohort=()" },
+          { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
+        ],
+      },
+      {
         // Private host links carry a secret token in the address; never send it to other sites.
         source: "/host/:path*",
         headers: [

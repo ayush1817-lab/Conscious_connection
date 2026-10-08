@@ -49,6 +49,7 @@ npm run dev                 # public site at http://localhost:3000, admin at /ad
 | `npm run test:registration` | Checks capacity is never exceeded when 25 or 40 people register at once, duplicates, closed events, rate limits, and that the public can't call these functions (re-seeds first) |
 | `npm run test:register` | Browser test of registering: errors, confirmation page, E8 with the address, repeat registration, full event, honeypot (re-seeds first; app must be running) |
 | `npm run test:submit` | Browser test of submitting an event at 360px: errors, poster upload, saved request, E1 and E5, and the request in the admin (re-seeds first; app must be running) |
+| `npm run test:resend` | Browser test of "Lost your link?": the same reply for hosts and strangers, a fresh working link (E4 or E2) that replaces the old one, nothing for pending or ended events, and the hourly limit (re-seeds first; app must be running) |
 | `npm run test:host` | Browser test of the private host page: broken links all show the same page, resubmitting, editing with a diff, locked fields, names only, contact requests, cancelling, and each action in the admin's Attention items (re-seeds first; app must be running) |
 | `npm run lint` | TypeScript type check |
 
@@ -101,6 +102,7 @@ Pages live under `app/(public)/` and share one header (with a mobile menu) and f
 | `/submit-event/thanks` | "Your event has been submitted" and what happens next (not indexed) |
 | `/host/[token]` | The host's private page (H3), reached only from the link in their email. Not indexed, sent with `Referrer-Policy: no-referrer` |
 | `/host/cancelled` | Shown once after a host cancels |
+| `/host/resend` | "Lost your link?" (H6): a host enters their email and gets a fresh link for each active event (not indexed) |
 | `/events/[id]/registered` | "Check your email" after registering (not indexed; never shows the address) |
 | `/events/[id]` | One event: poster, county, date, times, description, places left (only when fewer than 5), share button, more events. Anything not live and upcoming shows "This event is no longer running" with a 404 |
 
@@ -115,12 +117,16 @@ Pages live under `app/(public)/` and share one header (with a mobile menu) and f
   - Each host action is one database function (`host_edit_event`, `host_request_contact`, `host_cancel_event`, `host_resubmit_event`) that re-checks the link and status in the same transaction.
   - **Locked fields:** once anyone has registered, date, times, county and exact address can't be changed, and the server refuses them even if the form is tampered with. Set `LOCK_KEY_FIELDS_WHEN_REGISTERED=false` to allow changes (the rule is still being confirmed).
   - Tokens are never logged by the app. Note that hosting providers log request paths, so treat request logs as private.
+  - **Lost links** (`/host/resend`): the reply is always "If there's an active event for this email, we've sent the link", whether or not the email belongs to a host, and the emails are sent after the reply so its timing gives nothing away either. Each live event (not yet ended) gets a new link by E4, each needs-changes event by E2; the old links stop working. Pending, ended, cancelled, declined and taken-down events get nothing. Limited to 3 an hour per visitor.
   - `npm run seed` prints two fixed test links (a live event and a needs-changes event) for local testing only.
 - **Admin notifications** (E5, and E6/E7 from milestone 5) go to `ADMIN_NOTIFY_EMAIL` (comma-separated) if set, otherwise to every admin login's email.
 - **Spam protection** on public forms (`lib/public/spam.ts`): a hidden honeypot field (bots that fill it see the normal success page and nothing is saved) and per-visitor limits per hour (5 event submissions, 10 registrations, 3 link resends) kept in `rate_limits` under a hash of the visitor's IP. To add Cloudflare Turnstile later, check its token in `isLikelyBot()`.
 - **Places left:** the public can't read registrations, so the database function `event_places_left()` returns only a number per event, never who registered.
 - **Share previews:** event pages set Open Graph and Twitter tags. Events without a poster share a generated image with the title, county and date (`/events/[id]/share-image`).
 - **Counties** are one list in `lib/counties.ts` (26 counties of the Republic of Ireland). The database stores `Co. Clare`; addresses use `clare`.
+- **Security headers** (`next.config.ts`) on every page: `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `X-Frame-Options: DENY`, a restrictive `Permissions-Policy` and HSTS. Host pages also send `no-referrer`, `noindex` and `no-store`.
+- **Search engines:** `/robots.txt` (`app/robots.ts`) keeps out `/admin`, `/host`, `/setup` and the thank-you page; `/sitemap.xml` (`app/sitemap.ts`) lists the public pages, live events and published stories.
+- **How it all fits together** in plain language: [`docs/how-it-connects.md`](docs/how-it-connects.md).
 - **Fonts:** Atkinson Hyperlegible Next for text and Fraunces for headings, self-hosted by `next/font` (no requests to Google from visitors).
 
 ## Website content

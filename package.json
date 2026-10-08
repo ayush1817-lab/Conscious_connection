@@ -26,7 +26,8 @@
     "test:registration": "tsx scripts/test-registration.ts",
     "test:register": "tsx scripts/e2e/registration.ts",
     "test:submit": "tsx scripts/e2e/submission.ts",
-    "test:host": "tsx scripts/e2e/host.ts"
+    "test:host": "tsx scripts/e2e/host.ts",
+    "test:resend": "tsx scripts/e2e/resend.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
