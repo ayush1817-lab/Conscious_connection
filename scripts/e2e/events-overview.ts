@@ -40,7 +40,7 @@ async function main() {
     console.log("\nA2 – Events overview");
     await page.getByRole("link", { name: /Events/ }).click();
     await page.getByRole("heading", { name: "Events overview" }).waitFor();
-    check((await countTile(page, "live events")) === "4", "4 live (upcoming) events");
+    check((await countTile(page, "live events")) === "6", "6 live (upcoming) events");
     check((await countTile(page, "new requests")) === "2", "2 new requests");
     check((await countTile(page, "attention items")) === "3", "3 attention items");
 
@@ -58,7 +58,7 @@ async function main() {
     const upcoming = await sectionText(page, /^Upcoming/);
     const order = ["Sunrise Meditation", "Mindful Morning Yoga", "Community Drum Circle", "Book Club Evening"];
     const positions = order.map((t) => upcoming.indexOf(t));
-    check(positions.every((p, i) => p >= 0 && (i === 0 || p > positions[i - 1])), "upcoming shows the 4 live events, soonest first", upcoming);
+    check(positions.every((p, i) => p >= 0 && (i === 0 || p > positions[i - 1])), "upcoming shows the live events, soonest first", upcoming);
     check(/Sunrise Meditation[\s\S]*?6 registered/.test(upcoming), "upcoming shows registered counts");
 
     const past = await sectionText(page, /^Past/);

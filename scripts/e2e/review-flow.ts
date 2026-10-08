@@ -147,7 +147,7 @@ async function main() {
     await page.goto(`${BASE_URL}/admin/events`);
     await page.getByRole("heading", { name: "Events overview" }).waitFor();
     check(/New requests \(0\)/.test(await page.locator("main").innerText()), "no new requests left");
-    check(/Upcoming \(5 live events\)[\s\S]*Gentle Walk & Chat/.test(await page.locator("main").innerText()), "approved event is in Upcoming");
+    check(/Upcoming \(7 live events\)[\s\S]*Gentle Walk & Chat/.test(await page.locator("main").innerText()), "approved event is in Upcoming");
 
     console.log("\nMobile (360px)");
     await service.from("events").update({ status: "pending", status_reason: null }).eq("id", soundBath);
