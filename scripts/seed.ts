@@ -6,10 +6,11 @@
  * Safe to re-run. Creates (or updates) the admin login from SEED_ADMIN_EMAIL /
  * SEED_ADMIN_PASSWORD. Never run against production data you want to keep.
  */
-import { generateHostToken } from "../lib/events/host-token";
+import { generateHostToken, hashHostToken } from "../lib/events/host-token";
 import type { Database } from "../lib/supabase/database.types";
 import { env, serviceClient } from "./lib/env";
 import { placeholderPng } from "./lib/placeholder-png";
+import { TEST_HOST_TOKENS, TEST_TOKEN_EVENTS } from "./lib/test-tokens";
 
 type EventInsert = Database["public"]["Tables"]["events"]["Insert"];
 type PrivateInsert = Omit<Database["public"]["Tables"]["event_private_details"]["Insert"], "event_id">;
@@ -364,6 +365,8 @@ async function seedEvents() {
     if (event.status === "live" || event.status === "cancelled" || event.status === "taken_down") {
       row.host_edit_token_hash = generateHostToken().hash;
     }
+    if (key === TEST_TOKEN_EVENTS.live) row.host_edit_token_hash = hashHostToken(TEST_HOST_TOKENS.live);
+    if (key === TEST_TOKEN_EVENTS.needsChanges) row.host_edit_token_hash = hashHostToken(TEST_HOST_TOKENS.needsChanges);
 
     const { data, error } = await db.from("events").insert(row).select("id").single();
     if (error) fail(`inserting event "${event.title}"`, error);
@@ -502,6 +505,10 @@ async function main() {
   const ids = await seedEvents();
   await seedAttention(ids);
   await seedContent();
+  const site = (process.env.SITE_URL || "http://localhost:3000").replace(/\/+$/, "");
+  console.log(`✓ Test host links (local only):`);
+  console.log(`    live event:          ${site}/host/${TEST_HOST_TOKENS.live}`);
+  console.log(`    needs-changes event: ${site}/host/${TEST_HOST_TOKENS.needsChanges}`);
   console.log("Seed complete.");
 }
 

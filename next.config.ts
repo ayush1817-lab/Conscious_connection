@@ -6,6 +6,19 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ? new URL(process.env.N
 const isLocalSupabase = supabaseUrl ? ["127.0.0.1", "localhost"].includes(supabaseUrl.hostname) : false;
 
 const nextConfig: NextConfig = {
+  async headers() {
+    return [
+      {
+        // Private host links carry a secret token in the address; never send it to other sites.
+        source: "/host/:path*",
+        headers: [
+          { key: "Referrer-Policy", value: "no-referrer" },
+          { key: "X-Robots-Tag", value: "noindex, nofollow" },
+          { key: "Cache-Control", value: "private, no-store" },
+        ],
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "*.supabase.co" },

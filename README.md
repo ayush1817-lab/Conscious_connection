@@ -49,6 +49,7 @@ npm run dev                 # public site at http://localhost:3000, admin at /ad
 | `npm run test:registration` | Checks capacity is never exceeded when 25 or 40 people register at once, duplicates, closed events, rate limits, and that the public can't call these functions (re-seeds first) |
 | `npm run test:register` | Browser test of registering: errors, confirmation page, E8 with the address, repeat registration, full event, honeypot (re-seeds first; app must be running) |
 | `npm run test:submit` | Browser test of submitting an event at 360px: errors, poster upload, saved request, E1 and E5, and the request in the admin (re-seeds first; app must be running) |
+| `npm run test:host` | Browser test of the private host page: broken links all show the same page, resubmitting, editing with a diff, locked fields, names only, contact requests, cancelling, and each action in the admin's Attention items (re-seeds first; app must be running) |
 | `npm run lint` | TypeScript type check |
 
 ## Database and migrations
@@ -98,6 +99,8 @@ Pages live under `app/(public)/` and share one header (with a mobile menu) and f
 | `/events` | Live upcoming events, soonest first, 12 per page. Filters are links: `?county=clare&when=week` (`week`, `month`, or all) |
 | `/submit-event` | Host an event (H1): public details, then private details "Only visible to Karina", optional poster, consent |
 | `/submit-event/thanks` | "Your event has been submitted" and what happens next (not indexed) |
+| `/host/[token]` | The host's private page (H3), reached only from the link in their email. Not indexed, sent with `Referrer-Policy: no-referrer` |
+| `/host/cancelled` | Shown once after a host cancels |
 | `/events/[id]/registered` | "Check your email" after registering (not indexed; never shows the address) |
 | `/events/[id]` | One event: poster, county, date, times, description, places left (only when fewer than 5), share button, more events. Anything not live and upcoming shows "This event is no longer running" with a 404 |
 
@@ -105,6 +108,14 @@ Pages live under `app/(public)/` and share one header (with a mobile menu) and f
 - **Always fresh:** public pages render on every request, and admin saves call `revalidatePublicSite()` (`lib/revalidate.ts`), so edits show at once.
 - **Registering** (name, email, consent) calls the database function `register_for_event()`, which locks the event, checks it is live, upcoming and not full, and inserts the registration in one step, so capacity holds even when people register at the same moment. The same email registering twice gets E8 again instead of a second place. E8 is the only place the exact address is ever shown.
 - **Submitting an event** saves the event (status `pending`) and its private details together through the database function `submit_event()`, then emails E1 to the host and E5 to the admin. Posters upload straight from the browser to Storage through a one-time signed URL the server hands out after checking the type and size (JPG, PNG or WebP, up to 5MB), under a random name in `posters/submissions/`. Events take place on one day (date, start time, end time).
+- **Private host page** (`/host/[token]`): the token is hashed (SHA-256) and compared with `events.host_edit_token_hash` in constant time (`lib/host/host-event.ts`). Any link that doesn't work (made up, replaced by a newer one, cleared by retention, or for an event that ended, was cancelled, taken down or declined) gets the same "This link is no longer active" page (H5) with a 404, so it never reveals whether a link existed. What the host sees depends on the event:
+  - **Needs changes:** Karina's reason, then the event form; **Resubmit for review** sets it back to pending and emails Karina (E5).
+  - **Pending:** "Waiting for Karina's review" and a read-only summary.
+  - **Live:** tabs for **Event details** (edit; only changed fields are saved, with a before/after record for Karina, an attention item and E6), **Registrations** (names only) and **Request contact details** (one open request at a time; attention item that needs a decision, E7). **Cancel event** asks for confirmation, emails every registrant (E9) and Karina (E7).
+  - Each host action is one database function (`host_edit_event`, `host_request_contact`, `host_cancel_event`, `host_resubmit_event`) that re-checks the link and status in the same transaction.
+  - **Locked fields:** once anyone has registered, date, times, county and exact address can't be changed, and the server refuses them even if the form is tampered with. Set `LOCK_KEY_FIELDS_WHEN_REGISTERED=false` to allow changes (the rule is still being confirmed).
+  - Tokens are never logged by the app. Note that hosting providers log request paths, so treat request logs as private.
+  - `npm run seed` prints two fixed test links (a live event and a needs-changes event) for local testing only.
 - **Admin notifications** (E5, and E6/E7 from milestone 5) go to `ADMIN_NOTIFY_EMAIL` (comma-separated) if set, otherwise to every admin login's email.
 - **Spam protection** on public forms (`lib/public/spam.ts`): a hidden honeypot field (bots that fill it see the normal success page and nothing is saved) and per-visitor limits per hour (5 event submissions, 10 registrations, 3 link resends) kept in `rate_limits` under a hash of the visitor's IP. To add Cloudflare Turnstile later, check its token in `isLikelyBot()`.
 - **Places left:** the public can't read registrations, so the database function `event_places_left()` returns only a number per event, never who registered.
