@@ -155,6 +155,39 @@ export function registeredEmail(args: {
   ]);
 }
 
+// E6: a host edited their live event, to the admin(s).
+export function hostEditedEmail(args: { event: EventSummary; changes: { label: string; before: string; after: string }[]; adminUrl: string }) {
+  return render("E6", `Host edited "${args.event.title}"`, "A host changed their event", [
+    { kind: "p", text: `The host of "${args.event.title}" changed their event. The changes are already live.` },
+    { kind: "list", items: args.changes.map((c) => `${c.label}: "${c.before}" → "${c.after}"`) },
+    { kind: "button", label: "See the changes", url: args.adminUrl },
+  ]);
+}
+
+// E7: a host cancelled their event, or asked for registrants' contact details, to the admin(s).
+export function hostCancelledEmail(args: { event: EventSummary; registered: number; adminUrl: string }) {
+  return render("E7", `Host cancelled "${args.event.title}"`, "A host cancelled their event", [
+    {
+      kind: "p",
+      text: `The host of "${args.event.title}" has cancelled it. ${
+        args.registered === 0
+          ? "Nobody had registered."
+          : `We've emailed the ${args.registered === 1 ? "1 person" : `${args.registered} people`} who registered.`
+      }`,
+    },
+    { kind: "details", rows: whenWhere(args.event) },
+    { kind: "button", label: "Open in the admin", url: args.adminUrl },
+  ]);
+}
+
+export function contactRequestEmail(args: { event: EventSummary; reason: string; adminUrl: string }) {
+  return render("E7", `Contact details request for "${args.event.title}"`, "A host asked for contact details", [
+    { kind: "p", text: `The host of "${args.event.title}" has asked for the contact details of the people registered.` },
+    { kind: "quote", label: "Their reason", text: args.reason },
+    { kind: "button", label: "Share or decline", url: args.adminUrl },
+  ]);
+}
+
 // E9: Karina cancels a live event. Sent to each registrant.
 export function eventCancelledEmail(args: { registrantName: string; event: EventSummary }) {
   const { event } = args;

@@ -17,7 +17,7 @@ export function FieldError({ id, error }: { id: string; error?: string }) {
 }
 
 const control =
-  "w-full rounded-control border border-control-border bg-surface px-3 text-text placeholder:text-muted aria-[invalid=true]:border-danger aria-[invalid=true]:border-2";
+  "w-full rounded-control border border-control-border bg-surface px-3 text-text placeholder:text-muted aria-[invalid=true]:border-danger aria-[invalid=true]:border-2 [&[readonly]]:bg-band disabled:bg-band disabled:opacity-100";
 
 export function InputField({
   label,

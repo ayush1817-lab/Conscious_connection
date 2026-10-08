@@ -1,3 +1,4 @@
+import { formatDateTime } from "@/lib/format";
 import type { Database } from "@/lib/supabase/database.types";
 
 export type EventStatus = Database["public"]["Enums"]["event_status"];
@@ -43,3 +44,14 @@ export const FIELD_LABELS: Record<string, string> = {
   emergency_contact_name: "Emergency contact name",
   emergency_contact_phone: "Emergency contact phone",
 };
+
+// A before/after value from a host edit, in plain words.
+export function formatFieldValue(field: string, value: unknown): string {
+  if (value === null || value === undefined || value === "") {
+    return field === "capacity" ? "No limit" : field === "poster_path" ? "No poster" : "(empty)";
+  }
+  if ((field === "start_at" || field === "end_at") && typeof value === "string") return formatDateTime(value);
+  if (field === "poster_path") return "Poster image";
+  if (field === "capacity") return `${value} people`;
+  return String(value);
+}
