@@ -22,7 +22,9 @@
     "test:content": "tsx scripts/e2e/content.ts",
     "test:a11y": "tsx scripts/e2e/accessibility.ts",
     "test:retention": "tsx scripts/test-retention.ts",
-    "test:public": "tsx scripts/e2e/public-site.ts"
+    "test:public": "tsx scripts/e2e/public-site.ts",
+    "test:registration": "tsx scripts/test-registration.ts",
+    "test:register": "tsx scripts/e2e/registration.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

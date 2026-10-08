@@ -3,7 +3,7 @@ import { formatDate, formatTimeRange } from "@/lib/format";
 // Email templates (spec section 9). Each is written once as a list of blocks,
 // which render to both a plain-text and a simple HTML version.
 
-export type TemplateId = "E2" | "E3" | "E4" | "E9" | "E10" | "E11";
+export type TemplateId = "E1" | "E2" | "E3" | "E4" | "E5" | "E6" | "E7" | "E8" | "E9" | "E10" | "E11";
 
 export type RenderedEmail = { template: TemplateId; subject: string; text: string; html: string };
 
@@ -87,6 +87,37 @@ export function approvedEmail(args: {
       text: "Keep this email safe. The link above is the only way to manage your event, so please don't share it.",
     },
     { kind: "p", text: "Thanks for being part of the community,\nConscious Connections" },
+  ]);
+}
+
+// E8: a visitor registered. The only place the exact address is ever shown.
+export function registeredEmail(args: {
+  registrantName: string;
+  event: EventSummary;
+  exactAddress: string;
+  hostName: string;
+  eventUrl: string;
+}) {
+  const { event } = args;
+  return render("E8", `You're registered: ${event.title}`, "You're registered!", [
+    { kind: "p", text: `Hi ${firstName(args.registrantName)},` },
+    { kind: "p", text: `You're registered for "${event.title}". Here are the details.` },
+    {
+      kind: "details",
+      rows: [
+        ["Event", event.title],
+        ["When", `${formatDate(event.start_at)}, ${formatTimeRange(event.start_at, event.end_at)}`],
+        ["Where", args.exactAddress],
+        ["Host", firstName(args.hostName)],
+      ],
+      link: { label: "View the event", url: args.eventUrl },
+    },
+    { kind: "p", text: "Please keep the address to yourself, so everyone feels safe coming along." },
+    {
+      kind: "note",
+      text: "We only use your email for this event. The host sees your name only. We'll delete your details 7 days after the event.",
+    },
+    { kind: "p", text: "See you there,\nConscious Connections" },
   ]);
 }
 

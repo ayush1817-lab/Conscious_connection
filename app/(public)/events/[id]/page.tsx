@@ -5,10 +5,12 @@ import { EventCard } from "@/components/public/event-card";
 import { EventPoster } from "@/components/public/event-poster";
 import { ArrowLeftIcon, CalendarIcon, ClockIcon, PeopleIcon, PinIcon } from "@/components/public/icons";
 import { SectionHeading } from "@/components/public/section-heading";
+import { RegisterForm } from "@/components/public/register-form";
 import { ShareButton } from "@/components/public/share-button";
 import { formatDate, formatShortDate, formatTimeRange } from "@/lib/format";
 import { FEW_PLACES, getEvent, getPlacesLeft, getSimilarEvents, placesBadge } from "@/lib/public/events";
 import { publicImageUrl } from "@/lib/storage";
+import { registerForEvent } from "./actions";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -68,6 +70,13 @@ export default async function EventPage({ params }: Props) {
             </p>
           ) : null}
 
+          <a
+            href="#register"
+            className="mt-5 flex min-h-tap items-center justify-center rounded-control bg-primary px-5 font-medium text-on-primary hover:bg-primary-hover lg:hidden"
+          >
+            {placesLeft === 0 ? "Event full" : "Register for this event"}
+          </a>
+
           <section aria-labelledby="about-heading" className="mt-8">
             <h2 id="about-heading" className="font-heading text-2xl font-semibold">
               About this event
@@ -86,6 +95,31 @@ export default async function EventPage({ params }: Props) {
         </div>
 
         <aside className="space-y-4">
+          <section id="register" aria-labelledby="register-heading" className="scroll-mt-20 rounded-card border-2 border-primary bg-surface p-5">
+            <h2 id="register-heading" className="font-heading text-xl font-semibold">
+              Register
+            </h2>
+            {placesLeft === 0 ? (
+              <>
+                <p className="mt-2">Sorry, this event is full.</p>
+                <button
+                  type="button"
+                  disabled
+                  className="mt-4 min-h-tap w-full cursor-not-allowed rounded-control border border-border bg-band px-5 font-medium text-muted"
+                >
+                  Event full
+                </button>
+                <Link href="/events" className="mt-3 inline-flex min-h-tap items-center font-medium text-primary underline underline-offset-4">
+                  See other events
+                </Link>
+              </>
+            ) : (
+              <>
+                <p className="mt-2 mb-4 text-muted">You&apos;ll get the exact address by email after registering.</p>
+                <RegisterForm action={registerForEvent.bind(null, event.id)} />
+              </>
+            )}
+          </section>
           <section aria-labelledby="details-heading" className="rounded-card border border-border bg-surface p-5">
             <h2 id="details-heading" className="font-heading text-xl font-semibold">
               Event details
