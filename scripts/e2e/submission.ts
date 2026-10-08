@@ -109,6 +109,7 @@ async function main() {
     const requests = await admin.locator("main").innerText();
     check(/New requests \(3\)/.test(requests) && requests.includes(title), "it's listed under New requests");
     await admin.goto(`${BASE_URL}/admin/events/${saved?.id}`);
+    await admin.getByText("Only visible to you").first().waitFor();
     const detail = await admin.locator("main").innerText();
     check(
       ["Car park at Sliabh an Iarainn", "Ciara Test", "ciara.test@example.com", "087 123 4567", "A small walking group", "Sorcha", "086 765 4321"].every((t) => detail.includes(t)),
