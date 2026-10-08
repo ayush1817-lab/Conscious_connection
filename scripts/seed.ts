@@ -243,6 +243,42 @@ const events: SeedEvent[] = [
     registrants: ["Aoife", "R."],
   },
 
+  // Public site (spec section 12): a full event and one with a single place left. No posters.
+  {
+    key: "sea-swim",
+    event: {
+      title: "Sea Swim & Sauna",
+      county: "Co. Sligo",
+      start_at: dublin(11, "09:00"),
+      end_at: dublin(11, "11:00"),
+      description: "A short, safe dip at Strandhill followed by the wood-fired sauna. Swimmers of every ability welcome.",
+      capacity: 4,
+      status: "live",
+      submitted_at: ago(7 * DAY),
+      opened_by_admin_at: ago(6 * DAY),
+      approved_at: ago(6 * DAY),
+    },
+    host: host("Orla Kenny", "orla@example.com", "Strandhill seafront, by the lifeguard hut", "Year-round sea swimming group"),
+    registrants: ["Aoife", "Sam", "R.", "Jo"],
+  },
+  {
+    key: "pottery-taster",
+    event: {
+      title: "Pottery Taster Evening",
+      county: "Co. Clare",
+      start_at: dublin(20, "19:00"),
+      end_at: dublin(20, "21:00"),
+      description: "Get your hands muddy and make a small bowl to take home. Materials included.",
+      capacity: 6,
+      status: "live",
+      submitted_at: ago(5 * DAY),
+      opened_by_admin_at: ago(4 * DAY),
+      approved_at: ago(4 * DAY),
+    },
+    host: host("Méabh Doyle", "meabh@example.com", "The Old Creamery studio, Kilfenora", "Potter who runs small workshops"),
+    registrants: ["Niamh K.", "Clodagh", "Sam", "Jo", "Aoife"],
+  },
+
   // --- Live, past (ended 2 days ago): shows in "Past (last 7 days)" ---
   {
     key: "beach-clean",

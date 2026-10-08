@@ -539,6 +539,7 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      event_places_left: { Args: { event_ids: string[] }; Returns: { event_id: string; places_left: number }[] };
       is_admin: { Args: Record<PropertyKey, never>; Returns: boolean };
       run_retention: { Args: Record<PropertyKey, never>; Returns: Json };
     };
