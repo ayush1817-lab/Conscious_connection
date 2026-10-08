@@ -421,6 +421,12 @@ export type Database = {
         };
         Relationships: [];
       };
+      rate_limits: {
+        Row: { created_at: string; id: number; key: string };
+        Insert: { created_at?: string; id?: never; key: string };
+        Update: { created_at?: string; id?: never; key?: string };
+        Relationships: [];
+      };
       registrations: {
         Row: {
           consented_at: string;
@@ -540,7 +546,9 @@ export type Database = {
     };
     Functions: {
       event_places_left: { Args: { event_ids: string[] }; Returns: { event_id: string; places_left: number }[] };
+      hit_rate_limit: { Args: { p_key: string; p_limit: number; p_window: string }; Returns: boolean };
       is_admin: { Args: Record<PropertyKey, never>; Returns: boolean };
+      register_for_event: { Args: { p_event_id: string; p_name: string; p_email: string }; Returns: string };
       run_retention: { Args: Record<PropertyKey, never>; Returns: Json };
     };
     Enums: {
