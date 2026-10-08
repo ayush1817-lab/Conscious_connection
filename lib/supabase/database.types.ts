@@ -548,6 +548,25 @@ export type Database = {
       event_places_left: { Args: { event_ids: string[] }; Returns: { event_id: string; places_left: number }[] };
       hit_rate_limit: { Args: { p_key: string; p_limit: number; p_window: string }; Returns: boolean };
       is_admin: { Args: Record<PropertyKey, never>; Returns: boolean };
+      submit_event: {
+        Args: {
+          p_title: string;
+          p_county: string;
+          p_start_at: string;
+          p_end_at: string;
+          p_description: string;
+          p_poster_path: string | null;
+          p_capacity: number | null;
+          p_exact_address: string;
+          p_host_name: string;
+          p_host_email: string;
+          p_host_phone: string;
+          p_about_group: string;
+          p_emergency_contact_name: string;
+          p_emergency_contact_phone: string;
+        };
+        Returns: string;
+      };
       register_for_event: { Args: { p_event_id: string; p_name: string; p_email: string }; Returns: string };
       run_retention: { Args: Record<PropertyKey, never>; Returns: Json };
     };
