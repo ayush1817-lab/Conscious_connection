@@ -77,6 +77,10 @@ async function clearData() {
     if (error) fail(`clearing ${table}`, error);
   }
 
+  // Rate-limit counters, so browser tests can submit forms freely after a re-seed.
+  const { error: rlError } = await db.from("rate_limits").delete().gte("id", 0);
+  if (rlError) fail("clearing rate_limits", rlError);
+
   const { data: files } = await db.storage.from("gallery").list("seed");
   if (files?.length) await db.storage.from("gallery").remove(files.map((f) => `seed/${f.name}`));
   console.log("✓ Cleared existing event and content data");
