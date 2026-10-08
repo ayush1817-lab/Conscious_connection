@@ -9,7 +9,7 @@ import { buttonClass } from "@/components/ui/button";
 import { RichText } from "@/lib/content/rich-text";
 import { youtubeVideoId } from "@/lib/content/youtube";
 import { getGallery, getPodcasts, getSections, getStories } from "@/lib/public/content";
-import { getUpcomingEvents } from "@/lib/public/events";
+import { getPlacesLeft, getUpcomingEvents, placesBadge } from "@/lib/public/events";
 import { publicImageUrl } from "@/lib/storage";
 
 // P1 Homepage: Karina's sections, the next 3 events, latest stories, latest podcast, gallery strip.
@@ -22,6 +22,7 @@ export default async function HomePage() {
     getGallery(6),
   ]);
   const { hero, intro, host_cta: hostCta } = sections;
+  const places = await getPlacesLeft(events.filter((e) => e.capacity).map((e) => e.id));
   const podcast = podcasts[0];
   const videoId = podcast ? youtubeVideoId(podcast.youtube_url) : null;
 
@@ -90,11 +91,14 @@ export default async function HomePage() {
         <SectionHeading id="events-heading" title="Upcoming events" link={{ href: "/events", label: "View all events" }} />
         {events.length ? (
           <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {events.map((event) => (
-              <li key={event.id}>
-                <EventCard event={event} />
-              </li>
-            ))}
+            {events.map((event) => {
+              const badge = placesBadge(places.get(event.id));
+              return (
+                <li key={event.id}>
+                  <EventCard event={event} badge={badge?.label} full={badge?.full} />
+                </li>
+              );
+            })}
           </ul>
         ) : (
           <p className="rounded-card border border-border bg-surface p-6 text-muted">

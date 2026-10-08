@@ -45,7 +45,7 @@ npm run dev                 # public site at http://localhost:3000, admin at /ad
 | `npm run test:a11y` | Accessibility scan (axe, WCAG 2.1 AA) of every admin screen on desktop and at 360px, plus keyboard checks (re-seeds first; app must be running) |
 | `npm run test:retention` | Checks the retention cleanup removes only private data of events that ended more than 7 days ago (re-seeds first; also checks the cron route if the app is running) |
 | `npm run test:transitions` | Checks every event status change against the rules, and the email templates and providers |
-| `npm run test:public` | Browser test of the public website: every page on desktop and at 360px, accessibility, freshness after admin edits, drafts hidden (re-seeds first; app must be running) |
+| `npm run test:public` | Browser test of the public website: every page on desktop and at 360px, accessibility, freshness after admin edits, drafts hidden, only live upcoming events listed, filters, places left, share previews, and no private details on any page (re-seeds first; app must be running) |
 | `npm run lint` | TypeScript type check |
 
 ## Database and migrations
@@ -92,9 +92,13 @@ Pages live under `app/(public)/` and share one header (with a mobile menu) and f
 | `/stories`, `/stories/[slug]` | Published stories |
 | `/podcasts` | Published episodes; the YouTube player only loads when someone presses play |
 | `/gallery` | Gallery photos |
+| `/events` | Live upcoming events, soonest first, 12 per page. Filters are links: `?county=clare&when=week` (`week`, `month`, or all) |
+| `/events/[id]` | One event: poster, county, date, times, description, places left (only when fewer than 5), share button, more events. Anything not live and upcoming shows "This event is no longer running" with a 404 |
 
 - **Read-only and logged-out:** public pages read through the anon key (`lib/supabase/public.ts`), so Row Level Security decides what they can see: live upcoming events (public columns only) and published content. They never use the service role to read.
 - **Always fresh:** public pages render on every request, and admin saves call `revalidatePublicSite()` (`lib/revalidate.ts`), so edits show at once.
+- **Places left:** the public can't read registrations, so the database function `event_places_left()` returns only a number per event, never who registered.
+- **Share previews:** event pages set Open Graph and Twitter tags. Events without a poster share a generated image with the title, county and date (`/events/[id]/share-image`).
 - **Counties** are one list in `lib/counties.ts` (26 counties of the Republic of Ireland). The database stores `Co. Clare`; addresses use `clare`.
 - **Fonts:** Atkinson Hyperlegible Next for text and Fraunces for headings, self-hosted by `next/font` (no requests to Google from visitors).
 
