@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ConnectionLoops } from "@/components/public/brand-mark";
+import { BackgroundWaves } from "@/components/public/background-waves";
 import { EventCard } from "@/components/public/event-card";
 import { CalendarIcon, HeartIcon, PeopleIcon } from "@/components/public/icons";
 import { SectionHeading } from "@/components/public/section-heading";
@@ -31,6 +32,7 @@ export default async function HomePage() {
     <>
       {/* Hero */}
       <section className="home-hero bg-hero">
+        <BackgroundWaves className="hero-waves" />
         <div className="home-hero-inner mx-auto grid max-w-6xl items-center gap-8 px-4 py-10 md:grid-cols-2 md:py-16">
           <div className="home-hero-copy">
             <h1 className="home-hero-title font-heading text-4xl leading-tight font-semibold md:text-5xl">
@@ -50,9 +52,9 @@ export default async function HomePage() {
           <div className="home-hero-media">
           <div className="home-hero-photo relative aspect-[4/3] overflow-hidden rounded-card bg-band">
             {hero?.image_path ? (
-              <Image src={publicImageUrl("content", hero.image_path)} alt="" fill preload sizes="(min-width: 768px) 560px, 100vw" className="object-cover" />
+              <Image src={publicImageUrl("content", hero.image_path)} alt="" fill preload sizes="(min-width: 1536px) 752px, (min-width: 768px) 46vw, 100vw" className="object-cover" />
             ) : (
-              <Image src="/images/community-gathering.webp" alt="" fill preload sizes="(min-width: 768px) 560px, 100vw" className="object-cover" />
+              <Image src="/images/community-gathering.webp" alt="" fill preload sizes="(min-width: 1536px) 752px, (min-width: 768px) 46vw, 100vw" className="object-cover" />
             )}
           </div>
           </div>
@@ -91,10 +93,10 @@ export default async function HomePage() {
       </section>
 
       {/* Upcoming events */}
-      <section aria-labelledby="events-heading" className="home-section mx-auto max-w-6xl px-4 py-8">
+      <section aria-labelledby="events-heading" className="home-section home-events mx-auto max-w-6xl px-4 py-8">
         <SectionHeading id="events-heading" title="Upcoming events" link={{ href: "/events", label: "View all events" }} />
         {events.length ? (
-          <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="events-grid grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {events.map((event) => {
               const badge = placesBadge(places.get(event.id));
               return (
