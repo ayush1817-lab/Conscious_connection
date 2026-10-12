@@ -248,3 +248,39 @@ button:not(:disabled), a { transition: background-color 160ms ease, color 160ms 
     scroll-behavior: auto !important;
   }
 }
+
+/* Keep compact screens readable before the desktop layout begins. */
+@media (max-width: 1023px) {
+  .home-hero-inner,
+  .home-values,
+  .home-stories .story-card,
+  .home-podcast-panel {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .home-hero-copy .connection-loops { display: none; }
+  .home-hero-title { max-width: 30ch; font-size: clamp(1.8rem, 4.5vw, 2.5rem); }
+  .home-hero-photo { height: auto; aspect-ratio: 16 / 10; }
+  .home-hero-inner { gap: 1.75rem; }
+  .home-values { gap: 1.5rem; }
+  .home-stories .story-card > div:first-child { aspect-ratio: 16 / 9; }
+  .home-stories .story-card-body { padding: 1.25rem; }
+  .home-host-panel { flex-direction: column; align-items: stretch; }
+  .home-host-panel .connection-loops { display: none; }
+  .public-site .home-intro,
+  .public-site .home-stories { max-width: calc(100% - 2rem); }
+}
+@media (max-width: 479px) {
+  .site-header-inner { gap: .5rem; }
+  .site-wordmark { min-width: 0; white-space: normal; font-size: .875rem; line-height: 1.3; }
+  .site-wordmark .brand-mark { flex-shrink: 0; }
+  .site-header-inner > div:last-child { flex-shrink: 0; }
+  .home-intro, .home-stories { padding: 1.25rem; }
+  .home-value { column-gap: .75rem; }
+  .home-value-icon { width: 2.75rem; height: 2.75rem; }
+  .home-hero-media { min-width: 0; }
+  .home-hero-media::before { inset: -.5rem 0 .5rem .75rem; }
+  .event-card-body, .story-card-body { padding: 1rem; }
+  .event-filters { padding: 1rem; }
+  .public-site main > div[class*="max-w-"],
+  .public-site main > article { padding-top: 1.5rem; padding-bottom: 2rem; }
+}
