@@ -1,5 +1,6 @@
 import { SiteFooter } from "@/components/public/site-footer";
 import { SiteHeader } from "@/components/public/site-header";
+import { BackgroundWaves } from "@/components/public/background-waves";
 
 // Every public page reads the database on each request, so Karina's edits in
 // the admin show up straight away (spec section 5, "Freshness").
@@ -16,6 +17,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
       </a>
       <SiteHeader />
       <main id="main" tabIndex={-1} className="flex-1 focus:outline-none">
+        <BackgroundWaves />
         {children}
       </main>
       <SiteFooter />
