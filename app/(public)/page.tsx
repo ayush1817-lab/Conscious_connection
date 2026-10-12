@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { ConnectionLoops } from "@/components/public/brand-mark";
 import { EventCard } from "@/components/public/event-card";
 import { CalendarIcon, HeartIcon, PeopleIcon } from "@/components/public/icons";
 import { SectionHeading } from "@/components/public/section-heading";
@@ -29,10 +30,10 @@ export default async function HomePage() {
   return (
     <>
       {/* Hero */}
-      <section className="bg-hero">
-        <div className="mx-auto grid max-w-6xl items-center gap-8 px-4 py-10 md:grid-cols-2 md:py-16">
-          <div>
-            <h1 className="font-heading text-4xl leading-tight font-semibold md:text-5xl">
+      <section className="home-hero bg-hero">
+        <div className="home-hero-inner mx-auto grid max-w-6xl items-center gap-8 px-4 py-10 md:grid-cols-2 md:py-16">
+          <div className="home-hero-copy">
+            <h1 className="home-hero-title font-heading text-4xl leading-tight font-semibold md:text-5xl">
               {hero?.heading || "A community for women and non-binary people across rural Ireland."}
             </h1>
             {hero?.body ? <RichText text={hero.body} className="mt-4 text-lg" /> : null}
@@ -44,21 +45,24 @@ export default async function HomePage() {
                 Stories
               </Link>
             </div>
+            <ConnectionLoops />
           </div>
-          <div className="relative aspect-[4/3] overflow-hidden rounded-card bg-band">
+          <div className="home-hero-media">
+          <div className="home-hero-photo relative aspect-[4/3] overflow-hidden rounded-card bg-band">
             {hero?.image_path ? (
               <Image src={publicImageUrl("content", hero.image_path)} alt="" fill preload sizes="(min-width: 768px) 560px, 100vw" className="object-cover" />
             ) : (
-              <div aria-hidden className="h-full w-full bg-gradient-to-br from-poster-from to-poster-to" />
+              <Image src="/images/community-gathering.webp" alt="" fill preload sizes="(min-width: 768px) 560px, 100vw" className="object-cover" />
             )}
+          </div>
           </div>
         </div>
       </section>
 
       {/* Introduction + what we're about */}
-      <section aria-labelledby="intro-heading" className="mx-auto max-w-6xl px-4 py-10">
+      <section aria-labelledby="intro-heading" className="home-intro mx-auto max-w-6xl px-4 py-10">
         {intro?.heading ? (
-          <div className="mx-auto mb-8 max-w-2xl text-center">
+          <div className="home-intro-copy mx-auto mb-8 max-w-2xl text-center">
             <h2 id="intro-heading" className="font-heading text-2xl font-semibold md:text-3xl">
               {intro.heading}
             </h2>
@@ -69,25 +73,25 @@ export default async function HomePage() {
             What we&apos;re about
           </h2>
         )}
-        <ul className="grid gap-6 text-center sm:grid-cols-3">
+        <ul className="home-values grid gap-6 text-center sm:grid-cols-3">
           {[
             { icon: CalendarIcon, title: "Local events", text: "Find gatherings near you across rural counties." },
             { icon: PeopleIcon, title: "A safe and inclusive space", text: "For LGBTQ+ women and non-binary people." },
             { icon: HeartIcon, title: "Community led", text: "Created by and for our community." },
           ].map(({ icon: Icon, title, text }) => (
-            <li key={title} className="flex flex-col items-center gap-2">
-              <span className="flex h-14 w-14 items-center justify-center rounded-full bg-hero text-primary">
+            <li key={title} className="home-value">
+              <span className="home-value-icon flex h-14 w-14 items-center justify-center rounded-full bg-hero text-primary">
                 <Icon size={28} />
               </span>
-              <span className="font-heading text-lg font-semibold">{title}</span>
-              <span className="text-muted">{text}</span>
+              <span className="home-value-title font-heading text-lg font-semibold">{title}</span>
+              <span className="home-value-text text-muted">{text}</span>
             </li>
           ))}
         </ul>
       </section>
 
       {/* Upcoming events */}
-      <section aria-labelledby="events-heading" className="mx-auto max-w-6xl px-4 py-8">
+      <section aria-labelledby="events-heading" className="home-section mx-auto max-w-6xl px-4 py-8">
         <SectionHeading id="events-heading" title="Upcoming events" link={{ href: "/events", label: "View all events" }} />
         {events.length ? (
           <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -112,7 +116,7 @@ export default async function HomePage() {
 
       {/* Stories */}
       {stories.length ? (
-        <section aria-labelledby="stories-heading" className="mx-auto max-w-6xl px-4 py-8">
+        <section aria-labelledby="stories-heading" className="home-section home-stories mx-auto max-w-6xl px-4 py-8">
           <SectionHeading id="stories-heading" title="Stories from our community" link={{ href: "/stories", label: "View all stories" }} />
           <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {stories.map((story) => (
@@ -126,9 +130,9 @@ export default async function HomePage() {
 
       {/* Latest podcast */}
       {podcast && videoId ? (
-        <section aria-labelledby="podcast-heading" className="mx-auto max-w-6xl px-4 py-8">
+        <section aria-labelledby="podcast-heading" className="home-section mx-auto max-w-6xl px-4 py-8">
           <SectionHeading id="podcast-heading" title="Latest podcast" link={{ href: "/podcasts", label: "All episodes" }} />
-          <div className="grid items-center gap-6 rounded-card border border-border bg-surface p-4 md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] md:p-6">
+          <div className="home-podcast-panel grid items-center gap-6 rounded-card border border-border bg-surface p-4 md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] md:p-6">
             <YouTubeEmbed videoId={videoId} title={podcast.title} />
             <div>
               <h3 className="font-heading text-xl font-semibold">{podcast.title}</h3>
@@ -140,7 +144,7 @@ export default async function HomePage() {
 
       {/* Gallery strip */}
       {gallery.length ? (
-        <section aria-labelledby="gallery-heading" className="mx-auto max-w-6xl px-4 py-8">
+        <section aria-labelledby="gallery-heading" className="home-section mx-auto max-w-6xl px-4 py-8">
           <SectionHeading id="gallery-heading" title="Gallery" link={{ href: "/gallery", label: "View all" }} />
           <ul className="grid grid-cols-3 gap-2 md:grid-cols-6 md:gap-3">
             {gallery.map((img) => (
@@ -153,8 +157,9 @@ export default async function HomePage() {
       ) : null}
 
       {/* Invitation to host */}
-      <section aria-labelledby="host-heading" className="mx-auto max-w-6xl px-4 py-8">
-        <div className="flex flex-col gap-4 rounded-card bg-band p-6 md:flex-row md:items-center md:justify-between md:p-8">
+      <section aria-labelledby="host-heading" className="home-section mx-auto max-w-6xl px-4 py-8">
+        <div className="home-host-panel flex flex-col gap-4 rounded-card bg-band p-6 md:flex-row md:items-center md:justify-between md:p-8">
+          <ConnectionLoops />
           <div className="max-w-2xl">
             <h2 id="host-heading" className="font-heading text-2xl font-semibold">
               {hostCta?.heading || "Want to host an event?"}

@@ -62,7 +62,7 @@ export function EventForm({
       action={formAction}
       noValidate
       onChange={() => setDirty(true)}
-      className="relative space-y-8"
+      className="event-form relative space-y-8"
     >
       {state.error ? <FormAlert>{state.error}</FormAlert> : null}
       {state.notice ? (

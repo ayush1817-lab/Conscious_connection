@@ -18,7 +18,7 @@ export function EventFilters({ county, when }: { county: string; when: When }) {
     "min-h-tap w-full rounded-control border border-control-border bg-surface px-3 text-text sm:w-56";
 
   return (
-    <form ref={formRef} action="/events" className="flex flex-col gap-4 rounded-card border border-border bg-surface p-4 sm:flex-row sm:items-end">
+    <form ref={formRef} action="/events" className="event-filters flex flex-col gap-4 rounded-card border border-border bg-surface p-4 sm:flex-row sm:items-end">
       <div>
         <label htmlFor="filter-county" className="mb-1 block font-medium">
           County

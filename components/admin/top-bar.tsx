@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { logout } from "@/app/admin/(app)/actions";
+import { BrandMark } from "@/components/public/brand-mark";
 
 export function TopBar({ displayName }: { displayName: string }) {
   return (
-    <header className="border-b border-border bg-surface">
+    <header className="admin-top-bar border-b border-border bg-hero">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-2">
         <Link href="/admin" className="flex min-h-tap items-center gap-2 font-semibold whitespace-nowrap">
+          <BrandMark className="hidden sm:block" />
           Conscious Connections
           <span className="hidden font-normal text-muted sm:inline">| Admin</span>
         </Link>

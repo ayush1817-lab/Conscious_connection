@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { CloseIcon, MenuIcon } from "./icons";
+import { BrandMark } from "./brand-mark";
 
 export const NAV_LINKS = [
   { href: "/events", label: "Events" },
@@ -40,13 +41,14 @@ export function SiteHeader() {
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
   return (
-    <header className="sticky top-0 z-30 border-b border-border bg-surface/95 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-2">
-        <Link href="/" className="flex min-h-tap items-center font-heading text-lg font-semibold whitespace-nowrap text-primary">
+    <header className="site-header sticky top-0 z-30 border-b border-border bg-surface/95 backdrop-blur">
+      <div className="site-header-inner mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-2">
+        <Link href="/" className="site-wordmark flex min-h-tap items-center font-heading text-lg font-semibold whitespace-nowrap text-primary">
+          <BrandMark />
           Conscious Connections
         </Link>
 
-        <nav aria-label="Main" className="hidden md:block">
+        <nav aria-label="Main" className="hidden lg:block">
           <ul className="flex items-center gap-1">
             {NAV_LINKS.map((link) => (
               <li key={link.href}>
@@ -72,7 +74,7 @@ export function SiteHeader() {
           <button
             ref={buttonRef}
             type="button"
-            className="inline-flex min-h-tap min-w-tap items-center justify-center rounded-control md:hidden"
+            className="inline-flex min-h-tap min-w-tap items-center justify-center rounded-control lg:hidden"
             aria-expanded={open}
             aria-controls="mobile-menu"
             onClick={() => setOpen((o) => !o)}
@@ -84,7 +86,7 @@ export function SiteHeader() {
       </div>
 
       {open ? (
-        <nav id="mobile-menu" aria-label="Main" className="border-t border-border bg-surface md:hidden">
+        <nav id="mobile-menu" aria-label="Main" className="border-t border-border bg-surface lg:hidden">
           <ul className="mx-auto max-w-6xl px-4 py-2">
             {NAV_LINKS.map((link) => (
               <li key={link.href}>

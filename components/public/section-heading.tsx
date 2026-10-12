@@ -4,7 +4,7 @@ import { ArrowRightIcon } from "./icons";
 // "Upcoming events ............ View all events →"
 export function SectionHeading({ id, title, link }: { id: string; title: string; link?: { href: string; label: string } }) {
   return (
-    <div className="mb-5 flex flex-wrap items-end justify-between gap-2">
+    <div className="section-heading mb-5 flex flex-wrap items-end justify-between gap-2">
       <h2 id={id} className="font-heading text-2xl font-semibold md:text-3xl">
         {title}
       </h2>
@@ -20,7 +20,7 @@ export function SectionHeading({ id, title, link }: { id: string; title: string;
 
 export function PageIntro({ title, children }: { title: string; children?: React.ReactNode }) {
   return (
-    <div className="mb-8 max-w-2xl">
+    <div className="page-intro mb-8 max-w-2xl">
       <h1 className="font-heading text-3xl font-semibold md:text-4xl">{title}</h1>
       {children ? <div className="mt-3 text-lg text-muted">{children}</div> : null}
     </div>

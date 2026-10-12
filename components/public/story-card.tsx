@@ -10,15 +10,15 @@ type Story = { title: string; slug: string; cover_path: string | null; body: str
 export function StoryCard({ story, level = 3 }: { story: Story; level?: 2 | 3 }) {
   const Heading = level === 2 ? "h2" : "h3";
   return (
-    <article className="group relative flex flex-col overflow-hidden rounded-card border border-border bg-surface shadow-sm hover:shadow-md">
+    <article className="story-card group relative flex flex-col overflow-hidden rounded-card border border-border bg-surface shadow-sm hover:shadow-md">
       <div className="relative aspect-[3/2] bg-band">
         {story.cover_path ? (
           <Image src={publicImageUrl("content", story.cover_path)} alt="" fill sizes="(min-width: 1024px) 360px, (min-width: 640px) 50vw, 100vw" className="object-cover" />
         ) : (
-          <div aria-hidden className="h-full w-full bg-gradient-to-br from-hero to-band" />
+          <div aria-hidden className="story-placeholder h-full w-full" />
         )}
       </div>
-      <div className="flex flex-1 flex-col gap-2 p-4">
+      <div className="story-card-body flex flex-1 flex-col gap-2 p-4">
         <Heading className="font-heading text-lg leading-snug font-semibold">
           <Link href={`/stories/${story.slug}`} className="after:absolute after:inset-0 after:content-[''] focus-visible:outline-none">
             {story.title}

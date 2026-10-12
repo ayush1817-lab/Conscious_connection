@@ -127,7 +127,7 @@ Pages live under `app/(public)/` and share one header (with a mobile menu) and f
 - **Security headers** (`next.config.ts`) on every page: `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `X-Frame-Options: DENY`, a restrictive `Permissions-Policy` and HSTS. Host pages also send `no-referrer`, `noindex` and `no-store`.
 - **Search engines:** `/robots.txt` (`app/robots.ts`) keeps out `/admin`, `/host`, `/setup` and the thank-you page; `/sitemap.xml` (`app/sitemap.ts`) lists the public pages, live events and published stories.
 - **How it all fits together** in plain language: [`docs/how-it-connects.md`](docs/how-it-connects.md).
-- **Fonts:** Atkinson Hyperlegible Next for text and Fraunces for headings, self-hosted by `next/font` (no requests to Google from visitors).
+- **Fonts:** Poppins Regular for text and Poppins Medium for headings, self-hosted by `next/font` (no requests to Google from visitors).
 
 ## Website content
 
@@ -172,7 +172,7 @@ To remove admin access, delete that row from `public.admins` (and optionally the
 
 ## Theme tokens
 
-The current theme (warm cream, heather plum and sage) is a stand-in until the real design system arrives. All colours, radii and fonts are defined once, in [`app/globals.css`](app/globals.css): CSS variables in `:root`, exposed to Tailwind through the `@theme inline` block (Tailwind v4 has no `tailwind.config` file). Components use the token names (`bg-primary`, `text-muted`, `bg-private`, `rounded-card`, `min-h-tap`), never raw colours, so restyling means editing that one file.
+The lavender theme uses pale lilac surfaces, deeper violet controls, aubergine text and self-hosted Poppins typography. Shared presentation styles cover public pages, host forms and the admin area. All colours, radii and fonts are defined once, in [`app/globals.css`](app/globals.css): CSS variables in `:root`, exposed to Tailwind through the `@theme inline` block (Tailwind v4 has no `tailwind.config` file). Components use the token names (`bg-primary`, `text-muted`, `bg-private`, `rounded-card`, `min-h-tap`), never raw colours, so restyling means editing that one file.
 
 ## Deploying to Vercel
 

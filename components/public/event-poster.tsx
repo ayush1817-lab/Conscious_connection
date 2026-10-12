@@ -16,7 +16,7 @@ export function EventPoster({
   preload?: boolean;
 }) {
   return (
-    <div className={`relative aspect-[4/3] overflow-hidden bg-hero ${className}`}>
+    <div className={`event-poster relative aspect-[4/3] overflow-hidden bg-hero ${className}`}>
       {event.poster_path ? (
         <Image
           src={publicImageUrl("posters", event.poster_path)}
@@ -37,7 +37,7 @@ export function PosterPlaceholder({ county, startAt }: { county: string; startAt
   return (
     <div
       aria-hidden
-      className="flex h-full w-full flex-col items-center justify-center gap-1 bg-gradient-to-br from-poster-from to-poster-to p-4 text-center"
+      className="poster-placeholder flex h-full w-full flex-col items-center justify-center gap-1 p-4 text-center"
     >
       <span className="font-heading text-xl font-semibold text-primary">{county}</span>
       <span className="text-sm font-medium text-text">{formatShortDate(startAt)}</span>

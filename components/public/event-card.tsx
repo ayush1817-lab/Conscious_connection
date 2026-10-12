@@ -20,14 +20,14 @@ export function EventCard({
 }) {
   const Heading = level === 2 ? "h2" : "h3";
   return (
-    <article className="group relative flex flex-col overflow-hidden rounded-card border border-border bg-surface shadow-sm transition-shadow hover:shadow-md">
+    <article className="event-card group relative flex flex-col overflow-hidden rounded-card border border-border bg-surface shadow-sm transition-shadow hover:shadow-md">
       <EventPoster event={event} sizes="(min-width: 1024px) 360px, (min-width: 640px) 50vw, 100vw" />
       {badge ? (
         <span className="absolute top-3 right-3 rounded-full bg-surface px-3 py-1 text-sm font-semibold text-primary shadow-sm">
           {badge}
         </span>
       ) : null}
-      <div className="flex flex-1 flex-col gap-2 p-4">
+      <div className="event-card-body flex flex-1 flex-col gap-2 p-4">
         <Heading className="font-heading text-lg leading-snug font-semibold">
           {/* The whole card is clickable through this link's ::after overlay. */}
           <Link href={`/events/${event.id}`} className="after:absolute after:inset-0 after:content-[''] focus-visible:outline-none">

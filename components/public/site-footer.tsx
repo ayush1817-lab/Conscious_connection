@@ -1,12 +1,13 @@
 import Link from "next/link";
+import { BrandMark } from "./brand-mark";
 
 export function SiteFooter() {
   return (
-    <footer className="mt-16 border-t border-border bg-surface">
-      <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 md:flex-row md:items-start md:justify-between">
+    <footer className="site-footer mt-10 border-t border-border bg-surface">
+      <div className="site-footer-inner mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 md:flex-row md:items-start md:justify-between">
         <div className="max-w-sm">
-          <p className="font-heading text-lg font-semibold text-primary">Conscious Connections</p>
-          <p className="mt-1 text-muted">A community for women and non-binary people across rural Ireland.</p>
+          <div className="footer-brand"><BrandMark /><p className="font-heading text-lg font-semibold text-text">Conscious Connections</p></div>
+          <p className="footer-description text-muted">A community for women and non-binary people across rural Ireland.</p>
         </div>
         <nav aria-label="Footer">
           <ul className="flex flex-wrap gap-x-2 gap-y-1">
