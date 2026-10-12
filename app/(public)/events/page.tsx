@@ -45,7 +45,7 @@ export default async function EventsPage({ searchParams }: Props) {
       </p>
 
       {events.length ? (
-        <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="events-grid grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {events.map((event) => {
             const badge = placesBadge(places.get(event.id));
             return (
