@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { registeredEmail, sendEmail } from "@/lib/email";
+import { registeredEmail, sendEmail, sendQuietly } from "@/lib/email";
 import { publicEventUrl } from "@/lib/links";
 import { isLikelyBot, RATE_LIMITED_MESSAGE, withinRateLimit } from "@/lib/public/spam";
 import { checkEmail, checkText, field, type FieldErrors } from "@/lib/public/validate";
@@ -47,30 +47,34 @@ export async function registerForEvent(eventId: string, _prev: RegisterState, fo
   if (result === "not_available") return { error: "Sorry, this event is no longer taking registrations.", values };
 
   // New or repeat registration: (re)send E8 with the address. A repeat never creates a second row.
-  const { data: event } = await db
-    .from("events")
-    .select("title, county, start_at, end_at, event_private_details(exact_address, host_name)")
-    .eq("id", eventId)
-    .single();
-  const details = event?.event_private_details;
-  if (event && details) {
-    const { data: registrant } = await db
-      .from("registrations")
-      .select("name")
-      .eq("event_id", eventId)
-      .ilike("email", email.replace(/[\\%_]/g, "\\$&"))
-      .maybeSingle();
-    await sendEmail(
-      email,
-      registeredEmail({
-        registrantName: registrant?.name ?? name,
-        event,
-        exactAddress: details.exact_address,
-        hostName: details.host_name,
-        eventUrl: publicEventUrl(eventId),
-      }),
-    );
-  }
+  await sendQuietly("registration confirmation", async () => {
+    const { data: event } = await db
+      .from("events")
+      .select("title, county, start_at, end_at, event_private_details(exact_address, host_name)")
+      .eq("id", eventId)
+      .single();
+    const details = event?.event_private_details;
+    if (event && details) {
+      const { data: registrant } = await db
+        .from("registrations")
+        .select("name")
+        .eq("event_id", eventId)
+        .ilike("email", email.replace(/[\\%_]/g, "\\$&"))
+        .maybeSingle();
+      await sendEmail(
+        email,
+        registeredEmail({
+          registrantName: registrant?.name ?? name,
+          event,
+          exactAddress: details.exact_address,
+          hostName: details.host_name,
+          eventUrl: publicEventUrl(eventId),
+        }),
+      );
+    } else {
+      console.error(JSON.stringify({ event: "email_failed", template: "E8", eventId, error: "Event or its private details not found" }));
+    }
+  });
 
   if (result === "registered") revalidatePublicSite(); // places left changed
   redirect(`/events/${eventId}/registered`);

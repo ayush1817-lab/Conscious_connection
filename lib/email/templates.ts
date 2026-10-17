@@ -3,7 +3,7 @@ import { formatDate, formatTimeRange } from "@/lib/format";
 // Email templates (spec section 9). Each is written once as a list of blocks,
 // which render to both a plain-text and a simple HTML version.
 
-export type TemplateId = "E1" | "E2" | "E3" | "E4" | "E5" | "E6" | "E7" | "E8" | "E9" | "E10" | "E11";
+export type TemplateId = "E1" | "E2" | "E3" | "E4" | "E5" | "E6" | "E7" | "E8" | "E9" | "E10" | "E11" | "E12" | "TEST";
 
 export type RenderedEmail = { template: TemplateId; subject: string; text: string; html: string };
 
@@ -152,6 +152,32 @@ export function registeredEmail(args: {
       text: "We only use your email for this event. The host sees your name only. We'll delete your details 7 days after the event.",
     },
     { kind: "p", text: "See you there,\nConscious Connections" },
+  ]);
+}
+
+// E12: a host's changes were received (an edit to a live event, or a resubmission).
+export function changesReceivedEmail(args: { hostName: string; event: EventSummary; resubmitted: boolean; changed?: string[]; hostUrl?: string }) {
+  return render("E12", `We've received your changes to "${args.event.title}"`, "Thanks, we've got your changes", [
+    { kind: "p", text: `Hi ${firstName(args.hostName)},` },
+    {
+      kind: "p",
+      text: args.resubmitted
+        ? `Thanks for updating "${args.event.title}". Our team will review it again and email you once it's approved.`
+        : `Thanks for updating "${args.event.title}". Your changes are already live on the website, and our team has been told about them.`,
+    },
+    ...(args.changed?.length ? [{ kind: "list" as const, items: args.changed }] : []),
+    { kind: "details", rows: whenWhere(args.event) },
+    { kind: "note", text: "If you didn't make these changes, please reply to this email straight away." },
+    { kind: "p", text: SIGN_OFF },
+  ]);
+}
+
+// A test email from the admin's Email settings page.
+export function testEmail(args: { sentBy: string }) {
+  return render("TEST", "Test email from Conscious Connections", "Your emails are working", [
+    { kind: "p", text: `This is a test email sent from the admin by ${args.sentBy}.` },
+    { kind: "p", text: "If it landed in spam, mark it as not spam and check the domain settings in Resend (SPF, DKIM and DMARC)." },
+    { kind: "p", text: SIGN_OFF },
   ]);
 }
 

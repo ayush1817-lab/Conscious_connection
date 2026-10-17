@@ -10,7 +10,8 @@
 import { hashHostToken } from "../lib/events/host-token";
 import { TRANSITIONS, TransitionError, checkTransition, transitionEvent, type Actor } from "../lib/events/transitions";
 import type { EventStatus } from "../lib/events/status";
-import { ConsoleEmailService, ResendEmailService, sendAndLog } from "../lib/email/service";
+import { ConsoleEmailService, emailConfig, emailServiceFromEnv, MissingKeyEmailService, ResendEmailService, sendAndLog } from "../lib/email/service";
+import { siteUrl } from "../lib/links";
 import {
   approvedEmail,
   contactDetailsDeclinedEmail,
@@ -239,7 +240,20 @@ async function main() {
   const { data: failLog } = await supabase.from("email_log").select("*").eq("to_email", failTo).single();
   check(!failed.ok && failLog?.provider === "resend" && !failLog.sent_at && /401/.test(failLog.error ?? ""), "a failed send is logged with its error, not thrown");
 
-  await supabase.from("email_log").delete().in("to_email", [to, failTo]);
+  // Deployed without a key: never recorded as sent (this used to fail silently).
+  check(emailServiceFromEnv({ VERCEL: "1" }) instanceof MissingKeyEmailService, "deployed without RESEND_API_KEY uses the not-sending provider");
+  check(emailServiceFromEnv({ VERCEL: "1", EMAIL_PROVIDER: "console" }) instanceof ConsoleEmailService, "EMAIL_PROVIDER=console opts a deployment into test mode");
+  check(emailServiceFromEnv({}) instanceof ConsoleEmailService, "local development without a key prints emails");
+  check(emailServiceFromEnv({ RESEND_API_KEY: "re_x" }) instanceof ResendEmailService, "a Resend key sends through Resend");
+  check(emailConfig({ EMAIL_FROM: "CC <hello@Example.org>" }).fromDomain === "example.org", "the sending domain is read from EMAIL_FROM");
+  const missTo = `transition-test-miss-${Date.now()}@example.com`;
+  await sendAndLog(supabase, new MissingKeyEmailService(), missTo, e4);
+  const { data: missLog } = await supabase.from("email_log").select("*").eq("to_email", missTo).single();
+  check(!missLog?.sent_at && /RESEND_API_KEY/.test(missLog?.error ?? ""), "an email that couldn't be sent for lack of a key is logged as not sent");
+  check(siteUrl({ VERCEL_PROJECT_PRODUCTION_URL: "cc.vercel.app" }) === "https://cc.vercel.app", "links fall back to the Vercel address without SITE_URL");
+  check(siteUrl({ SITE_URL: "https://cc.ie/" }) === "https://cc.ie", "SITE_URL is used for links");
+
+  await supabase.from("email_log").delete().in("to_email", [to, failTo, missTo]);
 }
 
 main()

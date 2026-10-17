@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { notifyAdmins } from "@/lib/email/admin-recipients";
-import { newSubmissionEmail, sendEmail, submittedEmail } from "@/lib/email";
+import { newSubmissionEmail, sendEmail, sendQuietly, submittedEmail } from "@/lib/email";
 import { IMAGE_MAX_BYTES, IMAGE_TYPES } from "@/lib/content/images";
 import { adminEventUrl } from "@/lib/links";
 import { POSTER_FOLDER, readEventForm, validateEventForm, type EventFormValues } from "@/lib/public/event-form";
@@ -75,10 +75,12 @@ export async function submitEvent(_prev: SubmitState, formData: FormData): Promi
     return { error: "Something went wrong and your event wasn't sent. Please try again.", values, consent };
   }
 
-  await Promise.all([
-    sendEmail(details.host_email, submittedEmail({ hostName: details.host_name, event })),
-    notifyAdmins(newSubmissionEmail({ event, hostName: details.host_name, about: details.about_group, adminUrl: adminEventUrl(eventId) })),
-  ]);
+  await sendQuietly("event submitted", () =>
+    Promise.all([
+      sendEmail(details.host_email, submittedEmail({ hostName: details.host_name, event })),
+      notifyAdmins(newSubmissionEmail({ event, hostName: details.host_name, about: details.about_group, adminUrl: adminEventUrl(eventId) })),
+    ]),
+  );
   revalidatePublicSite(); // the admin's New requests list and counts
   redirect("/submit-event/thanks");
 }

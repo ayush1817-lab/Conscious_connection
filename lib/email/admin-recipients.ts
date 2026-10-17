@@ -20,8 +20,17 @@ export async function adminNotifyEmails(): Promise<string[]> {
   return emails.filter((e): e is string => Boolean(e));
 }
 
+// Never throws, like sendEmail.
 export async function notifyAdmins(email: RenderedEmail) {
-  const to = await adminNotifyEmails();
-  if (!to.length) console.error(`[email ${email.template}] no admin email to notify (set ADMIN_NOTIFY_EMAIL)`);
+  let to: string[] = [];
+  try {
+    to = await adminNotifyEmails();
+  } catch (error) {
+    console.error(JSON.stringify({ event: "admin_recipients_failed", template: email.template, error: error instanceof Error ? error.message : String(error) }));
+  }
+  if (!to.length) {
+    console.error(JSON.stringify({ event: "email_failed", template: email.template, error: "No admin email to notify. Set ADMIN_NOTIFY_EMAIL." }));
+    return;
+  }
   await Promise.all(to.map((address) => sendEmail(address, email)));
 }
