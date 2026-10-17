@@ -1,6 +1,5 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { notifyAdmins } from "@/lib/email/admin-recipients";
 import { newSubmissionEmail, sendEmail, sendQuietly, submittedEmail } from "@/lib/email";
 import { IMAGE_MAX_BYTES, IMAGE_TYPES } from "@/lib/content/images";
@@ -11,7 +10,7 @@ import type { FieldErrors } from "@/lib/public/validate";
 import { revalidatePublicSite } from "@/lib/revalidate";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-export type SubmitState = { error?: string; fieldErrors?: FieldErrors; values?: EventFormValues; consent?: boolean };
+export type SubmitState = { error?: string; fieldErrors?: FieldErrors; values?: EventFormValues; consent?: boolean; done?: boolean };
 
 const EXTENSIONS: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
 
@@ -38,7 +37,8 @@ export async function submitEvent(_prev: SubmitState, formData: FormData): Promi
   const values = readEventForm(formData);
   const consent = formData.get("consent") === "yes";
 
-  if (isLikelyBot(formData)) redirect("/submit-event/thanks");
+  // Bots that fill the hidden field see the normal confirmation and nothing is saved.
+  if (isLikelyBot(formData)) return { done: true };
 
   const { errors, event, details } = validateEventForm(values);
   if (!consent) errors.consent = "Please tick the box to agree, so Karina can review your event.";
@@ -82,5 +82,5 @@ export async function submitEvent(_prev: SubmitState, formData: FormData): Promi
     ]),
   );
   revalidatePublicSite(); // the admin's New requests list and counts
-  redirect("/submit-event/thanks");
+  return { done: true };
 }
