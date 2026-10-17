@@ -10,6 +10,7 @@ export type RetentionResult = {
   attention_items: number;
   host_links: number;
   email_records: number;
+  story_emails?: number;
 };
 
 // Runs the daily GDPR cleanup (supabase/migrations/*_retention.sql). Needs a

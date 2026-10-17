@@ -69,11 +69,37 @@ async function main() {
     await banner.getByLabel("Image").setInputFiles(png("banner.png"));
     await banner.getByRole("button", { name: "Change image" }).waitFor();
     await banner.getByRole("button", { name: "Save" }).click();
+    check(await visible(banner, "Please describe the image"), "an image needs a description (alt text)");
+    await banner.getByLabel("Describe the image").fill("People chatting over tea");
+    await banner.getByRole("button", { name: "Save" }).click();
     check(await visible(page, "Saved. Your changes are live."), "save shows a confirmation");
     const { data: hero } = await service.from("site_sections").select("heading, image_path").eq("key", "hero").single();
     check(hero?.heading === "Find your people", "heading is saved");
     check(!!hero?.image_path && (await stored("content", hero.image_path)), "image is uploaded to Storage and saved");
     check(!(await banner.getByText("You have unsaved changes.").isVisible()), "no unsaved changes after saving");
+
+    console.log("\nEvent photos");
+    const photo = page.getByRole("region", { name: "Event photo 1" });
+    await photo.getByLabel("Photo").setInputFiles({ name: "phone.png", mimeType: "image/png", buffer: placeholderPng(3200, 2400, "#8888aa") });
+    await photo.getByRole("button", { name: "Change image" }).waitFor({ timeout: 15000 });
+    await photo.getByLabel("Describe the image").fill("A walking group on a forest path");
+    await photo.getByLabel("Caption (optional)").fill("Autumn walk, Co. Clare");
+    await photo.getByRole("button", { name: "Save" }).click();
+    check(await photo.getByText("You have unsaved changes.").waitFor({ state: "hidden" }).then(() => true, () => false), "a photo slot saves");
+    const { data: photoRow } = await service.from("site_sections").select("image_path, image_alt").eq("page", "home").eq("key", "photo_1").single();
+    check(!!photoRow?.image_path?.endsWith(".webp"), "a large phone photo is converted to WebP before upload", photoRow?.image_path ?? "");
+    const blob = photoRow?.image_path ? (await service.storage.from("content").download(photoRow.image_path)).data : null;
+    const dims = blob ? await page.evaluate(async (b64) => {
+      const img = await createImageBitmap(await (await fetch(`data:image/webp;base64,${b64}`)).blob());
+      return [img.width, img.height];
+    }, Buffer.from(await blob.arrayBuffer()).toString("base64")) : [0, 0];
+    check(dims[0] === 2000 && dims[1] === 1500, "and resized to 2000px on the long side", dims.join("x"));
+    const home = await context.newPage();
+    await home.goto(`${BASE_URL}/`);
+    const shown = home.getByRole("img", { name: "A walking group on a forest path" });
+    check((await shown.count()) === 1 && (await shown.getAttribute("loading")) === "lazy" && !!(await shown.getAttribute("srcset")), "the homepage shows it lazily, with responsive sizes and alt text");
+    check(await home.getByText("Autumn walk, Co. Clare").isVisible(), "with its caption");
+    await home.close();
 
     console.log("\nAbout");
     await page.getByRole("link", { name: "About" }).click();

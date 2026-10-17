@@ -17,7 +17,7 @@ export async function loadHostEvent(token: string) {
   const { data: event } = await db
     .from("events")
     .select(
-      "id, title, county, start_at, end_at, description, poster_path, capacity, status, status_reason, host_edit_token_hash, event_private_details(exact_address, host_name, host_email, host_phone, about_group, emergency_contact_name, emergency_contact_phone)",
+      "id, title, county, start_at, end_at, series_end_at, recurrence_rule, recurrence_until, external_registration_url, description, poster_path, capacity, status, status_reason, host_edit_token_hash, event_private_details(exact_address, host_name, host_email, host_phone, about_group)",
     )
     .eq("host_edit_token_hash", hash)
     .maybeSingle();
@@ -27,7 +27,8 @@ export async function loadHostEvent(token: string) {
   const given = Buffer.from(hash, "hex");
   if (stored.length !== given.length || !timingSafeEqual(stored, given)) return null;
 
-  const ended = new Date(event.end_at).getTime() <= Date.now();
+  // A recurring event has ended when its last date has.
+  const ended = new Date(event.series_end_at).getTime() <= Date.now();
   const view: HostView | null =
     event.status === "needs_changes" ? "needs_changes" : event.status === "pending" ? "pending" : event.status === "live" && !ended ? "live" : null;
   if (!view) return null; // ended, cancelled, taken down or declined: H5
@@ -38,9 +39,15 @@ export async function loadHostEvent(token: string) {
 
 export type HostEvent = NonNullable<Awaited<ReturnType<typeof loadHostEvent>>>;
 
+// Names (never emails) and the date each person registered for.
 export async function loadRegistrantNames(eventId: string) {
-  const { data } = await createAdminClient().from("registrations").select("name").eq("event_id", eventId).order("created_at");
-  return (data ?? []).map((r) => r.name);
+  const { data } = await createAdminClient()
+    .from("registrations")
+    .select("name, occurrence_start")
+    .eq("event_id", eventId)
+    .order("occurrence_start")
+    .order("created_at");
+  return data ?? [];
 }
 
 export async function loadContactRequests(eventId: string) {
@@ -58,4 +65,4 @@ export function lockKeyFieldsWhenRegistered() {
   return process.env.LOCK_KEY_FIELDS_WHEN_REGISTERED !== "false";
 }
 
-export const LOCKABLE_FIELDS = ["date", "start_time", "end_time", "county", "exact_address"] as const;
+export const LOCKABLE_FIELDS = ["date", "start_time", "end_time", "repeats", "repeat_until", "county", "exact_address"] as const;

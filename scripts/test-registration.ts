@@ -63,8 +63,6 @@ async function main() {
     host_email: "host@example.com",
     host_phone: "087 000 0000",
     about_group: "Test",
-    emergency_contact_name: "Test",
-    emergency_contact_phone: "087 000 0001",
   });
   const many = await Promise.all(
     Array.from({ length: 40 }, (_, i) =>

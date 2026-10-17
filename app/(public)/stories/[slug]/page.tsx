@@ -33,13 +33,21 @@ export default async function StoryPage({ params }: Props) {
         <ArrowLeftIcon size={18} /> All stories
       </Link>
       <h1 className="font-heading text-3xl leading-tight font-semibold md:text-4xl">{story.title}</h1>
-      {story.published_at ? <p className="mt-2 text-muted">{formatDate(story.published_at)}</p> : null}
+      {story.author_name || story.published_at ? (
+        <p className="mt-2 text-muted">{[story.author_name ? `By ${story.author_name}` : null, story.published_at ? formatDate(story.published_at) : null].filter(Boolean).join(" · ")}</p>
+      ) : null}
       {story.cover_path ? (
         <div className="relative mt-6 aspect-[16/9] overflow-hidden rounded-card bg-band">
           <Image src={publicImageUrl("content", story.cover_path)} alt="" fill preload sizes="(min-width: 768px) 720px, 100vw" className="object-cover" />
         </div>
       ) : null}
       <RichText text={story.body} className="mt-6 text-lg" />
+      <p className="mt-10 rounded-card bg-band p-5">
+        Have a story of your own?{" "}
+        <Link href="/stories/share" className="font-medium text-primary underline underline-offset-4">
+          Share your story
+        </Link>
+      </p>
     </article>
   );
 }

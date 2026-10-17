@@ -116,3 +116,18 @@ export const MailIcon = (p: IconProps) => (
     <path d="M3.5 6l8.5 7 8.5-7" />
   </Icon>
 );
+export const RepeatIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M17 2.5l3 3-3 3" />
+    <path d="M4 11.5v-1a5 5 0 0 1 5-5h11" />
+    <path d="M7 21.5l-3-3 3-3" />
+    <path d="M20 12.5v1a5 5 0 0 1-5 5H4" />
+  </Icon>
+);
+export const ExternalIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M14 4h6v6" />
+    <path d="M20 4l-9 9" />
+    <path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" />
+  </Icon>
+);

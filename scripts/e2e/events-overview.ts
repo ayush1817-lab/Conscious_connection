@@ -40,7 +40,7 @@ async function main() {
     console.log("\nA2 – Events overview");
     await page.getByRole("link", { name: /Events/ }).click();
     await page.getByRole("heading", { name: "Events overview" }).waitFor();
-    check((await countTile(page, "live events")) === "6", "6 live (upcoming) events");
+    check((await countTile(page, "live events")) === "7", "7 live (upcoming) events");
     check((await countTile(page, "new requests")) === "2", "2 new requests");
     check((await countTile(page, "attention items")) === "3", "3 attention items");
 

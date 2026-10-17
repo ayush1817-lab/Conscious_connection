@@ -1,3 +1,4 @@
+import { RichText } from "@/lib/content/rich-text";
 import Link from "next/link";
 import { ArrowRightIcon } from "./icons";
 
@@ -18,10 +19,12 @@ export function SectionHeading({ id, title, link }: { id: string; title: string;
   );
 }
 
-export function PageIntro({ title, children }: { title: string; children?: React.ReactNode }) {
+// `intro` is admin-written text (Website content > Other pages); `children` is fixed wording.
+export function PageIntro({ title, intro, children }: { title: string; intro?: string; children?: React.ReactNode }) {
   return (
     <div className="page-intro mb-8 max-w-2xl">
       <h1 className="font-heading text-3xl font-semibold md:text-4xl">{title}</h1>
+      {intro ? <RichText text={intro} className="mt-3 text-lg text-muted" /> : null}
       {children ? <div className="mt-3 text-lg text-muted">{children}</div> : null}
     </div>
   );

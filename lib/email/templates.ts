@@ -1,9 +1,10 @@
+import { describeRecurrence } from "@/lib/events/recurrence";
 import { formatDate, formatTimeRange } from "@/lib/format";
 
 // Email templates (spec section 9). Each is written once as a list of blocks,
 // which render to both a plain-text and a simple HTML version.
 
-export type TemplateId = "E1" | "E2" | "E3" | "E4" | "E5" | "E6" | "E7" | "E8" | "E9" | "E10" | "E11" | "E12" | "TEST";
+export type TemplateId = "E1" | "E2" | "E3" | "E4" | "E5" | "E6" | "E7" | "E8" | "E9" | "E10" | "E11" | "E12" | "S1" | "S2" | "S3" | "S4" | "TEST";
 
 export type RenderedEmail = { template: TemplateId; subject: string; text: string; html: string };
 
@@ -15,7 +16,17 @@ type Block =
   | { kind: "list"; items: string[] }
   | { kind: "note"; text: string };
 
-type EventSummary = { title: string; county: string; start_at: string; end_at: string };
+// For a recurring event, start_at/end_at is the date the email is about
+// (the first date for hosts, the chosen date for an RSVP).
+type EventSummary = {
+  title: string;
+  county: string;
+  start_at: string;
+  end_at: string;
+  recurrence_rule?: unknown;
+  recurrence_until?: string | null;
+  external_registration_url?: string | null;
+};
 
 const SIGN_OFF = "Thanks,\nConscious Connections";
 
@@ -27,7 +38,7 @@ function firstName(fullName: string) {
 export function submittedEmail(args: { hostName: string; event: EventSummary }) {
   return render("E1", `We've received your event "${args.event.title}"`, "Thanks, we've got your event", [
     { kind: "p", text: `Hi ${firstName(args.hostName)},` },
-    { kind: "p", text: `Thank you for submitting "${args.event.title}". Karina will review it, usually within 24–48 hours.` },
+    { kind: "p", text: `Thank you for submitting "${args.event.title}". We will review it, usually within 24–48 hours.` },
     { kind: "details", rows: whenWhere(args.event) },
     {
       kind: "list",
@@ -52,16 +63,24 @@ export function newSubmissionEmail(args: { event: EventSummary; hostName: string
         ? `${args.hostName} has made the changes you asked for and resubmitted "${args.event.title}".`
         : `${args.hostName} has submitted "${args.event.title}" for review.`,
     },
-    { kind: "details", rows: [["Event", args.event.title], ...whenWhere(args.event), ["About the group", args.about]] },
+    {
+      kind: "details",
+      rows: [
+        ["Event", args.event.title],
+        ...whenWhere(args.event),
+        ...(args.event.external_registration_url ? [["Registration", `On another website: ${args.event.external_registration_url}`] as [string, string]] : []),
+        ["About the group", args.about],
+      ],
+    },
     { kind: "button", label: "Review the event", url: args.adminUrl },
   ]);
 }
 
-// E2: Karina requests changes.
+// E2: the admin requests changes.
 export function needsChangesEmail(args: { hostName: string; event: EventSummary; reason: string; editUrl: string }) {
   return render("E2", "We need a few changes to your event", "We need a few changes", [
     { kind: "p", text: `Hi ${firstName(args.hostName)},` },
-    { kind: "p", text: `Thanks for your event submission "${args.event.title}". Karina has asked for a few changes before it can go live.` },
+    { kind: "p", text: `Thanks for your event submission "${args.event.title}". We've asked for a few changes before it can go live.` },
     { kind: "quote", label: "Reason for changes", text: args.reason },
     { kind: "button", label: "Edit your event", url: args.editUrl },
     { kind: "p", text: "Once you've updated the details, we'll review it again." },
@@ -69,7 +88,7 @@ export function needsChangesEmail(args: { hostName: string; event: EventSummary;
   ]);
 }
 
-// E3: Karina declines.
+// E3: the admin declines.
 export function declinedEmail(args: { hostName: string; event: EventSummary; reason: string }) {
   return render("E3", "Your event won't be going live", "Your event won't be going live", [
     { kind: "p", text: `Hi ${firstName(args.hostName)},` },
@@ -83,7 +102,7 @@ export function declinedEmail(args: { hostName: string; event: EventSummary; rea
   ]);
 }
 
-// E4: Karina approves (or regenerates the host link).
+// E4: the admin approves (or regenerates the host link).
 // With resent, it's the regenerated-link version: the old link no longer works.
 export function approvedEmail(args: {
   hostName: string;
@@ -140,7 +159,7 @@ export function registeredEmail(args: {
       kind: "details",
       rows: [
         ["Event", event.title],
-        ["When", `${formatDate(event.start_at)}, ${formatTimeRange(event.start_at, event.end_at)}`],
+        ...whenWhere(event).filter(([label]) => label !== "County"),
         ["Where", args.exactAddress],
         ["Host", firstName(args.hostName)],
       ],
@@ -168,6 +187,50 @@ export function changesReceivedEmail(args: { hostName: string; event: EventSumma
     ...(args.changed?.length ? [{ kind: "list" as const, items: args.changed }] : []),
     { kind: "details", rows: whenWhere(args.event) },
     { kind: "note", text: "If you didn't make these changes, please reply to this email straight away." },
+    { kind: "p", text: SIGN_OFF },
+  ]);
+}
+
+// S1: someone shared their story from the public site.
+export function storyReceivedEmail(args: { name: string | null; title: string }) {
+  return render("S1", `We've received your story "${args.title}"`, "Thanks for sharing your story", [
+    { kind: "p", text: args.name ? `Hi ${firstName(args.name)},` : "Hi there," },
+    {
+      kind: "p",
+      text: `Thank you for sharing "${args.title}" with the Conscious Connections community. Our team will read it and email you once we've reviewed it.`,
+    },
+    { kind: "p", text: "If we'd like to change anything before it's published, we'll get in touch first. If you have any questions, you can reply to this email." },
+    { kind: "p", text: SIGN_OFF },
+  ]);
+}
+
+// S2: a new story to review, to the admin(s).
+export function newStorySubmissionEmail(args: { title: string; name: string | null; excerpt: string; adminUrl: string }) {
+  return render("S2", `New story to review: ${args.title}`, "A new story was shared", [
+    { kind: "p", text: `${args.name ? args.name : "Someone (anonymous)"} has shared a story, "${args.title}".` },
+    { kind: "quote", label: "It begins", text: args.excerpt },
+    { kind: "button", label: "Review the story", url: args.adminUrl },
+  ]);
+}
+
+// S3: the story was approved and is on the website.
+export function storyPublishedEmail(args: { name: string | null; title: string; storyUrl: string }) {
+  return render("S3", `Your story "${args.title}" is now live`, "Your story is on the website", [
+    { kind: "p", text: args.name ? `Hi ${firstName(args.name)},` : "Hi there," },
+    { kind: "p", text: `Thank you again for sharing "${args.title}". It's now published on the Conscious Connections website.` },
+    { kind: "button", label: "Read your story", url: args.storyUrl },
+    { kind: "p", text: "If you'd like anything changed or taken down, just reply to this email." },
+    { kind: "p", text: SIGN_OFF },
+  ]);
+}
+
+// S4: the story won't be published.
+export function storyDeclinedEmail(args: { name: string | null; title: string; reason: string }) {
+  return render("S4", `About your story "${args.title}"`, "About your story", [
+    { kind: "p", text: args.name ? `Hi ${firstName(args.name)},` : "Hi there," },
+    { kind: "p", text: `Thank you for sharing "${args.title}". After reading it, we've decided not to publish it on the website.` },
+    { kind: "quote", label: "Reason", text: args.reason },
+    { kind: "p", text: "You're welcome to share another story in the future. If you have any questions, you can reply to this email." },
     { kind: "p", text: SIGN_OFF },
   ]);
 }
@@ -214,7 +277,7 @@ export function contactRequestEmail(args: { event: EventSummary; reason: string;
   ]);
 }
 
-// E9: Karina cancels a live event. Sent to each registrant.
+// E9: the admin cancels a live event. Sent to each registrant.
 export function eventCancelledEmail(args: { registrantName: string; event: EventSummary }) {
   const { event } = args;
   return render("E9", `Cancelled: ${event.title}`, "This event has been cancelled", [
@@ -226,7 +289,7 @@ export function eventCancelledEmail(args: { registrantName: string; event: Event
   ]);
 }
 
-// E10: Karina shares registrants' contact details with the host.
+// E10: the admin shares registrants' contact details with the host.
 export function contactDetailsSharedEmail(args: {
   hostName: string;
   event: EventSummary;
@@ -237,7 +300,7 @@ export function contactDetailsSharedEmail(args: {
     { kind: "p", text: `Hi ${firstName(args.hostName)},` },
     {
       kind: "p",
-      text: `Karina has shared the contact details of the ${count === 1 ? "person" : `${count} people`} registered for "${args.event.title}".`,
+      text: `We've shared the contact details of the ${count === 1 ? "person" : `${count} people`} registered for "${args.event.title}".`,
     },
     { kind: "list", items: args.registrants.map((r) => `${r.name}: ${r.email}`) },
     {
@@ -248,13 +311,13 @@ export function contactDetailsSharedEmail(args: {
   ]);
 }
 
-// E10: Karina declines the host's request for contact details.
+// E10: the admin declines the host's request for contact details.
 export function contactDetailsDeclinedEmail(args: { hostName: string; event: EventSummary; reason: string }) {
   return render("E10", `About your request for "${args.event.title}"`, "About your contact details request", [
     { kind: "p", text: `Hi ${firstName(args.hostName)},` },
     {
       kind: "p",
-      text: `Thanks for your request. Karina has decided not to share registrants' contact details for "${args.event.title}".`,
+      text: `Thanks for your request. We've decided not to share registrants' contact details for "${args.event.title}".`,
     },
     { kind: "quote", label: "Reason", text: args.reason },
     { kind: "p", text: "If you have any questions, you can reply to this email." },
@@ -262,7 +325,7 @@ export function contactDetailsDeclinedEmail(args: { hostName: string; event: Eve
   ]);
 }
 
-// E11: Karina takes down a live event.
+// E11: the admin takes down a live event.
 export function takenDownEmail(args: { hostName: string; event: EventSummary; reason: string }) {
   return render("E11", "Your event has been taken down", "Your event has been taken down", [
     { kind: "p", text: `Hi ${firstName(args.hostName)},` },
@@ -274,8 +337,13 @@ export function takenDownEmail(args: { hostName: string; event: EventSummary; re
 }
 
 function whenWhere(event: EventSummary): [string, string][] {
+  const repeats = describeRecurrence(
+    { start_at: event.start_at, end_at: event.end_at, recurrence_rule: event.recurrence_rule, recurrence_until: event.recurrence_until ?? null },
+    { withUntil: true },
+  );
   return [
     ["When", `${formatDate(event.start_at)}, ${formatTimeRange(event.start_at, event.end_at)}`],
+    ...(repeats ? [["Repeats", repeats] as [string, string]] : []),
     ["County", event.county],
   ];
 }

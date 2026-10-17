@@ -9,6 +9,7 @@ const TABS = [
   { href: "/admin/content/podcasts", label: "Podcasts" },
   { href: "/admin/content/gallery", label: "Gallery" },
   { href: "/admin/content/about", label: "About" },
+  { href: "/admin/content/pages", label: "Other pages" },
 ];
 
 export function ContentTabs() {

@@ -6,6 +6,7 @@ import { PageIntro } from "@/components/public/section-heading";
 import { buttonClass } from "@/components/ui/button";
 import { EMPTY_EVENT_FORM } from "@/lib/public/event-form";
 import { submitEvent } from "./actions";
+import { getPageIntro } from "@/lib/public/content";
 
 export const metadata: Metadata = {
   title: "Host an event",
@@ -13,13 +14,11 @@ export const metadata: Metadata = {
 };
 
 // H1 Submit an event. After sending, the form is replaced by the confirmation.
-export default function SubmitEventPage() {
+export default async function SubmitEventPage() {
+  const intro = await getPageIntro("submit_event");
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
-      <PageIntro title="Host an event">
-        Create a local event and bring people together. It&apos;s quick and easy, and it helps build our community. Our
-        team reviews every event before it goes live.
-      </PageIntro>
+      <PageIntro title={intro.heading} intro={intro.body} />
       <EventForm
         action={submitEvent}
         initial={EMPTY_EVENT_FORM}

@@ -3,23 +3,27 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { EventCard } from "@/components/public/event-card";
 import { EventPoster } from "@/components/public/event-poster";
-import { ArrowLeftIcon, CalendarIcon, ClockIcon, PeopleIcon, PinIcon } from "@/components/public/icons";
+import { ArrowLeftIcon, CalendarIcon, ClockIcon, ExternalIcon, PeopleIcon, PinIcon, RepeatIcon } from "@/components/public/icons";
 import { SectionHeading } from "@/components/public/section-heading";
 import { RegisterForm } from "@/components/public/register-form";
 import { ShareButton } from "@/components/public/share-button";
 import { formatDate, formatShortDate, formatTimeRange } from "@/lib/format";
-import { FEW_PLACES, getEvent, getPlacesLeft, getSimilarEvents, placesBadge } from "@/lib/public/events";
+import { describeRecurrence, upcomingOccurrences } from "@/lib/events/recurrence";
+import { FEW_PLACES, getEvent, getOccurrencePlacesLeft, getPlacesLeft, getSimilarEvents, placesBadge, seriesOf } from "@/lib/public/events";
 import { publicImageUrl } from "@/lib/storage";
 import { registerForEvent } from "./actions";
 
 type Props = { params: Promise<{ id: string }> };
+
+// How many upcoming dates of a recurring event people can register for.
+const DATES_SHOWN = 8;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const event = await getEvent(id);
   if (!event) return { title: "Event not running" };
 
-  const when = `${formatShortDate(event.start_at)}, ${formatTimeRange(event.start_at, event.end_at)}`;
+  const when = describeRecurrence(seriesOf(event)) ?? `${formatShortDate(event.start_at)}, ${formatTimeRange(event.start_at, event.end_at)}`;
   const description = `${event.county} · ${when}. ${event.description}`.slice(0, 200);
   // Share previews (WhatsApp, Instagram, Facebook): the poster, or a generated card with the title, county and date.
   const image = event.poster_path ? publicImageUrl("posters", event.poster_path) : `/events/${event.id}/share-image`;
@@ -38,10 +42,29 @@ export default async function EventPage({ params }: Props) {
   const event = await getEvent(id);
   if (!event) notFound();
 
-  const [places, similar] = await Promise.all([getPlacesLeft([event.id]), getSimilarEvents(event)]);
+  // A recurring event: people pick one of the next few dates; places are per date.
+  const repeats = describeRecurrence(seriesOf(event), { withUntil: true });
+  // Registration on another website: no RSVP form, dates or places here.
+  const external = event.external_registration_url;
+  const occurrences = repeats && !external ? upcomingOccurrences(seriesOf(event), DATES_SHOWN) : [];
+  const [places, similar, datePlaces] = await Promise.all([
+    getPlacesLeft([event.id]),
+    getSimilarEvents(event),
+    event.capacity && occurrences.length ? getOccurrencePlacesLeft(event.id, occurrences.map((o) => o.start)) : Promise.resolve(new Map<string, number>()),
+  ]);
+  const dates = occurrences.map((o) => {
+    const left = datePlaces.get(o.start);
+    return {
+      value: o.start,
+      label: `${formatDate(o.start)}${left === 0 ? " (full)" : left !== undefined && left < FEW_PLACES ? ` (${left === 1 ? "1 place" : `${left} places`} left)` : ""}`,
+      full: left === 0,
+    };
+  });
   const placesLeft = places.get(event.id);
+  // Full means every date offered is full (a one-off event: its only date).
+  const full = repeats ? dates.length > 0 && dates.every((d) => d.full) : placesLeft === 0;
   const similarPlaces = await getPlacesLeft(similar.filter((e) => e.capacity).map((e) => e.id));
-  const badge = placesBadge(placesLeft);
+  const badge = repeats ? (full ? placesBadge(0) : undefined) : placesBadge(placesLeft);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
@@ -57,8 +80,14 @@ export default async function EventPage({ params }: Props) {
             <li className="flex items-center gap-2">
               <PinIcon className="text-accent" /> {event.county}
             </li>
+            {repeats ? (
+              <li className="flex items-center gap-2 font-medium">
+                <RepeatIcon className="text-accent" /> {repeats}
+              </li>
+            ) : null}
             <li className="flex items-center gap-2">
-              <CalendarIcon className="text-accent" /> {formatDate(event.start_at)}
+              <CalendarIcon className="text-accent" /> {repeats ? "Next: " : ""}
+              {formatDate(event.start_at)}
             </li>
             <li className="flex items-center gap-2">
               <ClockIcon className="text-accent" /> {formatTimeRange(event.start_at, event.end_at)}
@@ -70,12 +99,16 @@ export default async function EventPage({ params }: Props) {
             </p>
           ) : null}
 
-          <a
-            href="#register"
-            className="mt-5 flex min-h-tap items-center justify-center rounded-control bg-primary px-5 font-medium text-on-primary hover:bg-primary-hover lg:hidden"
-          >
-            {placesLeft === 0 ? "Event full" : "Register for this event"}
-          </a>
+          {external ? (
+            <ExternalRegisterLink href={external} className="mt-5 lg:hidden" />
+          ) : (
+            <a
+              href="#register"
+              className="mt-5 flex min-h-tap items-center justify-center rounded-control bg-primary px-5 font-medium text-on-primary hover:bg-primary-hover lg:hidden"
+            >
+              {full ? "Event full" : "Register for this event"}
+            </a>
+          )}
 
           <section aria-labelledby="about-heading" className="mt-8">
             <h2 id="about-heading" className="font-heading text-2xl font-semibold">
@@ -86,7 +119,9 @@ export default async function EventPage({ params }: Props) {
 
           <p className="mt-6 flex items-start gap-2 rounded-card bg-hero p-4">
             <PinIcon className="mt-0.5 shrink-0 text-primary" />
-            The exact location is shared by email when you register.
+            {external
+              ? "The exact location is shared when you register on the organiser's site."
+              : "The exact location is shared by email when you register."}
           </p>
 
           <div className="mt-6">
@@ -99,9 +134,14 @@ export default async function EventPage({ params }: Props) {
             <h2 id="register-heading" className="font-heading text-xl font-semibold">
               Register
             </h2>
-            {placesLeft === 0 ? (
+            {external ? (
               <>
-                <p className="mt-2">Sorry, this event is full.</p>
+                <p className="mt-2 mb-4">This event requires registration via an external site.</p>
+                <ExternalRegisterLink href={external} />
+              </>
+            ) : full ? (
+              <>
+                <p className="mt-2">Sorry, this event is full{repeats ? " on the next few dates" : ""}.</p>
                 <button
                   type="button"
                   disabled
@@ -116,7 +156,7 @@ export default async function EventPage({ params }: Props) {
             ) : (
               <>
                 <p className="mt-2 mb-4 text-muted">You&apos;ll get the exact address by email after registering.</p>
-                <RegisterForm action={registerForEvent.bind(null, event.id)} />
+                <RegisterForm action={registerForEvent.bind(null, event.id)} dates={repeats ? dates : undefined} />
               </>
             )}
           </section>
@@ -125,7 +165,12 @@ export default async function EventPage({ params }: Props) {
               Event details
             </h2>
             <dl className="mt-4 space-y-4">
-              <Detail icon={<CalendarIcon className="text-accent" />} label="Date">
+              {repeats ? (
+                <Detail icon={<RepeatIcon className="text-accent" />} label="Repeats">
+                  {repeats}
+                </Detail>
+              ) : null}
+              <Detail icon={<CalendarIcon className="text-accent" />} label={repeats ? "Next date" : "Date"}>
                 {formatDate(event.start_at)}
               </Detail>
               <Detail icon={<ClockIcon className="text-accent" />} label="Time">
@@ -135,7 +180,7 @@ export default async function EventPage({ params }: Props) {
                 {event.county}
                 <span className="block text-muted">Exact location shared after registration</span>
               </Detail>
-              {placesLeft !== undefined && placesLeft < FEW_PLACES ? (
+              {!repeats && placesLeft !== undefined && placesLeft < FEW_PLACES ? (
                 <Detail icon={<PeopleIcon className="text-accent" />} label="Places">
                   {placesLeft === 0 ? "Event full" : placesLeft === 1 ? "1 place left" : `${placesLeft} places left`}
                 </Detail>
@@ -167,6 +212,22 @@ export default async function EventPage({ params }: Props) {
         </section>
       ) : null}
     </div>
+  );
+}
+
+// Opens the organiser's own registration page in a new tab.
+function ExternalRegisterLink({ href, className = "" }: { href: string; className?: string }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={`flex min-h-tap items-center justify-center gap-2 rounded-control bg-primary px-5 font-medium text-on-primary hover:bg-primary-hover ${className}`}
+    >
+      Register here
+      <ExternalIcon size={18} />
+      <span className="sr-only">(opens in a new tab)</span>
+    </a>
   );
 }
 

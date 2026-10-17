@@ -2,7 +2,7 @@ import { SiteFooter } from "@/components/public/site-footer";
 import { SiteHeader } from "@/components/public/site-header";
 import { BackgroundWaves } from "@/components/public/background-waves";
 
-// Every public page reads the database on each request, so Karina's edits in
+// Every public page reads the database on each request, so the admin's edits in
 // the admin show up straight away (spec section 5, "Freshness").
 export const dynamic = "force-dynamic";
 

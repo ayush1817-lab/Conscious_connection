@@ -40,7 +40,7 @@ async function main() {
     const second = await context.newPage();
     await second.goto(`${BASE_URL}/admin`);
     check(new URL(second.url()).pathname === "/admin", "stays logged in on a new visit", second.url());
-    const welcome = second.getByRole("heading", { name: "Welcome, Karina" });
+    const welcome = second.getByRole("heading", { name: "Welcome, Admin" });
     check(await welcome.waitFor().then(() => true, () => false), "sees the admin home");
 
     await second.goto(`${BASE_URL}/admin/login`);

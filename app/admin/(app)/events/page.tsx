@@ -205,6 +205,7 @@ function NewRequest({ event }: { event: EventCard }) {
             </span>
             <span className="block text-muted">
               {event.county} · {formatDate(event.startAt)}
+              {event.repeats ? ` · ${event.repeats}` : ""}
             </span>
           </span>
           <span className="text-sm text-muted sm:text-right sm:text-base">
@@ -234,7 +235,9 @@ function EventLine({ event, muted = false }: { event: EventCard; muted?: boolean
             <span>{event.county}</span>
             <span className="sm:hidden"> · </span>
             <span>
+              {event.repeats ? "Next " : ""}
               {formatShortDate(event.startAt)}, {formatTimeRange(event.startAt, event.endAt)}
+              {event.repeats ? <span className="block text-sm">{event.repeats}</span> : null}
             </span>
           </span>
         </span>

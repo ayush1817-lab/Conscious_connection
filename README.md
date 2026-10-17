@@ -5,7 +5,7 @@ The website for Conscious Connections, a community for women and non-binary peop
 The app has two halves in one Next.js project and one Supabase database:
 
 - the **public website** visitors and hosts use (no logins), and
-- the **admin website** at `/admin` that Karina uses to review events and edit site content.
+- the **admin website** at `/admin` that the admin uses to review events and edit site content.
 
 - Spec: [`docs/admin-build-spec.md`](docs/admin-build-spec.md)
 - PRD: [`docs/conscious-connections-prd-lofi.md`](docs/conscious-connections-prd-lofi.md)
@@ -51,14 +51,21 @@ npm run dev                 # public site at http://localhost:3000, admin at /ad
 | `npm run test:submit` | Browser test of submitting an event at 360px: errors, poster upload, saved request, E1 and E5, and the request in the admin (re-seeds first; app must be running) |
 | `npm run test:resend` | Browser test of "Lost your link?": the same reply for hosts and strangers, a fresh working link (E4 or E2) that replaces the old one, nothing for pending or ended events, and the hourly limit (re-seeds first; app must be running) |
 | `npm run test:host` | Browser test of the private host page: broken links all show the same page, resubmitting, editing with a diff, locked fields, names only, contact requests, cancelling, and each action in the admin's Attention items (re-seeds first; app must be running) |
+| `npm run test:stories` | Browser test of "Share your story": errors, honeypot, confirmation and emails, and approving or declining in the admin (re-seeds first; app must be running) |
+| `npm run test:recurring` | Browser test of weekly events: the listing label, picking a date, places per date, the submission form and the admin event editor (re-seeds first; app must be running) |
+| `npm run test:external` | Browser test of external registration links: checking the link, the "Register here" button, our RSVP refused, and the admin editor (re-seeds first; app must be running) |
+| `npm run test:podcasts` | Browser test of Spotify and uploaded audio podcasts, from the admin form to the public page (re-seeds first; app must be running) |
+| `npm run test:page-content` | Browser test of the editable homepage cards and page introductions (re-seeds first; app must be running) |
+| `npm run test:attendees` | Browser test of the admin attendee list and CSV download (re-seeds first; app must be running) |
 | `npm run lint` | TypeScript type check |
 
 ## Database and migrations
 
-Migrations live in [`supabase/migrations/`](supabase/migrations/). The first one creates every table, enum, RLS policy, the `is_admin()` helper and the storage buckets (`posters`, `gallery`, `content`).
+Migrations live in [`supabase/migrations/`](supabase/migrations/). The first one creates every table, enum, RLS policy, the `is_admin()` helper and the storage buckets (`posters`, `gallery`, `content`; a later migration adds `podcasts` for audio files).
 
 - **Local:** `npm run db:reset` re-applies all migrations from scratch.
 - **Hosted:** `npx supabase link --project-ref <your-project-ref>` once, then `npm run db:push`.
+- **Client feedback changes (Oct 2026):** see [`docs/CHANGELOG-client-feedback.md`](docs/CHANGELOG-client-feedback.md) for the new migrations and a one-file SQL update for the live database.
 
 Row Level Security is on for every table. Private tables (host details, registrations, contact requests, edits, attention items, email log, activity) are readable only by admins. The public can read only live, upcoming events (public-safe columns only) and published content. `npm run test:rls` proves this.
 
@@ -69,7 +76,7 @@ Row Level Security is on for every table. Private tables (host details, registra
 ## Login and access
 
 - Everything under `/admin` is guarded by `proxy.ts` (Next.js 16's name for middleware): logged-out visitors go to the login page (A0), signed-in users who aren't in `public.admins` see "You don't have access". Each admin page and server action also checks with `requireAdmin()` (`lib/auth/admin.ts`).
-- Sessions are kept in Supabase auth cookies, so Karina stays logged in between visits until she logs out.
+- Sessions are kept in Supabase auth cookies, so the admin stays logged in between visits until they log out.
 - **Forgot password** uses Supabase's reset email. The link lands on `/auth/confirm`, which signs her in and opens `/admin/reset-password`.
 - Browser tests (`npm run test:*` under `scripts/e2e/`) use Playwright's Chromium. Set `CHROMIUM_PATH` if it isn't installed in the default location.
 
@@ -80,9 +87,9 @@ Row Level Security is on for every table. Private tables (host details, registra
 ## Reviewing events and emails
 
 - **Status changes** all go through one function, `transitionEvent()` in [`lib/events/transitions.ts`](lib/events/transitions.ts). It holds the allowed moves from the spec (for example pending → live, pending → declined), requires a reason where the spec does, and refuses a change if someone else changed the event first. `npm run test:transitions` checks every combination.
-- **Approve** creates the host's private link (`{SITE_URL}/host/{token}`). Only a SHA-256 hash of the token is stored, so the link is shown to Karina once, on the "Approved." screen, and emailed to the host. **Request changes** also emails a fresh private link, so the host can fix the event.
+- **Approve** creates the host's private link (`{SITE_URL}/host/{token}`). Only a SHA-256 hash of the token is stored, so the link is shown to the admin once, on the "Approved." screen, and emailed to the host. **Request changes** also emails a fresh private link, so the host can fix the event.
 - **Emails** go through the `EmailService` in [`lib/email/`](lib/email/). Every email is recorded in the `email_log` table, including failures. Without `RESEND_API_KEY` emails are only printed to the server console. With it they are sent through [Resend](https://resend.com) (verify your sending domain there first). Templates live in `lib/email/templates.ts`.
-- If an email fails, the action still happens and Karina is told to contact the host herself.
+- If an email fails, the action still happens and the admin is told to contact the host directly.
 - **Live events** (event page): **Take down** needs a reason and emails the host (E11). **Cancel event** asks for confirmation and emails every registrant (E9). **Regenerate host link** emails the host a new private link (E4) and the old one stops working. Taking down or cancelling also clears that event's open attention items.
 - **Attention items** each have their own page (`/admin/attention/[id]`). Host edits show what changed (before and after) with **Mark as seen** and **Take down**. Host cancellations have **Mark as seen**. Contact requests need a decision: **Share contact details** emails the host every registrant's name and email (E10), and **Decline** emails the host the reason (E10).
 
@@ -92,13 +99,13 @@ Pages live under `app/(public)/` and share one header (with a mobile menu) and f
 
 | Route | Page |
 |---|---|
-| `/` | Homepage: Karina's sections, the next 3 events, latest stories, latest podcast, gallery strip |
-| `/about`, `/privacy` | About (from Website content) and a placeholder privacy page marked "Karina to review" |
+| `/` | Homepage: the admin's sections, the next 3 events, latest stories, latest podcast, gallery strip |
+| `/about`, `/privacy` | About (from Website content) and a placeholder privacy page marked "Draft: to be reviewed" |
 | `/stories`, `/stories/[slug]` | Published stories |
 | `/podcasts` | Published episodes; the YouTube player only loads when someone presses play |
 | `/gallery` | Gallery photos |
 | `/events` | Live upcoming events, soonest first, 12 per page. Filters are links: `?county=clare&when=week` (`week`, `month`, or all) |
-| `/submit-event` | Host an event (H1): public details, then private details "Only visible to Karina", optional poster, consent |
+| `/submit-event` | Host an event (H1): public details, then private details "Only visible to our team", optional poster, consent |
 | `/submit-event/thanks` | "Your event has been submitted" and what happens next (not indexed) |
 | `/host/[token]` | The host's private page (H3), reached only from the link in their email. Not indexed, sent with `Referrer-Policy: no-referrer` |
 | `/host/cancelled` | Shown once after a host cancels |
@@ -111,9 +118,9 @@ Pages live under `app/(public)/` and share one header (with a mobile menu) and f
 - **Registering** (name, email, consent) calls the database function `register_for_event()`, which locks the event, checks it is live, upcoming and not full, and inserts the registration in one step, so capacity holds even when people register at the same moment. The same email registering twice gets E8 again instead of a second place. E8 is the only place the exact address is ever shown.
 - **Submitting an event** saves the event (status `pending`) and its private details together through the database function `submit_event()`, then emails E1 to the host and E5 to the admin. Posters upload straight from the browser to Storage through a one-time signed URL the server hands out after checking the type and size (JPG, PNG or WebP, up to 5MB), under a random name in `posters/submissions/`. Events take place on one day (date, start time, end time).
 - **Private host page** (`/host/[token]`): the token is hashed (SHA-256) and compared with `events.host_edit_token_hash` in constant time (`lib/host/host-event.ts`). Any link that doesn't work (made up, replaced by a newer one, cleared by retention, or for an event that ended, was cancelled, taken down or declined) gets the same "This link is no longer active" page (H5) with a 404, so it never reveals whether a link existed. What the host sees depends on the event:
-  - **Needs changes:** Karina's reason, then the event form; **Resubmit for review** sets it back to pending and emails Karina (E5).
-  - **Pending:** "Waiting for Karina's review" and a read-only summary.
-  - **Live:** tabs for **Event details** (edit; only changed fields are saved, with a before/after record for Karina, an attention item and E6), **Registrations** (names only) and **Request contact details** (one open request at a time; attention item that needs a decision, E7). **Cancel event** asks for confirmation, emails every registrant (E9) and Karina (E7).
+  - **Needs changes:** the admin's reason, then the event form; **Resubmit for review** sets it back to pending and emails the admin (E5).
+  - **Pending:** "Waiting for review" and a read-only summary.
+  - **Live:** tabs for **Event details** (edit; only changed fields are saved, with a before/after record for the admin, an attention item and E6), **Registrations** (names only) and **Request contact details** (one open request at a time; attention item that needs a decision, E7). **Cancel event** asks for confirmation, emails every registrant (E9) and the admin (E7).
   - Each host action is one database function (`host_edit_event`, `host_request_contact`, `host_cancel_event`, `host_resubmit_event`) that re-checks the link and status in the same transaction.
   - **Locked fields:** once anyone has registered, date, times, county and exact address can't be changed, and the server refuses them even if the form is tampered with. Set `LOCK_KEY_FIELDS_WHEN_REGISTERED=false` to allow changes (the rule is still being confirmed).
   - Tokens are never logged by the app. Note that hosting providers log request paths, so treat request logs as private.
@@ -131,7 +138,7 @@ Pages live under `app/(public)/` and share one header (with a mobile menu) and f
 
 ## Website content
 
-Under **Website content** (`/admin/content`) Karina edits what the public website shows. Everything goes live as soon as she saves.
+Under **Website content** (`/admin/content`) the admin edits what the public website shows. Everything goes live as soon as it's saved.
 
 - **Homepage** and **About**: each section (top banner, introduction, invitation to host, about) has a heading, text with **bold** and *italic*, an optional image and a live preview.
 - **Stories** and **Podcasts** are saved as drafts first, then published or unpublished from their edit page. Podcasts take a YouTube link (watch, share, Shorts or embed links all work) and show the video as a preview.
@@ -165,7 +172,7 @@ There is no public sign-up. To add an admin:
 
    ```sql
    insert into public.admins (user_id, display_name)
-   values ('<user id>', 'Karina');
+   values ('<user id>', 'Admin');
    ```
 
 To remove admin access, delete that row from `public.admins` (and optionally the user).
@@ -179,7 +186,7 @@ The lavender theme uses pale lilac surfaces, deeper violet controls, aubergine t
 1. **Create a Supabase project** at supabase.com, then apply the migrations from your machine:
    `npx supabase link --project-ref <your-project-ref>` and `npm run db:push`.
 2. **Supabase auth settings** (see "Login and access" above): turn off sign-ups, set the Site URL and add `https://<your-domain>/auth/confirm` as a redirect URL.
-3. **Create Karina's login** (see "Creating an admin").
+3. **Create the admin's login** (see "Creating an admin").
 4. **Vercel > Project > Settings > Environment Variables**, for Production and Preview:
 
    | Variable | Where to find it |

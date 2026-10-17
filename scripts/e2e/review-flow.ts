@@ -120,7 +120,8 @@ async function main() {
     await page.goto(`${BASE_URL}/admin/events/${gentleWalk}`);
     await page.getByRole("button", { name: "Approve" }).click();
     await page.waitForURL(`${BASE_URL}/admin/events/${gentleWalk}/approved`);
-    check(await page.getByRole("heading", { name: "Approved." }).isVisible(), "shows Approved.");
+    const approvedShown = await page.getByRole("heading", { name: "Approved." }).waitFor({ timeout: 5000 }).then(() => true, () => false);
+    check(approvedShown, "shows Approved.");
     check(await visible(page, "Mary O'Brien has been emailed their private link."), "says the host has been emailed");
     const live = await eventRow(gentleWalk);
     check(live.status === "live", "status is live");
@@ -147,7 +148,7 @@ async function main() {
     await page.goto(`${BASE_URL}/admin/events`);
     await page.getByRole("heading", { name: "Events overview" }).waitFor();
     check(/New requests \(0\)/.test(await page.locator("main").innerText()), "no new requests left");
-    check(/Upcoming \(7 live events\)[\s\S]*Gentle Walk & Chat/.test(await page.locator("main").innerText()), "approved event is in Upcoming");
+    check(/Upcoming \(8 live events\)[\s\S]*Gentle Walk & Chat/.test(await page.locator("main").innerText()), "approved event is in Upcoming");
 
     console.log("\nMobile (360px)");
     await service.from("events").update({ status: "pending", status_reason: null }).eq("id", soundBath);

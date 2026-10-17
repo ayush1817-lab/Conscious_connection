@@ -30,3 +30,11 @@ export function adminEventUrl(eventId: string) {
 export function adminAttentionUrl(itemId: string) {
   return `${siteUrl()}/admin/attention/${itemId}`;
 }
+
+export function publicStoryUrl(slug: string) {
+  return `${siteUrl()}/stories/${slug}`;
+}
+
+export function adminStorySubmissionUrl(id: string) {
+  return `${siteUrl()}/admin/content/stories/submissions/${id}`;
+}

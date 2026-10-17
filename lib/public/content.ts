@@ -1,19 +1,44 @@
 import "server-only";
+import { PAGE_SECTIONS, PHOTO_KEYS, type ContentPage } from "@/lib/content/sections";
 import { createPublicClient } from "@/lib/supabase/public";
 
 // Read-only queries for the public content pages. All go through the anon
 // client, so RLS guarantees only published content is returned.
 
-export type Section = { key: string; heading: string; body: string; image_path: string | null };
+export type Section = { key: string; heading: string; body: string; image_path: string | null; image_alt: string };
 
-export async function getSections(page: "home" | "about") {
+// Every section of a page, in order, with the built-in wording filling any gap.
+export async function getSections(page: ContentPage) {
   const { data, error } = await createPublicClient()
     .from("site_sections")
-    .select("key, heading, body, image_path")
-    .eq("page", page)
-    .order("sort_order");
+    .select("key, heading, body, image_path, image_alt")
+    .eq("page", page);
   if (error) throw error;
-  return Object.fromEntries((data ?? []).map((s) => [s.key, s])) as Record<string, Section | undefined>;
+  const rows = new Map((data ?? []).map((s) => [s.key, s]));
+  return Object.fromEntries(
+    PAGE_SECTIONS[page].map((def) => {
+      const row = rows.get(def.key);
+      const section: Section = {
+        key: def.key,
+        heading: row?.heading?.trim() || def.defaults.heading,
+        body: row?.body?.trim() || def.defaults.body,
+        image_path: def.image ? (row?.image_path ?? null) : null,
+        image_alt: row?.image_alt?.trim() ?? "",
+      };
+      return [def.key, section];
+    }),
+  ) as Record<string, Section>;
+}
+
+// The title and introduction of one of the other public pages (Website content > Other pages).
+export async function getPageIntro(key: string): Promise<Section> {
+  const sections = await getSections("pages");
+  return sections[key];
+}
+
+// The photo slots that have a photo, in order.
+export function photosOf(sections: Record<string, Section>) {
+  return PHOTO_KEYS.map((k) => sections[k]).filter((s): s is Section => Boolean(s?.image_path));
 }
 
 export async function getStories(limit?: number) {
@@ -31,7 +56,7 @@ export async function getStories(limit?: number) {
 export async function getStory(slug: string) {
   const { data, error } = await createPublicClient()
     .from("stories")
-    .select("id, title, slug, cover_path, body, published_at")
+    .select("id, title, slug, cover_path, body, published_at, author_name")
     .eq("published", true)
     .eq("slug", slug)
     .maybeSingle();
@@ -42,7 +67,7 @@ export async function getStory(slug: string) {
 export async function getPodcasts(limit?: number) {
   let query = createPublicClient()
     .from("podcasts")
-    .select("id, title, description, youtube_url, published_at")
+    .select("id, title, description, source, youtube_url, spotify_url, audio_path, published_at")
     .eq("published", true)
     .order("published_at", { ascending: false, nullsFirst: false });
   if (limit) query = query.limit(limit);

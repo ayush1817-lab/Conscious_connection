@@ -15,7 +15,7 @@ export function ContactRequestForm({ action }: { action: (prev: ContactState, fo
       <TextAreaField
         id="reason"
         label="Why do you need their contact details?"
-        hint="For example, the meeting point has moved. Karina decides whether to share them."
+        hint="For example, the meeting point has moved. Our team decides whether to share them."
         required
         maxLength={500}
         rows={3}

@@ -57,11 +57,13 @@ async function checkOutsider(client: Client, who: string, service: Client) {
     .from("events")
     .select("id")
     .eq("status", "live")
-    .gt("end_at", new Date().toISOString());
-  const { data: events, error } = await client.from("events").select("id, status, end_at");
+    .gt("series_end_at", new Date().toISOString());
+  // series_end_at: when the last date ends ("infinity" for a weekly event without an end date).
+  const { data: events, error } = await client.from("events").select("id, status, series_end_at");
   const now = Date.now();
+  const notOver = (iso: string) => iso === "infinity" || Date.parse(iso) > now;
   check(
-    !error && !!events && events.every((e) => e.status === "live" && Date.parse(e.end_at) > now),
+    !error && !!events && events.every((e) => e.status === "live" && notOver(e.series_end_at)),
     `${who} sees only live, upcoming events`,
     error?.message,
   );

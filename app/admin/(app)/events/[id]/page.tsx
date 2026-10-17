@@ -8,7 +8,8 @@ import { StatusBadge } from "@/components/events/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { requireAdmin } from "@/lib/auth/admin";
-import { retentionCutoff } from "@/lib/events/status";
+import { describeRecurrence, groupByOccurrence } from "@/lib/events/recurrence";
+import { EDITABLE_STATUSES, retentionCutoff } from "@/lib/events/status";
 import { formatDate, formatDateTime, formatTimeRange, timeAgo } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import { approveEvent, cancelEvent, regenerateLink, reviewWithReason, takeDownEvent } from "./actions";
@@ -41,10 +42,10 @@ export default async function EventDetailPage({
   const { data: event } = await supabase
     .from("events")
     .select(
-      "*, event_private_details(*), registrations(name, created_at), event_activity(id, actor, action, note, created_at), attention_items(id, type, needs_decision, created_at, resolved_at)",
+      "*, event_private_details(*), registrations(name, email, created_at, occurrence_start), event_activity(id, actor, action, note, created_at), attention_items(id, type, needs_decision, created_at, resolved_at)",
     )
     .eq("id", id)
-    .gte("end_at", retentionCutoff())
+    .gte("series_end_at", retentionCutoff())
     .maybeSingle();
   if (!event) notFound();
 
@@ -58,7 +59,9 @@ export default async function EventDetailPage({
   const activity = [...event.event_activity].sort((a, b) => b.created_at.localeCompare(a.created_at));
   const openItems = event.attention_items.filter((i) => !i.resolved_at);
   const isPending = event.status === "pending";
-  const isUpcomingLive = event.status === "live" && new Date(event.end_at).getTime() > Date.now();
+  const isUpcomingLive = event.status === "live" && (event.series_end_at === "infinity" || new Date(event.series_end_at).getTime() > Date.now());
+  const repeats = describeRecurrence(event, { withUntil: true });
+  const canEdit = host && (EDITABLE_STATUSES as readonly string[]).includes(event.status) && (event.status !== "live" || isUpcomingLive);
   const showActivity = !isPending && tab === "activity";
 
   return (
@@ -69,8 +72,13 @@ export default async function EventDetailPage({
 
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="text-2xl font-semibold sm:text-3xl">{event.title}</h1>
-        <StatusBadge status={event.status} endAt={event.end_at} />
+        <StatusBadge status={event.status} endAt={event.series_end_at} />
         {event.status === "live" ? <span className="text-muted">{registrants.length} registered</span> : null}
+        {canEdit ? (
+          <Link href={`/admin/events/${id}/edit`} className="ml-auto inline-flex min-h-tap items-center rounded-control border border-border px-4 font-medium hover:bg-band">
+            Edit event
+          </Link>
+        ) : null}
       </div>
 
       {event.status_reason ? (
@@ -142,9 +150,18 @@ export default async function EventDetailPage({
                 <dl className="grid flex-1 grid-cols-[auto_1fr] gap-x-4 gap-y-2">
                   <Detail label="Title">{event.title}</Detail>
                   <Detail label="County">{event.county}</Detail>
-                  <Detail label="Date">{formatDate(event.start_at)}</Detail>
+                  <Detail label={repeats ? "First date" : "Date"}>{formatDate(event.start_at)}</Detail>
+                  {repeats ? <Detail label="Repeats">{repeats}</Detail> : null}
                   <Detail label="Time">{formatTimeRange(event.start_at, event.end_at)}</Detail>
                   <Detail label="Capacity">{event.capacity ? `${event.capacity} people` : "No limit"}</Detail>
+                  {event.external_registration_url ? (
+                    <Detail label="Registration">
+                      On another website:{" "}
+                      <a href={event.external_registration_url} target="_blank" rel="noopener noreferrer" className="break-all text-primary underline underline-offset-4">
+                        {event.external_registration_url}
+                      </a>
+                    </Detail>
+                  ) : null}
                 </dl>
               </div>
               <h3 className="mt-4 font-medium">Description</h3>
@@ -165,9 +182,11 @@ export default async function EventDetailPage({
                   <Detail label="Phone">{host.host_phone}</Detail>
                   <Detail label="About the group">{host.about_group}</Detail>
                   <Detail label="Exact address">{host.exact_address}</Detail>
-                  <Detail label="Emergency contact">
-                    {host.emergency_contact_name}, {host.emergency_contact_phone}
-                  </Detail>
+                  {host.emergency_contact_name || host.emergency_contact_phone ? (
+                    <Detail label="Emergency contact">
+                      {[host.emergency_contact_name, host.emergency_contact_phone].filter(Boolean).join(", ")}
+                    </Detail>
+                  ) : null}
                   <Detail label="Submitted">
                     {timeAgo(event.submitted_at)} ({formatDateTime(event.submitted_at)})
                   </Detail>
@@ -179,16 +198,57 @@ export default async function EventDetailPage({
           </div>
 
           {event.status === "live" || registrants.length ? (
-            <section className="rounded-card border border-border bg-surface p-4">
-              <h2 className="font-semibold">Registered ({registrants.length})</h2>
-              {registrants.length ? (
-                <ul className="mt-2 flex flex-wrap gap-2">
-                  {registrants.map((r, i) => (
-                    <li key={i} className="rounded-full border border-border px-3 py-1">
-                      {r.name}
-                    </li>
-                  ))}
-                </ul>
+            <section aria-labelledby="attendees-heading" className="rounded-card border border-border bg-surface p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h2 id="attendees-heading" className="font-semibold">
+                  Attendees ({registrants.length})
+                </h2>
+                {registrants.length ? (
+                  <a
+                    href={`/admin/events/${id}/attendees`}
+                    download
+                    className="inline-flex min-h-tap items-center rounded-control border border-border px-4 font-medium hover:bg-band"
+                  >
+                    Download all as CSV
+                  </a>
+                ) : null}
+              </div>
+              <p className="mt-1 text-sm text-muted">
+                Only you see emails. The host sees first names only. Everything is deleted 7 days after each date.
+              </p>
+              {event.external_registration_url ? (
+                <p className="mt-2 text-muted">People register on the organiser&apos;s own site, so they don&apos;t appear here.</p>
+              ) : registrants.length ? (
+                groupByOccurrence(registrants).map((group) => (
+                  <div key={group.start} className="mt-4">
+                    {repeats ? (
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <h3 className="font-medium">
+                          {formatDate(group.start)} · {group.rows.length} {group.rows.length === 1 ? "person" : "people"}
+                          {event.capacity ? ` of ${event.capacity}` : ""}
+                        </h3>
+                        <a
+                          href={`/admin/events/${id}/attendees?date=${encodeURIComponent(group.start)}`}
+                          download
+                          className="text-sm font-medium text-primary underline underline-offset-4"
+                        >
+                          Download this date<span className="sr-only">, {formatDate(group.start)}</span>
+                        </a>
+                      </div>
+                    ) : null}
+                    <ul className="mt-2 divide-y divide-border rounded-control border border-border">
+                      {group.rows.map((r, i) => (
+                        <li key={i} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 px-3 py-2">
+                          <span className="font-medium">{r.name}</span>
+                          <a href={`mailto:${r.email}`} className="min-w-0 break-all text-primary underline underline-offset-4">
+                            {r.email}
+                          </a>
+                          <span className="w-full text-sm text-muted sm:w-auto">Registered {timeAgo(r.created_at)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))
               ) : (
                 <p className="mt-2 text-muted">Nobody has registered yet.</p>
               )}

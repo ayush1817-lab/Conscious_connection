@@ -1,8 +1,9 @@
 import Link from "next/link";
+import { describeRecurrence } from "@/lib/events/recurrence";
 import { formatShortDate, formatTimeRange } from "@/lib/format";
-import type { PublicEvent } from "@/lib/public/events";
+import { seriesOf, type PublicEvent } from "@/lib/public/events";
 import { EventPoster } from "./event-poster";
-import { CalendarIcon, PinIcon } from "./icons";
+import { CalendarIcon, PinIcon, RepeatIcon } from "./icons";
 
 // Card for event lists: poster, title, county only, date and times (spec section 7).
 // `badge` is "Few places left" / "Event full" when the list knows it.
@@ -19,6 +20,7 @@ export function EventCard({
   level?: 2 | 3;
 }) {
   const Heading = level === 2 ? "h2" : "h3";
+  const repeats = describeRecurrence(seriesOf(event));
   return (
     <article className="event-card group relative flex flex-col overflow-hidden rounded-card border border-border bg-surface shadow-sm transition-shadow hover:shadow-md">
       <EventPoster event={event} sizes="(min-width: 1024px) 360px, (min-width: 640px) 50vw, 100vw" />
@@ -40,8 +42,15 @@ export function EventCard({
         </p>
         <p className="flex items-center gap-2 text-muted">
           <CalendarIcon size={18} className="shrink-0 text-accent" />
+          {repeats ? "Next: " : ""}
           {formatShortDate(event.start_at)} · {formatTimeRange(event.start_at, event.end_at)}
         </p>
+        {repeats ? (
+          <p className="flex items-center gap-2 font-medium text-primary">
+            <RepeatIcon size={18} className="shrink-0 text-accent" />
+            {repeats}
+          </p>
+        ) : null}
         <span
           className={`mt-auto inline-flex min-h-tap items-center justify-center rounded-control border px-4 font-medium ${
             full ? "border-border text-muted" : "border-primary text-primary group-hover:bg-primary group-hover:text-on-primary"

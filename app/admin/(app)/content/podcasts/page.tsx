@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { ItemRow, Thumb } from "@/components/content/item-list";
 import { ButtonLink } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
-import { youtubeThumbnailUrl, youtubeVideoId } from "@/lib/content/youtube";
+import { podcastMedia, SOURCE_LABELS } from "@/lib/content/podcast-media";
+import { youtubeThumbnailUrl } from "@/lib/content/youtube";
 import { formatDate } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 
@@ -12,7 +13,7 @@ export default async function PodcastsPage() {
   const supabase = await createClient();
   const { data: podcasts } = await supabase
     .from("podcasts")
-    .select("id, title, youtube_url, published, published_at, created_at")
+    .select("id, title, source, youtube_url, spotify_url, audio_path, published, published_at, created_at")
     .order("created_at", { ascending: false });
 
   return (
@@ -21,7 +22,8 @@ export default async function PodcastsPage() {
       {podcasts?.length ? (
         <ul className="divide-y divide-border rounded-card border border-border bg-surface px-4">
           {podcasts.map((p) => {
-            const videoId = youtubeVideoId(p.youtube_url);
+            const media = podcastMedia(p);
+            const where = p.source === "audio" ? "Uploaded audio file" : `${SOURCE_LABELS[p.source]} link: ${p.source === "youtube" ? p.youtube_url : p.spotify_url}`;
             return (
               <ItemRow
                 key={p.id}
@@ -29,8 +31,8 @@ export default async function PodcastsPage() {
                 title={p.title}
                 published={p.published}
                 date={p.published && p.published_at ? formatDate(p.published_at) : null}
-                detail={`YouTube link: ${p.youtube_url}`}
-                thumb={<Thumb src={videoId ? youtubeThumbnailUrl(videoId) : null} label="No video" />}
+                detail={where}
+                thumb={<Thumb src={media?.kind === "youtube" ? youtubeThumbnailUrl(media.videoId) : null} label={media ? SOURCE_LABELS[p.source] : "Missing"} />}
               />
             );
           })}

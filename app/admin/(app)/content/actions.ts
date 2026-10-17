@@ -4,9 +4,14 @@ import { revalidatePublicSite } from "@/lib/revalidate";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth/admin";
 import { IMAGE_TARGETS, isUploadedImagePath, type ImageTarget } from "@/lib/content/images";
+import { sectionDef } from "@/lib/content/sections";
 import { slugify } from "@/lib/content/slug";
+import { AUDIO_BUCKET, isAudioPath } from "@/lib/content/podcast-audio";
+import type { PodcastSource } from "@/lib/content/podcast-media";
+import { spotifyEpisodeId, spotifyEpisodeUrl } from "@/lib/content/spotify";
 import { youtubeVideoId } from "@/lib/content/youtube";
 import { setFlash } from "@/lib/flash";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 export type FormState = { error?: string };
@@ -51,22 +56,26 @@ async function done(message = SAVED) {
 export async function saveSection(id: string, _prev: FormState, formData: FormData): Promise<FormState> {
   await requireAdmin();
   const supabase = await createClient();
-  const { data: section } = await supabase.from("site_sections").select("image_path").eq("id", id).maybeSingle();
+  const { data: section } = await supabase.from("site_sections").select("page, key, image_path").eq("id", id).maybeSingle();
   if (!section) return { error: "This section can't be found. Please reload the page." };
+  const def = sectionDef(section.page, section.key);
 
-  const heading = text(formData, "heading");
-  const body = text(formData, "body");
-  const image = imagePath(formData, "image_path", section.image_path, IMAGE_TARGETS.sections);
+  const heading = def?.heading === "none" ? "" : text(formData, "heading");
+  const body = def && !def.body ? "" : text(formData, "body");
+  const image = def && !def.image ? { path: null } : imagePath(formData, "image_path", section.image_path, IMAGE_TARGETS.sections);
+  const alt = image.path ? text(formData, "image_alt") : "";
   const error =
-    (!heading ? "Please add a heading." : null) ??
+    (!heading && def?.heading !== "optional" && def?.heading !== "none" ? "Please add a heading." : null) ??
     tooLong(heading, 150, "The heading") ??
     tooLong(body, 3000, "The text") ??
-    ("error" in image ? image.error! : null);
+    ("error" in image ? image.error! : null) ??
+    (image.path && !alt ? "Please describe the image, for people who use screen readers." : null) ??
+    tooLong(alt, 300, "The image description");
   if (error) return { error };
 
   const { error: dbError } = await supabase
     .from("site_sections")
-    .update({ heading, body, image_path: image.path ?? null })
+    .update({ heading, body, image_path: image.path ?? null, image_alt: alt || null })
     .eq("id", id);
   if (dbError) return { error: "Your changes couldn't be saved. Please try again." };
   if (section.image_path !== image.path) await removeImage(supabase, IMAGE_TARGETS.sections, section.image_path);
@@ -93,12 +102,14 @@ function storyFields(formData: FormData, current: string | null) {
   const title = text(formData, "title");
   const body = text(formData, "body");
   const cover = imagePath(formData, "cover_path", current, IMAGE_TARGETS.stories);
+  const authorName = text(formData, "author_name");
   const error =
     (!title ? "Please add a title." : null) ??
     tooLong(title, 150, "The title") ??
     tooLong(body, 20000, "The story") ??
+    tooLong(authorName, 80, "The name") ??
     ("error" in cover ? cover.error! : null);
-  return { title, body, cover: cover.path ?? null, error };
+  return { title, body, cover: cover.path ?? null, author_name: authorName || null, error };
 }
 
 export async function createStory(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -109,7 +120,7 @@ export async function createStory(_prev: FormState, formData: FormData): Promise
 
   const { data, error } = await supabase
     .from("stories")
-    .insert({ title: fields.title, body: fields.body, cover_path: fields.cover, slug: await uniqueSlug(supabase, fields.title) })
+    .insert({ title: fields.title, body: fields.body, cover_path: fields.cover, author_name: fields.author_name, slug: await uniqueSlug(supabase, fields.title) })
     .select("id")
     .single();
   if (error) return { error: "The story couldn't be saved. Please try again." };
@@ -128,7 +139,7 @@ export async function saveStory(id: string, _prev: FormState, formData: FormData
 
   const { error } = await supabase
     .from("stories")
-    .update({ title: fields.title, body: fields.body, cover_path: fields.cover })
+    .update({ title: fields.title, body: fields.body, cover_path: fields.cover, author_name: fields.author_name })
     .eq("id", id);
   if (error) return { error: "Your changes couldn't be saved. Please try again." };
   if (story.cover_path !== fields.cover) await removeImage(supabase, IMAGE_TARGETS.stories, story.cover_path);
@@ -172,22 +183,54 @@ export async function deleteStory(id: string, _prev: FormState, _formData: FormD
 // Podcasts
 // ---------------------------------------------------------------------------
 
-function podcastFields(formData: FormData) {
+// Exactly one of the three sources is kept; the other two are cleared.
+async function podcastFields(formData: FormData) {
   const title = text(formData, "title");
   const description = text(formData, "description");
+  const sourceValue = text(formData, "source") || "youtube";
+  const source: PodcastSource = sourceValue === "spotify" || sourceValue === "audio" ? sourceValue : "youtube";
   const youtubeUrl = text(formData, "youtube_url");
-  const error =
+  const spotifyUrl = text(formData, "spotify_url");
+  const audioPath = text(formData, "audio_path");
+  const episodeId = spotifyEpisodeId(spotifyUrl);
+
+  let error =
     (!title ? "Please add a title." : null) ??
     tooLong(title, 150, "The title") ??
-    tooLong(description, 500, "The description") ??
-    (!youtubeUrl ? "Please paste the YouTube link." : null) ??
-    (youtubeVideoId(youtubeUrl) ? null : "That doesn't look like a YouTube video link. Copy it from the Share button on YouTube.");
-  return { title, description, youtube_url: youtubeUrl, error };
+    tooLong(description, 500, "The description");
+  if (!error && source === "youtube") {
+    error =
+      (!youtubeUrl ? "Please paste the YouTube link." : null) ??
+      (youtubeVideoId(youtubeUrl) ? null : "That doesn't look like a YouTube video link. Copy it from the Share button on YouTube.");
+  }
+  if (!error && source === "spotify") {
+    error =
+      (!spotifyUrl ? "Please paste the Spotify episode link." : null) ??
+      (episodeId ? null : "That doesn't look like a Spotify episode link. It should start with https://open.spotify.com/episode/");
+  }
+  if (!error && source === "audio") {
+    if (!audioPath) error = "Please upload the audio file.";
+    else if (!isAudioPath(audioPath)) error = "That audio file couldn't be used. Please upload it again.";
+    else {
+      const { data: exists } = await createAdminClient().storage.from(AUDIO_BUCKET).exists(audioPath);
+      if (!exists) error = "The audio file didn't finish uploading. Please upload it again.";
+    }
+  }
+  return {
+    title,
+    description,
+    source,
+    youtube_url: source === "youtube" ? youtubeUrl : null,
+    // Stored without the ?si= share code.
+    spotify_url: source === "spotify" && episodeId ? spotifyEpisodeUrl(episodeId) : null,
+    audio_path: source === "audio" ? audioPath : null,
+    error,
+  };
 }
 
 export async function createPodcast(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireAdmin();
-  const { error: invalid, ...fields } = podcastFields(formData);
+  const { error: invalid, ...fields } = await podcastFields(formData);
   if (invalid) return { error: invalid };
   const supabase = await createClient();
   const { data, error } = await supabase.from("podcasts").insert(fields).select("id").single();
@@ -198,11 +241,16 @@ export async function createPodcast(_prev: FormState, formData: FormData): Promi
 
 export async function savePodcast(id: string, _prev: FormState, formData: FormData): Promise<FormState> {
   await requireAdmin();
-  const { error: invalid, ...fields } = podcastFields(formData);
+  const { error: invalid, ...fields } = await podcastFields(formData);
   if (invalid) return { error: invalid };
   const supabase = await createClient();
+  const { data: before } = await supabase.from("podcasts").select("audio_path").eq("id", id).maybeSingle();
   const { data, error } = await supabase.from("podcasts").update(fields).eq("id", id).select("published").maybeSingle();
   if (error || !data) return { error: "Your changes couldn't be saved. Please try again." };
+  // A replaced or no-longer-used audio file is removed from storage.
+  if (before?.audio_path && before.audio_path !== fields.audio_path) {
+    await supabase.storage.from(AUDIO_BUCKET).remove([before.audio_path]);
+  }
   await done(data.published ? SAVED : "Saved. This podcast is still a draft.");
   return {};
 }
@@ -232,7 +280,8 @@ export async function setPodcastPublished(id: string, published: boolean) {
 export async function deletePodcast(id: string, _prev: FormState, _formData: FormData): Promise<FormState> {
   await requireAdmin();
   const supabase = await createClient();
-  await supabase.from("podcasts").delete().eq("id", id);
+  const { data: gone } = await supabase.from("podcasts").delete().eq("id", id).select("audio_path").maybeSingle();
+  if (gone?.audio_path) await supabase.storage.from(AUDIO_BUCKET).remove([gone.audio_path]);
   await done("Podcast deleted.");
   redirect("/admin/content/podcasts");
 }

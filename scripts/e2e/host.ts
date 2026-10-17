@@ -71,15 +71,15 @@ async function main() {
 
     console.log("\nNeeds changes: fix and resubmit");
     await page.goto(needsChanges);
-    check(await page.getByText("Please add what people should bring").isVisible(), "Karina's reason is at the top");
+    check(await page.getByText("Please add what people should bring").isVisible(), "the admin's reason is at the top");
     await axe(page, "host page (needs changes)");
     await page.getByLabel("Description").fill("Try hand-building with clay. Bring an apron; materials cost €10.");
     await page.getByRole("button", { name: "Resubmit for review" }).click();
-    await page.getByText("Waiting for Karina's review").waitFor();
+    await page.getByText("Waiting for review").waitFor();
     const resubmitted = await eventByToken(TEST_HOST_TOKENS.needsChanges);
     check(resubmitted.status === "pending" && resubmitted.description.includes("€10"), "the event is pending again with the fix");
-    check((await emails("E5", start)).some((e) => e.body.includes("resubmitted")), "E5 tells Karina it was resubmitted");
-    check(await page.getByText("Your changes have been sent to Karina").isVisible(), "the host sees it was sent");
+    check((await emails("E5", start)).some((e) => e.body.includes("resubmitted")), "E5 tells the admin it was resubmitted");
+    check(await page.getByText("Your changes have been sent to our team").isVisible(), "the host sees it was sent");
     check(!(await page.getByRole("button", { name: /Resubmit|Save/ }).count()), "a pending event is read-only");
 
     console.log("\nLive: edit");
@@ -125,19 +125,19 @@ async function main() {
     console.log("\nContact request");
     await page.goto(`${live}?tab=contact`);
     await page.getByRole("button", { name: "Request contact details" }).click();
-    await page.getByText("Tell Karina why").waitFor();
+    await page.getByText("Tell us why").waitFor();
     check(true, "a reason is required");
     await page.getByLabel(/Why do you need/).fill("The meeting point has moved.");
     await page.getByRole("button", { name: "Request contact details" }).click();
     await page.getByText("Request sent").waitFor();
-    check(await page.getByText("Waiting for Karina").isVisible(), "the request shows as waiting");
+    check(await page.getByText("Waiting for our team").isVisible(), "the request shows as waiting");
     check(!(await page.getByRole("button", { name: "Request contact details" }).count()), "only one open request at a time");
     const { data: request } = await service.from("contact_requests").select("id, status").eq("event_id", drum.id).single();
     const { data: requestItem } = await service.from("attention_items").select("id, needs_decision").eq("ref_id", request!.id).single();
     check(request?.status === "requested" && requestItem?.needs_decision === true, "a contact request needing a decision is created");
-    check((await emails("E7", start)).some((e) => e.subject.startsWith("Contact details request")), "E7 tells Karina");
+    check((await emails("E7", start)).some((e) => e.subject.startsWith("Contact details request")), "E7 tells the admin");
 
-    console.log("\nKarina sees every host action");
+    console.log("\nThe admin sees every host action");
     const admin = await browser.newPage();
     await admin.goto(`${BASE_URL}/admin/login`);
     await admin.getByLabel("Email").fill(env("SEED_ADMIN_EMAIL"));
@@ -145,6 +145,8 @@ async function main() {
     await admin.getByRole("button", { name: "Log in" }).click();
     await admin.getByRole("heading", { name: /Welcome/ }).waitFor();
     await admin.goto(`${BASE_URL}/admin/events`);
+    await admin.getByRole("heading", { name: "Events overview" }).waitFor();
+    await admin.getByText(/Attention items \(\d+\)/).first().waitFor();
     const overview = await admin.locator("main").innerText();
     check(/Attention items \(5\)/.test(overview), "the attention count includes the host's edit and request", overview.match(/Attention items \(\d+\)/)?.[0]);
     check(await admin.locator(`a[href="/admin/attention/${editItem!.id}"]`).first().isVisible(), "the host edit is listed");
@@ -168,7 +170,7 @@ async function main() {
     check((await eventByToken(TEST_HOST_TOKENS.live)).status === "cancelled", "the event is cancelled");
     const e9 = (await emails("E9", start)).map((e) => e.to_email).sort();
     check(e9.join() === people!.map((p) => p.email).sort().join(), "E9 goes to every registrant");
-    check((await emails("E7", start)).some((e) => e.subject.startsWith("Host cancelled")), "E7 tells Karina");
+    check((await emails("E7", start)).some((e) => e.subject.startsWith("Host cancelled")), "E7 tells the admin");
     const { data: cancelItem } = await service.from("attention_items").select("id").eq("event_id", drum.id).eq("type", "host_cancelled").is("resolved_at", null).single();
     check(!!cancelItem, "a host_cancelled attention item is created");
     const { data: activity } = await service.from("event_activity").select("actor").eq("event_id", drum.id).eq("action", "Cancelled").single();

@@ -16,6 +16,7 @@ export function ReasonDialog({
   hostEmail,
   action,
   variant = "secondary",
+  audience = "the host",
 }: {
   trigger: string;
   title: string;
@@ -24,6 +25,8 @@ export function ReasonDialog({
   hostEmail: string;
   action: ReasonAction;
   variant?: "secondary" | "danger";
+  // Who the reason is emailed to, e.g. "the writer" for story submissions.
+  audience?: string;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const textRef = useRef<HTMLTextAreaElement>(null);
@@ -61,7 +64,7 @@ export function ReasonDialog({
           </div>
           <div>
             <label htmlFor={`${id}-reason`} className="mb-1 block font-medium">
-              Explain your decision to the host <span className="font-normal text-muted">(required)</span>
+              Explain your decision to {audience} <span className="font-normal text-muted">(required)</span>
             </label>
             <textarea
               ref={textRef}
