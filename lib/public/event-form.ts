@@ -31,8 +31,6 @@ export type EventFormValues = {
   host_email: string;
   host_phone: string;
   about_group: string;
-  emergency_contact_name: string;
-  emergency_contact_phone: string;
 };
 
 export const EMPTY_EVENT_FORM: EventFormValues = {
@@ -49,8 +47,6 @@ export const EMPTY_EVENT_FORM: EventFormValues = {
   host_email: "",
   host_phone: "",
   about_group: "",
-  emergency_contact_name: "",
-  emergency_contact_phone: "",
 };
 
 // Database-ready values.
@@ -69,8 +65,6 @@ export type PrivateFields = {
   host_email: string;
   host_phone: string;
   about_group: string;
-  emergency_contact_name: string;
-  emergency_contact_phone: string;
 };
 
 export function readEventForm(formData: FormData): EventFormValues {
@@ -130,8 +124,6 @@ export function validateEventForm(
   set("host_email", checkEmail(v.host_email));
   set("host_phone", checkPhone(v.host_phone, "your phone number"));
   set("about_group", checkText(v.about_group, "a little about your group", LIMITS.about));
-  set("emergency_contact_name", checkText(v.emergency_contact_name, "an emergency contact name", LIMITS.name));
-  set("emergency_contact_phone", checkPhone(v.emergency_contact_phone, "an emergency contact phone number"));
 
   if (Object.keys(errors).length || !start || !end) return { errors };
   return {
@@ -151,8 +143,6 @@ export function validateEventForm(
       host_email: v.host_email,
       host_phone: v.host_phone,
       about_group: v.about_group,
-      emergency_contact_name: v.emergency_contact_name,
-      emergency_contact_phone: v.emergency_contact_phone,
     },
   };
 }

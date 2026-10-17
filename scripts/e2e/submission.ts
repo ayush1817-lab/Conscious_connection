@@ -61,8 +61,7 @@ async function main() {
     await page.getByLabel("Your email").fill("Ciara.Test@Example.com");
     await page.getByLabel("Your phone").fill("087 123 4567");
     await page.getByLabel("About you or your group").fill("A small walking group");
-    await page.getByLabel("Name", { exact: true }).fill("Sorcha");
-    await page.getByLabel("Phone", { exact: true }).fill("086 765 4321");
+    check(!(await page.getByText("Emergency contact").count()), "hosts aren't asked for an emergency contact");
     await page.getByLabel(/I agree/).check();
     await page.getByRole("button", { name: "Submit event for review" }).click();
     check(await page.getByRole("button", { name: "Sending…" }).isDisabled().catch(() => true), "the button shows it's sending and can't be pressed twice");
@@ -86,7 +85,7 @@ async function main() {
     check(saved?.host_edit_token_hash === null, "no host link exists before approval");
     const d = saved?.event_private_details;
     check(
-      d?.exact_address === "Car park at Sliabh an Iarainn, Drumshanbo" && d.host_email === "ciara.test@example.com" && d.emergency_contact_name === "Sorcha",
+      d?.exact_address === "Car park at Sliabh an Iarainn, Drumshanbo" && d.host_email === "ciara.test@example.com" && d.emergency_contact_name === null,
       "every private detail is saved",
     );
 
@@ -115,7 +114,7 @@ async function main() {
     await admin.getByText("Only visible to you").first().waitFor();
     const detail = await admin.locator("main").innerText();
     check(
-      ["Car park at Sliabh an Iarainn", "Ciara Test", "ciara.test@example.com", "087 123 4567", "A small walking group", "Sorcha", "086 765 4321"].every((t) => detail.includes(t)),
+      ["Car park at Sliabh an Iarainn", "Ciara Test", "ciara.test@example.com", "087 123 4567", "A small walking group"].every((t) => detail.includes(t)),
       "the request shows all the private details",
     );
   } finally {

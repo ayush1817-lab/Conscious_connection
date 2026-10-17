@@ -254,8 +254,8 @@ export type Database = {
         Row: {
           about_group: string;
           created_at: string;
-          emergency_contact_name: string;
-          emergency_contact_phone: string;
+          emergency_contact_name: string | null;
+          emergency_contact_phone: string | null;
           event_id: string;
           exact_address: string;
           host_email: string;
@@ -268,8 +268,8 @@ export type Database = {
         Insert: {
           about_group: string;
           created_at?: string;
-          emergency_contact_name: string;
-          emergency_contact_phone: string;
+          emergency_contact_name?: string | null;
+          emergency_contact_phone?: string | null;
           event_id: string;
           exact_address: string;
           host_email: string;
@@ -281,8 +281,8 @@ export type Database = {
         Update: {
           about_group?: string;
           created_at?: string;
-          emergency_contact_name?: string;
-          emergency_contact_phone?: string;
+          emergency_contact_name?: string | null;
+          emergency_contact_phone?: string | null;
           event_id?: string;
           exact_address?: string;
           host_email?: string;
@@ -569,8 +569,8 @@ export type Database = {
           p_host_email: string;
           p_host_phone: string;
           p_about_group: string;
-          p_emergency_contact_name: string;
-          p_emergency_contact_phone: string;
+          p_emergency_contact_name?: string | null;
+          p_emergency_contact_phone?: string | null;
         };
         Returns: string;
       };

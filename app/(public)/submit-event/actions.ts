@@ -67,8 +67,9 @@ export async function submitEvent(_prev: SubmitState, formData: FormData): Promi
     p_host_email: details.host_email,
     p_host_phone: details.host_phone,
     p_about_group: details.about_group,
-    p_emergency_contact_name: details.emergency_contact_name,
-    p_emergency_contact_phone: details.emergency_contact_phone,
+    // No longer asked for (client feedback, Oct 2026); the columns are kept.
+    p_emergency_contact_name: null,
+    p_emergency_contact_phone: null,
   });
   if (error || !eventId) {
     console.error("submit_event failed", error);

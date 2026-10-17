@@ -34,7 +34,7 @@ export default function PrivacyPage() {
           <h2 className="font-heading text-xl font-semibold">When you host an event</h2>
           <ul className="mt-2 list-disc space-y-1 pl-6">
             <li>The title, county, date, times, description and poster are shown publicly.</li>
-            <li>The exact address, your contact details and your emergency contact are only seen by our team.</li>
+            <li>The exact address and your contact details are only seen by our team.</li>
             <li>The exact address is emailed to people who register.</li>
             <li>Your private details are deleted 7 days after the event.</li>
           </ul>

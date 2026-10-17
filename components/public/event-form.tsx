@@ -173,14 +173,6 @@ export function EventForm({
           defaultValue={v.about_group}
           error={e.about_group}
         />
-        <div>
-          <p className="font-medium">Emergency contact</p>
-          <p className="mb-2 text-sm text-muted">Only used if something goes wrong on the day.</p>
-          <div className="grid gap-5 sm:grid-cols-2">
-            <InputField id="emergency_contact_name" label="Name" required maxLength={LIMITS.name} defaultValue={v.emergency_contact_name} error={e.emergency_contact_name} />
-            <InputField id="emergency_contact_phone" label="Phone" type="tel" required maxLength={30} defaultValue={v.emergency_contact_phone} error={e.emergency_contact_phone} />
-          </div>
-        </div>
       </fieldset>
 
       {withConsent ? (

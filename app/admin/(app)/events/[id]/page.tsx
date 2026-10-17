@@ -165,9 +165,11 @@ export default async function EventDetailPage({
                   <Detail label="Phone">{host.host_phone}</Detail>
                   <Detail label="About the group">{host.about_group}</Detail>
                   <Detail label="Exact address">{host.exact_address}</Detail>
-                  <Detail label="Emergency contact">
-                    {host.emergency_contact_name}, {host.emergency_contact_phone}
-                  </Detail>
+                  {host.emergency_contact_name || host.emergency_contact_phone ? (
+                    <Detail label="Emergency contact">
+                      {[host.emergency_contact_name, host.emergency_contact_phone].filter(Boolean).join(", ")}
+                    </Detail>
+                  ) : null}
                   <Detail label="Submitted">
                     {timeAgo(event.submitted_at)} ({formatDateTime(event.submitted_at)})
                   </Detail>
