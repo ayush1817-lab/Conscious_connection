@@ -6,6 +6,7 @@ import { ArrowLeftIcon, ArrowRightIcon } from "@/components/public/icons";
 import { PageIntro } from "@/components/public/section-heading";
 import { countyBySlug } from "@/lib/counties";
 import { getPlacesLeft, listEvents, PAGE_SIZE, placesBadge, type When } from "@/lib/public/events";
+import { getPageIntro } from "@/lib/public/content";
 
 export const metadata: Metadata = {
   title: "Events",
@@ -21,7 +22,7 @@ export default async function EventsPage({ searchParams }: Props) {
   const when: When = params.when === "week" || params.when === "month" ? params.when : "all";
   const page = Math.max(1, Math.floor(Number(params.page)) || 1);
 
-  const { events, total } = await listEvents({ county: county?.name ?? null, when, page });
+  const [{ events, total }, intro] = await Promise.all([listEvents({ county: county?.name ?? null, when, page }), getPageIntro("events")]);
   const places = await getPlacesLeft(events.filter((e) => e.capacity).map((e) => e.id));
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -36,7 +37,7 @@ export default async function EventsPage({ searchParams }: Props) {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
-      <PageIntro title="Events">Discover local events for LGBTQ+ women and non-binary people across rural Ireland.</PageIntro>
+      <PageIntro title={intro.heading} intro={intro.body} />
 
       <EventFilters county={county?.slug ?? ""} when={when} />
 

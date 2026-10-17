@@ -79,11 +79,11 @@ export default async function HomePage() {
         )}
         <ul className="home-values grid gap-6 text-center sm:grid-cols-3">
           {[
-            { icon: CalendarIcon, title: "Local events", text: "Find gatherings near you across rural counties." },
-            { icon: PeopleIcon, title: "A safe and inclusive space", text: "For LGBTQ+ women and non-binary people." },
-            { icon: HeartIcon, title: "Community led", text: "Created by and for our community." },
-          ].map(({ icon: Icon, title, text }) => (
-            <li key={title} className="home-value">
+            { icon: CalendarIcon, card: sections.value_1 },
+            { icon: PeopleIcon, card: sections.value_2 },
+            { icon: HeartIcon, card: sections.value_3 },
+          ].map(({ icon: Icon, card: { key, heading: title, body: text } }) => (
+            <li key={key} className="home-value">
               <span className="home-value-icon flex h-14 w-14 items-center justify-center rounded-full bg-hero text-primary">
                 <Icon size={28} />
               </span>

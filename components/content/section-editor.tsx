@@ -64,7 +64,7 @@ export function SectionEditor({ def, section, action }: { def: SectionDef; secti
               <input id={`${id}-heading`} name="heading" value={heading} maxLength={150} onChange={(e) => setHeading(e.target.value)} className={input} />
             </div>
           ) : null}
-          {def.body ? <TextEditor label="Text" name="body" value={body} onChange={setBody} rows={5} maxLength={3000} /> : null}
+          {def.body ? <TextEditor label={def.bodyLabel ?? "Text"} name="body" value={body} onChange={setBody} rows={5} maxLength={3000} /> : null}
           <FormError error={state.error} />
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
             <SaveButton dirty={dirty} />

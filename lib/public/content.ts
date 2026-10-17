@@ -30,6 +30,12 @@ export async function getSections(page: ContentPage) {
   ) as Record<string, Section>;
 }
 
+// The title and introduction of one of the other public pages (Website content > Other pages).
+export async function getPageIntro(key: string): Promise<Section> {
+  const sections = await getSections("pages");
+  return sections[key];
+}
+
 // The photo slots that have a photo, in order.
 export function photosOf(sections: Record<string, Section>) {
   return PHOTO_KEYS.map((k) => sections[k]).filter((s): s is Section => Boolean(s?.image_path));
