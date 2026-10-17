@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ConnectionLoops } from "@/components/public/brand-mark";
 import { BackgroundWaves } from "@/components/public/background-waves";
 import { EventCard } from "@/components/public/event-card";
+import { PhotoGrid } from "@/components/public/photo-grid";
 import { CalendarIcon, HeartIcon, PeopleIcon } from "@/components/public/icons";
 import { SectionHeading } from "@/components/public/section-heading";
 import { StoryCard } from "@/components/public/story-card";
@@ -10,7 +11,7 @@ import { YouTubeEmbed } from "@/components/public/youtube-embed";
 import { buttonClass } from "@/components/ui/button";
 import { RichText } from "@/lib/content/rich-text";
 import { youtubeVideoId } from "@/lib/content/youtube";
-import { getGallery, getPodcasts, getSections, getStories } from "@/lib/public/content";
+import { getGallery, getPodcasts, getSections, getStories, photosOf } from "@/lib/public/content";
 import { getPlacesLeft, getUpcomingEvents, placesBadge } from "@/lib/public/events";
 import { publicImageUrl } from "@/lib/storage";
 
@@ -24,6 +25,7 @@ export default async function HomePage() {
     getGallery(6),
   ]);
   const { hero, intro, host_cta: hostCta } = sections;
+  const photos = photosOf(sections);
   const places = await getPlacesLeft(events.filter((e) => e.capacity).map((e) => e.id));
   const podcast = podcasts[0];
   const videoId = podcast ? youtubeVideoId(podcast.youtube_url) : null;
@@ -52,7 +54,7 @@ export default async function HomePage() {
           <div className="home-hero-media">
           <div className="home-hero-photo relative aspect-[4/3] overflow-hidden rounded-card bg-band">
             {hero?.image_path ? (
-              <Image src={publicImageUrl("content", hero.image_path)} alt="" fill preload sizes="(min-width: 1536px) 752px, (min-width: 768px) 46vw, 100vw" className="object-cover" />
+              <Image src={publicImageUrl("content", hero.image_path)} alt={hero.image_alt} fill preload sizes="(min-width: 1536px) 752px, (min-width: 768px) 46vw, 100vw" className="object-cover" />
             ) : (
               <Image src="/images/community-gathering.webp" alt="" fill preload sizes="(min-width: 1536px) 752px, (min-width: 768px) 46vw, 100vw" className="object-cover" />
             )}
@@ -91,6 +93,14 @@ export default async function HomePage() {
           ))}
         </ul>
       </section>
+
+      {/* Event photos (Website content > Homepage) */}
+      {photos.length ? (
+        <section aria-labelledby="photos-heading" className="home-section mx-auto max-w-6xl px-4 py-8">
+          <SectionHeading id="photos-heading" title="Moments from our events" link={{ href: "/gallery", label: "See the gallery" }} />
+          <PhotoGrid photos={photos} />
+        </section>
+      ) : null}
 
       {/* Upcoming events */}
       <section aria-labelledby="events-heading" className="home-section home-events mx-auto max-w-6xl px-4 py-8">

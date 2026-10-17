@@ -3,6 +3,7 @@
 import { useId, useRef, useState } from "react";
 import { createPosterUpload } from "@/app/(public)/submit-event/actions";
 import { imageProblem } from "@/lib/content/images";
+import { prepareImage } from "@/lib/content/prepare-image";
 import { createClient } from "@/lib/supabase/browser";
 import { publicImageUrl } from "@/lib/storage";
 import { FieldError } from "./forms/fields";
@@ -31,9 +32,11 @@ export function PosterUpload({
   const id = useId();
   const shownError = problem ?? error;
 
-  async function upload(file: File | undefined) {
-    if (!file) return;
+  async function upload(picked: File | undefined) {
+    if (!picked) return;
     setProblem(null);
+    // Phone photos are resized and compressed before upload.
+    const file = await prepareImage(picked);
     const local = imageProblem(file);
     if (local) return setProblem(local);
     setBusy(true);
@@ -62,7 +65,7 @@ export function PosterUpload({
         Event poster <span className="font-normal text-muted">(optional)</span>
       </p>
       <p id={`${id}-hint`} className="mb-2 text-sm text-muted">
-        JPG, PNG or WebP, up to 5MB. Without one, we show a simple card with your county and date.
+        JPG, PNG or WebP. Large phone photos are resized automatically. Without one, we show a simple card with your county and date.
       </p>
       <input
         ref={inputRef}

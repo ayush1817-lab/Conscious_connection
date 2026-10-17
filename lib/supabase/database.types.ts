@@ -472,6 +472,7 @@ export type Database = {
           created_at: string;
           heading: string;
           id: string;
+          image_alt: string | null;
           image_path: string | null;
           key: string;
           page: string;
@@ -484,6 +485,7 @@ export type Database = {
           created_at?: string;
           heading?: string;
           id?: string;
+          image_alt?: string | null;
           image_path?: string | null;
           key: string;
           page: string;
@@ -495,6 +497,7 @@ export type Database = {
           created_at?: string;
           heading?: string;
           id?: string;
+          image_alt?: string | null;
           image_path?: string | null;
           key?: string;
           page?: string;

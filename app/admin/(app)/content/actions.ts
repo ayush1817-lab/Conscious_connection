@@ -4,6 +4,7 @@ import { revalidatePublicSite } from "@/lib/revalidate";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth/admin";
 import { IMAGE_TARGETS, isUploadedImagePath, type ImageTarget } from "@/lib/content/images";
+import { sectionDef } from "@/lib/content/sections";
 import { slugify } from "@/lib/content/slug";
 import { youtubeVideoId } from "@/lib/content/youtube";
 import { setFlash } from "@/lib/flash";
@@ -51,22 +52,26 @@ async function done(message = SAVED) {
 export async function saveSection(id: string, _prev: FormState, formData: FormData): Promise<FormState> {
   await requireAdmin();
   const supabase = await createClient();
-  const { data: section } = await supabase.from("site_sections").select("image_path").eq("id", id).maybeSingle();
+  const { data: section } = await supabase.from("site_sections").select("page, key, image_path").eq("id", id).maybeSingle();
   if (!section) return { error: "This section can't be found. Please reload the page." };
+  const def = sectionDef(section.page, section.key);
 
-  const heading = text(formData, "heading");
-  const body = text(formData, "body");
-  const image = imagePath(formData, "image_path", section.image_path, IMAGE_TARGETS.sections);
+  const heading = def?.heading === "none" ? "" : text(formData, "heading");
+  const body = def && !def.body ? "" : text(formData, "body");
+  const image = def && !def.image ? { path: null } : imagePath(formData, "image_path", section.image_path, IMAGE_TARGETS.sections);
+  const alt = image.path ? text(formData, "image_alt") : "";
   const error =
-    (!heading ? "Please add a heading." : null) ??
+    (!heading && def?.heading !== "optional" && def?.heading !== "none" ? "Please add a heading." : null) ??
     tooLong(heading, 150, "The heading") ??
     tooLong(body, 3000, "The text") ??
-    ("error" in image ? image.error! : null);
+    ("error" in image ? image.error! : null) ??
+    (image.path && !alt ? "Please describe the image, for people who use screen readers." : null) ??
+    tooLong(alt, 300, "The image description");
   if (error) return { error };
 
   const { error: dbError } = await supabase
     .from("site_sections")
-    .update({ heading, body, image_path: image.path ?? null })
+    .update({ heading, body, image_path: image.path ?? null, image_alt: alt || null })
     .eq("id", id);
   if (dbError) return { error: "Your changes couldn't be saved. Please try again." };
   if (section.image_path !== image.path) await removeImage(supabase, IMAGE_TARGETS.sections, section.image_path);

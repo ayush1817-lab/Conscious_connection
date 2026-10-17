@@ -2,12 +2,15 @@
 
 import { useId, useRef, useState } from "react";
 import { imageProblem, newImagePath, type ImageTarget } from "@/lib/content/images";
+import { prepareImage } from "@/lib/content/prepare-image";
 import { createClient } from "@/lib/supabase/browser";
 import { publicImageUrl } from "@/lib/storage";
 
 // Upload straight from the browser to Supabase Storage (admin-only by RLS), so
 // large images don't pass through the server. The form then saves the path.
-export async function uploadImage(file: File, target: ImageTarget): Promise<{ path: string } | { error: string }> {
+// Photos are resized and compressed in the browser first (see prepareImage).
+export async function uploadImage(original: File, target: ImageTarget): Promise<{ path: string } | { error: string }> {
+  const file = await prepareImage(original);
   const problem = imageProblem(file);
   if (problem) return { error: problem };
   const path = newImagePath(target.folder, file.type);
@@ -90,7 +93,7 @@ export function ImagePicker({
         </div>
       </div>
       <p id={`${id}-hint`} className="mt-1 text-sm text-muted">
-        JPG, PNG or WebP, up to 5MB.
+        JPG, PNG or WebP. Large phone photos are resized automatically.
       </p>
       {error ? (
         <p role="alert" className="mt-1 font-medium text-danger">
