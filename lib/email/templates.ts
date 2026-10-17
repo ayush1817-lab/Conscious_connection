@@ -25,6 +25,7 @@ type EventSummary = {
   end_at: string;
   recurrence_rule?: unknown;
   recurrence_until?: string | null;
+  external_registration_url?: string | null;
 };
 
 const SIGN_OFF = "Thanks,\nConscious Connections";
@@ -62,7 +63,15 @@ export function newSubmissionEmail(args: { event: EventSummary; hostName: string
         ? `${args.hostName} has made the changes you asked for and resubmitted "${args.event.title}".`
         : `${args.hostName} has submitted "${args.event.title}" for review.`,
     },
-    { kind: "details", rows: [["Event", args.event.title], ...whenWhere(args.event), ["About the group", args.about]] },
+    {
+      kind: "details",
+      rows: [
+        ["Event", args.event.title],
+        ...whenWhere(args.event),
+        ...(args.event.external_registration_url ? [["Registration", `On another website: ${args.event.external_registration_url}`] as [string, string]] : []),
+        ["About the group", args.about],
+      ],
+    },
     { kind: "button", label: "Review the event", url: args.adminUrl },
   ]);
 }

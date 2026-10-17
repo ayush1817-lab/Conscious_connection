@@ -7,7 +7,7 @@ import { createPublicClient } from "@/lib/supabase/public";
 // still limits rows to live events whose series hasn't ended; it adds the next
 // occurrence of each event. The filters below repeat that rule on purpose.
 const LISTING_COLUMNS =
-  "id, title, county, start_at, end_at, description, poster_path, capacity, recurrence_rule, recurrence_until, next_start_at, next_end_at" as const;
+  "id, title, county, start_at, end_at, description, poster_path, capacity, recurrence_rule, recurrence_until, next_start_at, next_end_at, external_registration_url" as const;
 
 export type PublicEvent = {
   id: string;
@@ -24,6 +24,8 @@ export type PublicEvent = {
   capacity: number | null;
   recurrence_rule: unknown;
   recurrence_until: string | null;
+  // When set, people register on this other website instead of with us.
+  external_registration_url: string | null;
 };
 
 type ListingRow = {
@@ -39,6 +41,7 @@ type ListingRow = {
   recurrence_until: string | null;
   next_start_at: string;
   next_end_at: string;
+  external_registration_url: string | null;
 };
 
 function toPublicEvent(row: ListingRow): PublicEvent {
@@ -55,6 +58,7 @@ function toPublicEvent(row: ListingRow): PublicEvent {
     capacity: row.capacity,
     recurrence_rule: row.recurrence_rule,
     recurrence_until: row.recurrence_until,
+    external_registration_url: row.external_registration_url,
   };
 }
 

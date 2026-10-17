@@ -20,7 +20,7 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
   const { data: event } = await supabase
     .from("events")
     .select(
-      "id, title, county, start_at, end_at, description, poster_path, capacity, recurrence_rule, recurrence_until, status, event_private_details(exact_address, host_name, host_email, host_phone, about_group), registrations(count)",
+      "id, title, county, start_at, end_at, description, poster_path, capacity, recurrence_rule, recurrence_until, external_registration_url, status, event_private_details(exact_address, host_name, host_email, host_phone, about_group), registrations(count)",
     )
     .eq("id", id)
     .maybeSingle();

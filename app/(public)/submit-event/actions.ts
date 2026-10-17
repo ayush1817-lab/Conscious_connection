@@ -67,7 +67,11 @@ export async function submitEvent(_prev: SubmitState, formData: FormData): Promi
     p_host_email: details.host_email,
     p_host_phone: details.host_phone,
     p_about_group: details.about_group,
-    p_extra: { recurrence_rule: event.recurrence_rule, recurrence_until: event.recurrence_until },
+    p_extra: {
+      recurrence_rule: event.recurrence_rule,
+      recurrence_until: event.recurrence_until,
+      external_registration_url: event.external_registration_url,
+    },
   });
   if (error || !eventId) {
     console.error("submit_event failed", error);

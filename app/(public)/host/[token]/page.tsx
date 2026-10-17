@@ -208,7 +208,11 @@ async function Live({ host, token, query }: { host: HostEvent; token: string; qu
                 ))}
               </ul>
             ) : (
-              <p className="mt-3 text-muted">Nobody has registered yet. Share your event to let people know!</p>
+              <p className="mt-3 text-muted">
+                {e.external_registration_url
+                  ? "People register on the link you gave us, so they don't appear here."
+                  : "Nobody has registered yet. Share your event to let people know!"}
+              </p>
             )}
             <p className="mt-4 flex items-start gap-2 text-sm text-muted">
               <LockIcon size={18} className="shrink-0" /> To protect everyone&apos;s privacy you see first names only. If you

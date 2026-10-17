@@ -62,6 +62,7 @@ export async function registerForEvent(eventId: string, _prev: RegisterState, fo
     return { error: "Something went wrong and you're not registered yet. Please try again.", values };
   }
   if (result === "full") return { error: recurring ? "Sorry, that date has just filled up. Please pick another." : "Sorry, this event has just filled up.", values };
+  if (result === "external") return { error: "This event takes registrations on another website. Please use the Register here button.", values };
   if (result === "not_available")
     return { error: recurring ? "Sorry, that date is no longer taking registrations." : "Sorry, this event is no longer taking registrations.", values };
 

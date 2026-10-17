@@ -137,6 +137,17 @@ export function EventForm({
           error={e.capacity}
           className="sm:max-w-xs"
         />
+        <InputField
+          id="external_registration_url"
+          label="Registration link (optional)"
+          type="url"
+          inputMode="url"
+          maxLength={LIMITS.url}
+          placeholder="https://www.eventbrite.ie/…"
+          hint="Only if people must sign up on another website, like Eventbrite. We'll show a “Register here” button that opens it, instead of our own form."
+          defaultValue={v.external_registration_url}
+          error={e.external_registration_url}
+        />
         <PosterUpload defaultPath={v.poster_path} error={e.poster_path} onChange={() => setDirty(true)} />
       </fieldset>
 

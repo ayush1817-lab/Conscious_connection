@@ -316,6 +316,7 @@ export type Database = {
           recurrence_rule: Json | null;
           recurrence_until: string | null;
           series_end_at: string;
+          external_registration_url: string | null;
           start_at: string;
           status: Database["public"]["Enums"]["event_status"];
           status_reason: string | null;
@@ -338,6 +339,7 @@ export type Database = {
           recurrence_rule?: Json | null;
           recurrence_until?: string | null;
           series_end_at?: string;
+          external_registration_url?: string | null;
           start_at: string;
           status?: Database["public"]["Enums"]["event_status"];
           status_reason?: string | null;
@@ -359,6 +361,7 @@ export type Database = {
           recurrence_rule?: Json | null;
           recurrence_until?: string | null;
           series_end_at?: string;
+          external_registration_url?: string | null;
           start_at?: string;
           status?: Database["public"]["Enums"]["event_status"];
           status_reason?: string | null;
@@ -630,6 +633,7 @@ export type Database = {
           series_end_at: string;
           next_start_at: string;
           next_end_at: string;
+          external_registration_url: string | null;
         };
         Relationships: [];
       };

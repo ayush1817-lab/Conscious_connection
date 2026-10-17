@@ -29,7 +29,8 @@
     "test:host": "tsx scripts/e2e/host.ts",
     "test:resend": "tsx scripts/e2e/resend.ts",
     "test:stories": "tsx scripts/e2e/stories.ts",
-    "test:recurring": "tsx scripts/e2e/recurring.ts"
+    "test:recurring": "tsx scripts/e2e/recurring.ts",
+    "test:external": "tsx scripts/e2e/external-registration.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

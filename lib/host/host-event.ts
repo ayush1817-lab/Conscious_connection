@@ -17,7 +17,7 @@ export async function loadHostEvent(token: string) {
   const { data: event } = await db
     .from("events")
     .select(
-      "id, title, county, start_at, end_at, series_end_at, recurrence_rule, recurrence_until, description, poster_path, capacity, status, status_reason, host_edit_token_hash, event_private_details(exact_address, host_name, host_email, host_phone, about_group)",
+      "id, title, county, start_at, end_at, series_end_at, recurrence_rule, recurrence_until, external_registration_url, description, poster_path, capacity, status, status_reason, host_edit_token_hash, event_private_details(exact_address, host_name, host_email, host_phone, about_group)",
     )
     .eq("host_edit_token_hash", hash)
     .maybeSingle();

@@ -43,6 +43,7 @@ export const FIELD_LABELS: Record<string, string> = {
   capacity: "Capacity",
   recurrence_rule: "Repeats",
   recurrence_until: "Last date",
+  external_registration_url: "Registration link",
   exact_address: "Exact address",
   host_name: "Host name",
   host_email: "Host email",
@@ -56,7 +57,7 @@ export const FIELD_LABELS: Record<string, string> = {
 export function formatFieldValue(field: string, value: unknown): string {
   if (field === "recurrence_rule") return parseRule(value) ? "Every week" : "Doesn't repeat";
   if (value === null || value === undefined || value === "") {
-    return field === "capacity" ? "No limit" : field === "poster_path" ? "No poster" : field === "recurrence_until" ? "No end date" : "(empty)";
+    return field === "capacity" ? "No limit" : field === "poster_path" ? "No poster" : field === "recurrence_until" ? "No end date" : field === "external_registration_url" ? "Register on this site" : "(empty)";
   }
   if ((field === "start_at" || field === "end_at") && typeof value === "string") return formatDateTime(value);
   if (field === "poster_path") return "Poster image";

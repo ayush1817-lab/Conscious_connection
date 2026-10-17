@@ -124,3 +124,10 @@ export const RepeatIcon = (p: IconProps) => (
     <path d="M20 12.5v1a5 5 0 0 1-5 5H4" />
   </Icon>
 );
+export const ExternalIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M14 4h6v6" />
+    <path d="M20 4l-9 9" />
+    <path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" />
+  </Icon>
+);

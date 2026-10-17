@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { EventCard } from "@/components/public/event-card";
 import { EventPoster } from "@/components/public/event-poster";
-import { ArrowLeftIcon, CalendarIcon, ClockIcon, PeopleIcon, PinIcon, RepeatIcon } from "@/components/public/icons";
+import { ArrowLeftIcon, CalendarIcon, ClockIcon, ExternalIcon, PeopleIcon, PinIcon, RepeatIcon } from "@/components/public/icons";
 import { SectionHeading } from "@/components/public/section-heading";
 import { RegisterForm } from "@/components/public/register-form";
 import { ShareButton } from "@/components/public/share-button";
@@ -44,7 +44,9 @@ export default async function EventPage({ params }: Props) {
 
   // A recurring event: people pick one of the next few dates; places are per date.
   const repeats = describeRecurrence(seriesOf(event), { withUntil: true });
-  const occurrences = repeats ? upcomingOccurrences(seriesOf(event), DATES_SHOWN) : [];
+  // Registration on another website: no RSVP form, dates or places here.
+  const external = event.external_registration_url;
+  const occurrences = repeats && !external ? upcomingOccurrences(seriesOf(event), DATES_SHOWN) : [];
   const [places, similar, datePlaces] = await Promise.all([
     getPlacesLeft([event.id]),
     getSimilarEvents(event),
@@ -97,12 +99,16 @@ export default async function EventPage({ params }: Props) {
             </p>
           ) : null}
 
-          <a
-            href="#register"
-            className="mt-5 flex min-h-tap items-center justify-center rounded-control bg-primary px-5 font-medium text-on-primary hover:bg-primary-hover lg:hidden"
-          >
-            {full ? "Event full" : "Register for this event"}
-          </a>
+          {external ? (
+            <ExternalRegisterLink href={external} className="mt-5 lg:hidden" />
+          ) : (
+            <a
+              href="#register"
+              className="mt-5 flex min-h-tap items-center justify-center rounded-control bg-primary px-5 font-medium text-on-primary hover:bg-primary-hover lg:hidden"
+            >
+              {full ? "Event full" : "Register for this event"}
+            </a>
+          )}
 
           <section aria-labelledby="about-heading" className="mt-8">
             <h2 id="about-heading" className="font-heading text-2xl font-semibold">
@@ -113,7 +119,9 @@ export default async function EventPage({ params }: Props) {
 
           <p className="mt-6 flex items-start gap-2 rounded-card bg-hero p-4">
             <PinIcon className="mt-0.5 shrink-0 text-primary" />
-            The exact location is shared by email when you register.
+            {external
+              ? "The exact location is shared when you register on the organiser's site."
+              : "The exact location is shared by email when you register."}
           </p>
 
           <div className="mt-6">
@@ -126,7 +134,12 @@ export default async function EventPage({ params }: Props) {
             <h2 id="register-heading" className="font-heading text-xl font-semibold">
               Register
             </h2>
-            {full ? (
+            {external ? (
+              <>
+                <p className="mt-2 mb-4">This event requires registration via an external site.</p>
+                <ExternalRegisterLink href={external} />
+              </>
+            ) : full ? (
               <>
                 <p className="mt-2">Sorry, this event is full{repeats ? " on the next few dates" : ""}.</p>
                 <button
@@ -199,6 +212,22 @@ export default async function EventPage({ params }: Props) {
         </section>
       ) : null}
     </div>
+  );
+}
+
+// Opens the organiser's own registration page in a new tab.
+function ExternalRegisterLink({ href, className = "" }: { href: string; className?: string }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={`flex min-h-tap items-center justify-center gap-2 rounded-control bg-primary px-5 font-medium text-on-primary hover:bg-primary-hover ${className}`}
+    >
+      Register here
+      <ExternalIcon size={18} />
+      <span className="sr-only">(opens in a new tab)</span>
+    </a>
   );
 }
 

@@ -154,6 +154,14 @@ export default async function EventDetailPage({
                   {repeats ? <Detail label="Repeats">{repeats}</Detail> : null}
                   <Detail label="Time">{formatTimeRange(event.start_at, event.end_at)}</Detail>
                   <Detail label="Capacity">{event.capacity ? `${event.capacity} people` : "No limit"}</Detail>
+                  {event.external_registration_url ? (
+                    <Detail label="Registration">
+                      On another website:{" "}
+                      <a href={event.external_registration_url} target="_blank" rel="noopener noreferrer" className="break-all text-primary underline underline-offset-4">
+                        {event.external_registration_url}
+                      </a>
+                    </Detail>
+                  ) : null}
                 </dl>
               </div>
               <h3 className="mt-4 font-medium">Description</h3>

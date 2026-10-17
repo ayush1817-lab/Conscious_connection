@@ -10,6 +10,7 @@ export const LIMITS = {
   title: 120,
   description: 500,
   capacityMax: 500,
+  url: 2000,
   address: 300,
   name: 100,
   about: 300,
@@ -30,6 +31,8 @@ export type EventFormValues = {
   // "none" or "weekly"; repeat_until is the optional last date (YYYY-MM-DD).
   repeats: string;
   repeat_until: string;
+  // Optional: people register on another website instead of ours.
+  external_registration_url: string;
   exact_address: string;
   host_name: string;
   host_email: string;
@@ -48,6 +51,7 @@ export const EMPTY_EVENT_FORM: EventFormValues = {
   capacity: "",
   repeats: "none",
   repeat_until: "",
+  external_registration_url: "",
   exact_address: "",
   host_name: "",
   host_email: "",
@@ -66,6 +70,7 @@ export type EventFields = {
   capacity: number | null;
   recurrence_rule: RecurrenceRule | null;
   recurrence_until: string | null;
+  external_registration_url: string | null;
 };
 export type PrivateFields = {
   exact_address: string;
@@ -145,6 +150,13 @@ export function validateEventForm(
     poster = null;
   }
 
+  const externalUrl = v.external_registration_url ? normaliseUrl(v.external_registration_url) : null;
+  if (v.external_registration_url && !externalUrl) {
+    errors.external_registration_url = "Enter a full web address, like https://www.eventbrite.ie/…";
+  } else if (externalUrl && externalUrl.length > LIMITS.url) {
+    errors.external_registration_url = "That link is too long.";
+  }
+
   set("exact_address", checkText(v.exact_address, "the exact address", LIMITS.address));
   set("host_name", checkText(v.host_name, "your name", LIMITS.name));
   set("host_email", checkEmail(v.host_email));
@@ -164,6 +176,7 @@ export function validateEventForm(
       capacity,
       recurrence_rule: recurrence,
       recurrence_until: until,
+      external_registration_url: externalUrl,
     },
     details: {
       exact_address: v.exact_address,
@@ -192,6 +205,23 @@ export function eventToForm(
     capacity: event.capacity === null ? "" : String(event.capacity),
     repeats: repeatsOf(event.recurrence_rule),
     repeat_until: event.recurrence_until ?? "",
+    external_registration_url: event.external_registration_url ?? "",
     ...details,
   };
+}
+
+// "eventbrite.ie/e/123" -> "https://eventbrite.ie/e/123". Only http(s) links
+// to a real-looking host are accepted (never javascript: and the like).
+export function normaliseUrl(input: string): string | null {
+  const trimmed = input.trim();
+  const withScheme = /^[a-z][a-z0-9+.-]*:/i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  let url: URL;
+  try {
+    url = new URL(withScheme);
+  } catch {
+    return null;
+  }
+  if (url.protocol !== "https:" && url.protocol !== "http:") return null;
+  if (!/^[^.\s]+(\.[^.\s]+)+$/.test(url.hostname)) return null; // needs a dot, e.g. example.com
+  return url.toString();
 }
