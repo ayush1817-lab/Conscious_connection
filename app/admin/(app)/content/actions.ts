@@ -98,12 +98,14 @@ function storyFields(formData: FormData, current: string | null) {
   const title = text(formData, "title");
   const body = text(formData, "body");
   const cover = imagePath(formData, "cover_path", current, IMAGE_TARGETS.stories);
+  const authorName = text(formData, "author_name");
   const error =
     (!title ? "Please add a title." : null) ??
     tooLong(title, 150, "The title") ??
     tooLong(body, 20000, "The story") ??
+    tooLong(authorName, 80, "The name") ??
     ("error" in cover ? cover.error! : null);
-  return { title, body, cover: cover.path ?? null, error };
+  return { title, body, cover: cover.path ?? null, author_name: authorName || null, error };
 }
 
 export async function createStory(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -114,7 +116,7 @@ export async function createStory(_prev: FormState, formData: FormData): Promise
 
   const { data, error } = await supabase
     .from("stories")
-    .insert({ title: fields.title, body: fields.body, cover_path: fields.cover, slug: await uniqueSlug(supabase, fields.title) })
+    .insert({ title: fields.title, body: fields.body, cover_path: fields.cover, author_name: fields.author_name, slug: await uniqueSlug(supabase, fields.title) })
     .select("id")
     .single();
   if (error) return { error: "The story couldn't be saved. Please try again." };
@@ -133,7 +135,7 @@ export async function saveStory(id: string, _prev: FormState, formData: FormData
 
   const { error } = await supabase
     .from("stories")
-    .update({ title: fields.title, body: fields.body, cover_path: fields.cover })
+    .update({ title: fields.title, body: fields.body, cover_path: fields.cover, author_name: fields.author_name })
     .eq("id", id);
   if (error) return { error: "Your changes couldn't be saved. Please try again." };
   if (story.cover_path !== fields.cover) await removeImage(supabase, IMAGE_TARGETS.stories, story.cover_path);

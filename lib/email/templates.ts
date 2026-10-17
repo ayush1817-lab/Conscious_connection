@@ -3,7 +3,7 @@ import { formatDate, formatTimeRange } from "@/lib/format";
 // Email templates (spec section 9). Each is written once as a list of blocks,
 // which render to both a plain-text and a simple HTML version.
 
-export type TemplateId = "E1" | "E2" | "E3" | "E4" | "E5" | "E6" | "E7" | "E8" | "E9" | "E10" | "E11" | "E12" | "TEST";
+export type TemplateId = "E1" | "E2" | "E3" | "E4" | "E5" | "E6" | "E7" | "E8" | "E9" | "E10" | "E11" | "E12" | "S1" | "S2" | "S3" | "S4" | "TEST";
 
 export type RenderedEmail = { template: TemplateId; subject: string; text: string; html: string };
 
@@ -168,6 +168,50 @@ export function changesReceivedEmail(args: { hostName: string; event: EventSumma
     ...(args.changed?.length ? [{ kind: "list" as const, items: args.changed }] : []),
     { kind: "details", rows: whenWhere(args.event) },
     { kind: "note", text: "If you didn't make these changes, please reply to this email straight away." },
+    { kind: "p", text: SIGN_OFF },
+  ]);
+}
+
+// S1: someone shared their story from the public site.
+export function storyReceivedEmail(args: { name: string | null; title: string }) {
+  return render("S1", `We've received your story "${args.title}"`, "Thanks for sharing your story", [
+    { kind: "p", text: args.name ? `Hi ${firstName(args.name)},` : "Hi there," },
+    {
+      kind: "p",
+      text: `Thank you for sharing "${args.title}" with the Conscious Connections community. Our team will read it and email you once we've reviewed it.`,
+    },
+    { kind: "p", text: "If we'd like to change anything before it's published, we'll get in touch first. If you have any questions, you can reply to this email." },
+    { kind: "p", text: SIGN_OFF },
+  ]);
+}
+
+// S2: a new story to review, to the admin(s).
+export function newStorySubmissionEmail(args: { title: string; name: string | null; excerpt: string; adminUrl: string }) {
+  return render("S2", `New story to review: ${args.title}`, "A new story was shared", [
+    { kind: "p", text: `${args.name ? args.name : "Someone (anonymous)"} has shared a story, "${args.title}".` },
+    { kind: "quote", label: "It begins", text: args.excerpt },
+    { kind: "button", label: "Review the story", url: args.adminUrl },
+  ]);
+}
+
+// S3: the story was approved and is on the website.
+export function storyPublishedEmail(args: { name: string | null; title: string; storyUrl: string }) {
+  return render("S3", `Your story "${args.title}" is now live`, "Your story is on the website", [
+    { kind: "p", text: args.name ? `Hi ${firstName(args.name)},` : "Hi there," },
+    { kind: "p", text: `Thank you again for sharing "${args.title}". It's now published on the Conscious Connections website.` },
+    { kind: "button", label: "Read your story", url: args.storyUrl },
+    { kind: "p", text: "If you'd like anything changed or taken down, just reply to this email." },
+    { kind: "p", text: SIGN_OFF },
+  ]);
+}
+
+// S4: the story won't be published.
+export function storyDeclinedEmail(args: { name: string | null; title: string; reason: string }) {
+  return render("S4", `About your story "${args.title}"`, "About your story", [
+    { kind: "p", text: args.name ? `Hi ${firstName(args.name)},` : "Hi there," },
+    { kind: "p", text: `Thank you for sharing "${args.title}". After reading it, we've decided not to publish it on the website.` },
+    { kind: "quote", label: "Reason", text: args.reason },
+    { kind: "p", text: "You're welcome to share another story in the future. If you have any questions, you can reply to this email." },
     { kind: "p", text: SIGN_OFF },
   ]);
 }

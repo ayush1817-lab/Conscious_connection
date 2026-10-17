@@ -5,26 +5,40 @@ import { createPosterUpload } from "@/app/(public)/submit-event/actions";
 import { imageProblem } from "@/lib/content/images";
 import { prepareImage } from "@/lib/content/prepare-image";
 import { createClient } from "@/lib/supabase/browser";
-import { publicImageUrl } from "@/lib/storage";
+import { publicImageUrl, type Bucket } from "@/lib/storage";
 import { FieldError } from "./forms/fields";
 import { UploadIcon } from "./icons";
 
-// Optional event poster. The server checks the file and hands out a signed
-// upload URL; the file then goes straight from the browser to Storage. The form
-// sends only the resulting path (poster_path).
+type Ticket = { path: string; token: string } | { error: string };
+
+// Optional event poster (or, with props, a story image). The server checks the
+// file and hands out a signed upload URL; the file then goes straight from the
+// browser to Storage. The form sends only the resulting path (`name`).
 export function PosterUpload({
   defaultPath,
   error,
   disabled = false,
   onChange,
+  name = "poster_path",
+  label = "Event poster",
+  hint = "JPG, PNG or WebP. Large phone photos are resized automatically. Without one, we show a simple card with your county and date.",
+  bucket = "posters",
+  requestUpload = createPosterUpload,
+  noun = "poster",
 }: {
   defaultPath: string;
   error?: string;
   disabled?: boolean;
   onChange?: () => void;
+  name?: string;
+  label?: string;
+  hint?: string;
+  bucket?: Bucket;
+  requestUpload?: (type: string, size: number) => Promise<Ticket>;
+  noun?: string;
 }) {
   const [path, setPath] = useState(defaultPath);
-  const [preview, setPreview] = useState<string | null>(defaultPath ? publicImageUrl("posters", defaultPath) : null);
+  const [preview, setPreview] = useState<string | null>(defaultPath ? publicImageUrl(bucket, defaultPath) : null);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
@@ -41,17 +55,17 @@ export function PosterUpload({
     if (local) return setProblem(local);
     setBusy(true);
     try {
-      const ticket = await createPosterUpload(file.type, file.size);
+      const ticket = await requestUpload(file.type, file.size);
       if ("error" in ticket) return setProblem(ticket.error);
-      const { error: uploadError } = await createClient().storage.from("posters").uploadToSignedUrl(ticket.path, ticket.token, file, {
+      const { error: uploadError } = await createClient().storage.from(bucket).uploadToSignedUrl(ticket.path, ticket.token, file, {
         contentType: file.type,
       });
-      if (uploadError) return setProblem("The poster couldn't be uploaded. Please try again.");
+      if (uploadError) return setProblem(`The ${noun} couldn't be uploaded. Please try again.`);
       setPath(ticket.path);
       setPreview(URL.createObjectURL(file));
       onChange?.();
     } catch {
-      setProblem("The poster couldn't be uploaded. Check your connection and try again.");
+      setProblem(`The ${noun} couldn't be uploaded. Check your connection and try again.`);
     } finally {
       setBusy(false);
       if (inputRef.current) inputRef.current.value = "";
@@ -60,12 +74,12 @@ export function PosterUpload({
 
   return (
     <div className="group">
-      <input type="hidden" name="poster_path" value={path} />
+      <input type="hidden" name={name} value={path} />
       <p id={`${id}-label`} className="mb-1 font-medium">
-        Event poster <span className="font-normal text-muted">(optional)</span>
+        {label} <span className="font-normal text-muted">(optional)</span>
       </p>
       <p id={`${id}-hint`} className="mb-2 text-sm text-muted">
-        JPG, PNG or WebP. Large phone photos are resized automatically. Without one, we show a simple card with your county and date.
+        {hint}
       </p>
       <input
         ref={inputRef}
@@ -82,7 +96,7 @@ export function PosterUpload({
       {preview ? (
         <div className="flex flex-wrap items-end gap-4">
           {/* eslint-disable-next-line @next/next/no-img-element -- local preview of the chosen file */}
-          <img src={preview} alt="Poster preview" className="h-40 w-auto max-w-full rounded-card border border-border object-cover" />
+          <img src={preview} alt={`${noun[0].toUpperCase()}${noun.slice(1)} preview`} className="h-40 w-auto max-w-full rounded-card border border-border object-cover" />
           {disabled ? null : (
             <div className="flex gap-2">
               <label
@@ -128,7 +142,7 @@ export function PosterUpload({
         </label>
       )}
       <div role="status" className="sr-only">
-        {busy ? "Uploading poster" : ""}
+        {busy ? `Uploading ${noun}` : ""}
       </div>
       <FieldError id={id} error={shownError ?? undefined} />
     </div>

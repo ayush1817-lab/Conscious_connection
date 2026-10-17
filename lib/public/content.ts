@@ -50,7 +50,7 @@ export async function getStories(limit?: number) {
 export async function getStory(slug: string) {
   const { data, error } = await createPublicClient()
     .from("stories")
-    .select("id, title, slug, cover_path, body, published_at")
+    .select("id, title, slug, cover_path, body, published_at, author_name")
     .eq("published", true)
     .eq("slug", slug)
     .maybeSingle();

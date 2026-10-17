@@ -508,6 +508,7 @@ export type Database = {
       };
       stories: {
         Row: {
+          author_name: string | null;
           body: string;
           cover_path: string | null;
           created_at: string;
@@ -520,6 +521,7 @@ export type Database = {
         };
         ComputedFields: never;
         Insert: {
+          author_name?: string | null;
           body?: string;
           cover_path?: string | null;
           created_at?: string;
@@ -531,6 +533,7 @@ export type Database = {
           updated_at?: string | null;
         };
         Update: {
+          author_name?: string | null;
           body?: string;
           cover_path?: string | null;
           created_at?: string;
@@ -542,6 +545,60 @@ export type Database = {
           updated_at?: string | null;
         };
         Relationships: [];
+      };
+      story_submissions: {
+        Row: {
+          author_name: string | null;
+          body: string;
+          created_at: string;
+          decided_at: string | null;
+          decision_reason: string | null;
+          email: string | null;
+          id: string;
+          image_path: string | null;
+          status: Database["public"]["Enums"]["story_submission_status"];
+          story_id: string | null;
+          title: string;
+          updated_at: string | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          author_name?: string | null;
+          body: string;
+          created_at?: string;
+          decided_at?: string | null;
+          decision_reason?: string | null;
+          email?: string | null;
+          id?: string;
+          image_path?: string | null;
+          status?: Database["public"]["Enums"]["story_submission_status"];
+          story_id?: string | null;
+          title: string;
+          updated_at?: string | null;
+        };
+        Update: {
+          author_name?: string | null;
+          body?: string;
+          created_at?: string;
+          decided_at?: string | null;
+          decision_reason?: string | null;
+          email?: string | null;
+          id?: string;
+          image_path?: string | null;
+          status?: Database["public"]["Enums"]["story_submission_status"];
+          story_id?: string | null;
+          title?: string;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "story_submissions_story_id_fkey";
+            columns: ["story_id"];
+            isOneToOne: false;
+            referencedRelation: "stories";
+            referencedColumns: ["id"];
+          },
+        ];
       };
     };
     Views: {
@@ -582,6 +639,7 @@ export type Database = {
     };
     Enums: {
       activity_actor: "admin" | "host" | "system";
+      story_submission_status: "pending" | "approved" | "declined";
       attention_type: "host_edited" | "host_cancelled" | "contact_request";
       contact_request_status: "requested" | "shared" | "declined";
       email_provider: "console" | "resend";

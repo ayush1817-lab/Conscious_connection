@@ -69,6 +69,7 @@ async function clearData() {
     "events",
     "event_activity",
     "site_sections",
+    "story_submissions",
     "stories",
     "podcasts",
     "gallery_images",
