@@ -86,6 +86,8 @@ async function clearData() {
 
   const { data: files } = await db.storage.from("gallery").list("seed");
   if (files?.length) await db.storage.from("gallery").remove(files.map((f) => `seed/${f.name}`));
+  const { data: audio } = await db.storage.from("podcasts").list("episodes", { limit: 1000 });
+  if (audio?.length) await db.storage.from("podcasts").remove(audio.map((f) => `episodes/${f.name}`));
   console.log("✓ Cleared existing event and content data");
 }
 

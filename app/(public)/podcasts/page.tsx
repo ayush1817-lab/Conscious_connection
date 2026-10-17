@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { PageIntro } from "@/components/public/section-heading";
-import { YouTubeEmbed } from "@/components/public/youtube-embed";
-import { youtubeVideoId } from "@/lib/content/youtube";
+import { PodcastPlayer } from "@/components/public/podcast-player";
+import { podcastMedia } from "@/lib/content/podcast-media";
 import { formatDate } from "@/lib/format";
 import { getPodcasts } from "@/lib/public/content";
 
@@ -12,8 +12,8 @@ export const metadata: Metadata = {
 
 export default async function PodcastsPage() {
   const podcasts = (await getPodcasts())
-    .map((p) => ({ ...p, videoId: youtubeVideoId(p.youtube_url) }))
-    .filter((p): p is typeof p & { videoId: string } => p.videoId !== null);
+    .map((p) => ({ ...p, media: podcastMedia(p) }))
+    .filter((p): p is typeof p & { media: NonNullable<typeof p.media> } => p.media !== null);
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-10">
@@ -22,7 +22,7 @@ export default async function PodcastsPage() {
         <ul className="space-y-8">
           {podcasts.map((p) => (
             <li key={p.id} className="grid gap-4 rounded-card border border-border bg-surface p-4 md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] md:p-6">
-              <YouTubeEmbed videoId={p.videoId} title={p.title} />
+              <PodcastPlayer media={p.media} title={p.title} />
               <div>
                 <h2 className="font-heading text-xl font-semibold">{p.title}</h2>
                 {p.published_at ? <p className="mt-1 text-sm text-muted">{formatDate(p.published_at)}</p> : null}

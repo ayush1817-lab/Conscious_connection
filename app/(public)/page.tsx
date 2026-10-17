@@ -7,10 +7,10 @@ import { PhotoGrid } from "@/components/public/photo-grid";
 import { CalendarIcon, HeartIcon, PeopleIcon } from "@/components/public/icons";
 import { SectionHeading } from "@/components/public/section-heading";
 import { StoryCard } from "@/components/public/story-card";
-import { YouTubeEmbed } from "@/components/public/youtube-embed";
+import { PodcastPlayer } from "@/components/public/podcast-player";
 import { buttonClass } from "@/components/ui/button";
 import { RichText } from "@/lib/content/rich-text";
-import { youtubeVideoId } from "@/lib/content/youtube";
+import { podcastMedia } from "@/lib/content/podcast-media";
 import { getGallery, getPodcasts, getSections, getStories, photosOf } from "@/lib/public/content";
 import { getPlacesLeft, getUpcomingEvents, placesBadge } from "@/lib/public/events";
 import { publicImageUrl } from "@/lib/storage";
@@ -28,7 +28,7 @@ export default async function HomePage() {
   const photos = photosOf(sections);
   const places = await getPlacesLeft(events.filter((e) => e.capacity).map((e) => e.id));
   const podcast = podcasts[0];
-  const videoId = podcast ? youtubeVideoId(podcast.youtube_url) : null;
+  const media = podcast ? podcastMedia(podcast) : null;
 
   return (
     <>
@@ -141,11 +141,11 @@ export default async function HomePage() {
       ) : null}
 
       {/* Latest podcast */}
-      {podcast && videoId ? (
+      {podcast && media ? (
         <section aria-labelledby="podcast-heading" className="home-section mx-auto max-w-6xl px-4 py-8">
           <SectionHeading id="podcast-heading" title="Latest podcast" link={{ href: "/podcasts", label: "All episodes" }} />
           <div className="home-podcast-panel grid items-center gap-6 rounded-card border border-border bg-surface p-4 md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] md:p-6">
-            <YouTubeEmbed videoId={videoId} title={podcast.title} />
+            <PodcastPlayer media={media} title={podcast.title} />
             <div>
               <h3 className="font-heading text-xl font-semibold">{podcast.title}</h3>
               {podcast.description ? <p className="mt-2 text-muted">{podcast.description}</p> : null}

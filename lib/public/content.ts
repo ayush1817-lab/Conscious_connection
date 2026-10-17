@@ -61,7 +61,7 @@ export async function getStory(slug: string) {
 export async function getPodcasts(limit?: number) {
   let query = createPublicClient()
     .from("podcasts")
-    .select("id, title, description, youtube_url, published_at")
+    .select("id, title, description, source, youtube_url, spotify_url, audio_path, published_at")
     .eq("published", true)
     .order("published_at", { ascending: false, nullsFirst: false });
   if (limit) query = query.limit(limit);

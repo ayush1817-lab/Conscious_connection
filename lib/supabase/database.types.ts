@@ -401,35 +401,44 @@ export type Database = {
       };
       podcasts: {
         Row: {
+          audio_path: string | null;
           created_at: string;
           description: string;
           id: string;
           published: boolean;
           published_at: string | null;
+          source: Database["public"]["Enums"]["podcast_source"];
+          spotify_url: string | null;
           title: string;
           updated_at: string | null;
-          youtube_url: string;
+          youtube_url: string | null;
         };
         ComputedFields: never;
         Insert: {
+          audio_path?: string | null;
           created_at?: string;
           description?: string;
           id?: string;
           published?: boolean;
           published_at?: string | null;
+          source?: Database["public"]["Enums"]["podcast_source"];
+          spotify_url?: string | null;
           title: string;
           updated_at?: string | null;
-          youtube_url: string;
+          youtube_url?: string | null;
         };
         Update: {
+          audio_path?: string | null;
           created_at?: string;
           description?: string;
           id?: string;
           published?: boolean;
           published_at?: string | null;
+          source?: Database["public"]["Enums"]["podcast_source"];
+          spotify_url?: string | null;
           title?: string;
           updated_at?: string | null;
-          youtube_url?: string;
+          youtube_url?: string | null;
         };
         Relationships: [];
       };
@@ -683,6 +692,7 @@ export type Database = {
       attention_type: "host_edited" | "host_cancelled" | "contact_request";
       contact_request_status: "requested" | "shared" | "declined";
       email_provider: "console" | "resend";
+      podcast_source: "youtube" | "spotify" | "audio";
       event_status: "pending" | "needs_changes" | "declined" | "live" | "cancelled" | "taken_down";
     };
     CompositeTypes: {
