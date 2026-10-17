@@ -1,8 +1,11 @@
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { buttonClass } from "@/components/ui/button";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { formatDate } from "@/lib/format";
 
-// Publish/Unpublish for a story or podcast. Plain form, so it works before JS loads.
+// Publish/Unpublish for a story or podcast. Plain form, so it works before JS
+// loads; the button shows "Publishing…" and can't be pressed twice. Publishing
+// goes back to the list with a confirmation toast.
 export function PublishControls({
   published,
   publishedAt,
@@ -28,9 +31,12 @@ export function PublishControls({
       </p>
       <div className="flex flex-col gap-3 sm:flex-row">
         <form action={toggle}>
-          <Button type="submit" variant={published ? "secondary" : "primary"} className="w-full sm:w-auto">
+          <SubmitButton
+            pendingLabel={published ? "Unpublishing…" : "Publishing…"}
+            className={buttonClass(published ? "secondary" : "primary", "w-full sm:w-auto")}
+          >
             {published ? "Unpublish" : "Publish"}
-          </Button>
+          </SubmitButton>
         </form>
         {children}
       </div>
