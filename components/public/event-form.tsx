@@ -114,6 +114,7 @@ export function EventForm({
         </div>
         {/* A disabled select isn't sent with the form, so send the locked county separately. */}
         {isLocked("county") ? <input type="hidden" name="county" value={v.county} /> : null}
+        <RepeatFields values={v} errors={e} locked={isLocked("repeats")} lockHint={lockHint("repeats")} min={v.date || today} />
         <TextAreaField
           id="description"
           label="Description"
@@ -207,6 +208,52 @@ export function EventForm({
         )}
       </button>
     </form>
+  );
+}
+
+// "Does it repeat?" and, for a weekly event, an optional last date.
+function RepeatFields({
+  values,
+  errors,
+  locked,
+  lockHint,
+  min,
+}: {
+  values: EventFormValues;
+  errors: FieldErrors;
+  locked: boolean;
+  lockHint?: ReactNode;
+  min: string;
+}) {
+  const [repeats, setRepeats] = useState(values.repeats || "none");
+  return (
+    <div className="grid gap-5 sm:grid-cols-2">
+      <SelectField
+        id="repeats"
+        label="Does it repeat?"
+        value={repeats}
+        onChange={(event) => setRepeats(event.target.value)}
+        disabled={locked}
+        hint={lockHint ?? "A weekly event repeats on the same day and time as the date above."}
+        error={errors.repeats}
+      >
+        <option value="none">No, it happens once</option>
+        <option value="weekly">Yes, every week</option>
+      </SelectField>
+      {locked ? <input type="hidden" name="repeats" value={repeats} /> : null}
+      {repeats === "weekly" ? (
+        <InputField
+          id="repeat_until"
+          label="Last date (optional)"
+          type="date"
+          min={min}
+          hint={locked ? lockHint : "Leave empty if it keeps going."}
+          defaultValue={values.repeat_until}
+          readOnly={locked}
+          error={errors.repeat_until}
+        />
+      ) : null}
+    </div>
   );
 }
 

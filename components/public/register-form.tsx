@@ -3,11 +3,19 @@
 import Link from "next/link";
 import { useActionState, useRef } from "react";
 import type { RegisterState } from "@/app/(public)/events/[id]/actions";
-import { ConsentField, FormAlert, Honeypot, InputField } from "./forms/fields";
+import { ConsentField, FormAlert, Honeypot, InputField, SelectField } from "./forms/fields";
 import { useFocusFirstError } from "./forms/use-focus-first-error";
 
-// P4 Registration form.
-export function RegisterForm({ action }: { action: (prev: RegisterState, formData: FormData) => Promise<RegisterState> }) {
+export type OccurrenceOption = { value: string; label: string; full: boolean };
+
+// P4 Registration form. For a recurring event, `dates` lists the dates people can pick.
+export function RegisterForm({
+  action,
+  dates,
+}: {
+  action: (prev: RegisterState, formData: FormData) => Promise<RegisterState>;
+  dates?: OccurrenceOption[];
+}) {
   const [state, formAction, pending] = useActionState(action, {});
   const formRef = useRef<HTMLFormElement>(null);
   useFocusFirstError(formRef, state);
@@ -16,6 +24,21 @@ export function RegisterForm({ action }: { action: (prev: RegisterState, formDat
   return (
     <form ref={formRef} action={formAction} noValidate className="relative space-y-4">
       {state.error ? <FormAlert>{state.error}</FormAlert> : null}
+      {dates ? (
+        <SelectField
+          id="occurrence"
+          label="Which date?"
+          required
+          defaultValue={v?.occurrence ?? dates.find((d) => !d.full)?.value}
+          error={state.fieldErrors?.occurrence}
+        >
+          {dates.map((d) => (
+            <option key={d.value} value={d.value} disabled={d.full}>
+              {d.label}
+            </option>
+          ))}
+        </SelectField>
+      ) : null}
       <InputField
         id="name"
         label="Your name"

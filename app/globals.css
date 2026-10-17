@@ -19,13 +19,13 @@
   --color-control-border: #9480a7;
 
   --color-text: #30213f;
-  --color-muted: #6c597b;
+  --color-muted: #655275; /* 4.5:1 even on the lilac background waves */
 
   --color-success: #2f7d4f;
   --color-warning: #a35f00;
   --color-danger: #b42318;
 
-  /* Background behind host private details ("Only visible to Karina"). */
+  /* Background behind host private details ("Only visible to our team"). */
   --color-private: #f1e9ff;
   --color-private-border: #cba0ef;
 

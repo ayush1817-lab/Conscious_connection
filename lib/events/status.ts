@@ -1,3 +1,4 @@
+import { parseRule } from "@/lib/events/recurrence";
 import { formatDateTime } from "@/lib/format";
 import type { Database } from "@/lib/supabase/database.types";
 
@@ -11,6 +12,9 @@ export function retentionCutoff(now = Date.now()) {
   return new Date(now - ADMIN_RETENTION_DAYS * 24 * 60 * 60 * 1000).toISOString();
 }
 
+// Statuses the admin event editor can change (not ended, declined or cancelled ones).
+export const EDITABLE_STATUSES = ["pending", "needs_changes", "live"] as const;
+
 // Plain-language names shown to the admin.
 export const STATUS_LABELS: Record<EventStatus, string> = {
   pending: "New request",
@@ -22,8 +26,9 @@ export const STATUS_LABELS: Record<EventStatus, string> = {
 };
 
 // "Expired" is derived: a live event whose end time has passed.
+// endAt is when the event is over (series_end_at; "infinity" never ends).
 export function displayStatus(status: EventStatus, endAt: string, now = Date.now()) {
-  if (status === "live" && new Date(endAt).getTime() < now) return "Ended";
+  if (status === "live" && endAt !== "infinity" && new Date(endAt).getTime() < now) return "Ended";
   return STATUS_LABELS[status];
 }
 
@@ -36,6 +41,8 @@ export const FIELD_LABELS: Record<string, string> = {
   description: "Description",
   poster_path: "Poster",
   capacity: "Capacity",
+  recurrence_rule: "Repeats",
+  recurrence_until: "Last date",
   exact_address: "Exact address",
   host_name: "Host name",
   host_email: "Host email",
@@ -47,8 +54,9 @@ export const FIELD_LABELS: Record<string, string> = {
 
 // A before/after value from a host edit, in plain words.
 export function formatFieldValue(field: string, value: unknown): string {
+  if (field === "recurrence_rule") return parseRule(value) ? "Every week" : "Doesn't repeat";
   if (value === null || value === undefined || value === "") {
-    return field === "capacity" ? "No limit" : field === "poster_path" ? "No poster" : "(empty)";
+    return field === "capacity" ? "No limit" : field === "poster_path" ? "No poster" : field === "recurrence_until" ? "No end date" : "(empty)";
   }
   if ((field === "start_at" || field === "end_at") && typeof value === "string") return formatDateTime(value);
   if (field === "poster_path") return "Poster image";

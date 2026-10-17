@@ -8,7 +8,8 @@ import { StatusBadge } from "@/components/events/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { requireAdmin } from "@/lib/auth/admin";
-import { retentionCutoff } from "@/lib/events/status";
+import { describeRecurrence } from "@/lib/events/recurrence";
+import { EDITABLE_STATUSES, retentionCutoff } from "@/lib/events/status";
 import { formatDate, formatDateTime, formatTimeRange, timeAgo } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import { approveEvent, cancelEvent, regenerateLink, reviewWithReason, takeDownEvent } from "./actions";
@@ -41,10 +42,10 @@ export default async function EventDetailPage({
   const { data: event } = await supabase
     .from("events")
     .select(
-      "*, event_private_details(*), registrations(name, created_at), event_activity(id, actor, action, note, created_at), attention_items(id, type, needs_decision, created_at, resolved_at)",
+      "*, event_private_details(*), registrations(name, created_at, occurrence_start), event_activity(id, actor, action, note, created_at), attention_items(id, type, needs_decision, created_at, resolved_at)",
     )
     .eq("id", id)
-    .gte("end_at", retentionCutoff())
+    .gte("series_end_at", retentionCutoff())
     .maybeSingle();
   if (!event) notFound();
 
@@ -58,7 +59,9 @@ export default async function EventDetailPage({
   const activity = [...event.event_activity].sort((a, b) => b.created_at.localeCompare(a.created_at));
   const openItems = event.attention_items.filter((i) => !i.resolved_at);
   const isPending = event.status === "pending";
-  const isUpcomingLive = event.status === "live" && new Date(event.end_at).getTime() > Date.now();
+  const isUpcomingLive = event.status === "live" && (event.series_end_at === "infinity" || new Date(event.series_end_at).getTime() > Date.now());
+  const repeats = describeRecurrence(event, { withUntil: true });
+  const canEdit = host && (EDITABLE_STATUSES as readonly string[]).includes(event.status) && (event.status !== "live" || isUpcomingLive);
   const showActivity = !isPending && tab === "activity";
 
   return (
@@ -69,8 +72,13 @@ export default async function EventDetailPage({
 
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="text-2xl font-semibold sm:text-3xl">{event.title}</h1>
-        <StatusBadge status={event.status} endAt={event.end_at} />
+        <StatusBadge status={event.status} endAt={event.series_end_at} />
         {event.status === "live" ? <span className="text-muted">{registrants.length} registered</span> : null}
+        {canEdit ? (
+          <Link href={`/admin/events/${id}/edit`} className="ml-auto inline-flex min-h-tap items-center rounded-control border border-border px-4 font-medium hover:bg-band">
+            Edit event
+          </Link>
+        ) : null}
       </div>
 
       {event.status_reason ? (
@@ -142,7 +150,8 @@ export default async function EventDetailPage({
                 <dl className="grid flex-1 grid-cols-[auto_1fr] gap-x-4 gap-y-2">
                   <Detail label="Title">{event.title}</Detail>
                   <Detail label="County">{event.county}</Detail>
-                  <Detail label="Date">{formatDate(event.start_at)}</Detail>
+                  <Detail label={repeats ? "First date" : "Date"}>{formatDate(event.start_at)}</Detail>
+                  {repeats ? <Detail label="Repeats">{repeats}</Detail> : null}
                   <Detail label="Time">{formatTimeRange(event.start_at, event.end_at)}</Detail>
                   <Detail label="Capacity">{event.capacity ? `${event.capacity} people` : "No limit"}</Detail>
                 </dl>

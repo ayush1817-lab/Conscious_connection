@@ -1,6 +1,7 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/lib/supabase/database.types";
+import { describeRecurrence, upcomingOccurrences } from "./recurrence";
 import { FIELD_LABELS, retentionCutoff, type EventStatus } from "./status";
 
 type AttentionType = Database["public"]["Enums"]["attention_type"];
@@ -9,8 +10,12 @@ export type EventCard = {
   id: string;
   title: string;
   county: string;
+  // For a recurring event: the next date (or the last one, once it has ended).
   startAt: string;
   endAt: string;
+  // When the event (all its dates) is over: "infinity" for a weekly event with no end.
+  seriesEndAt: string;
+  repeats: string | null;
   status: EventStatus;
   posterPath: string | null;
   submittedAt: string;
@@ -44,7 +49,7 @@ export type EventsOverview = {
 };
 
 const EVENT_FIELDS =
-  "id, title, county, start_at, end_at, status, poster_path, submitted_at, opened_by_admin_at, event_private_details(host_name), registrations(count)";
+  "id, title, county, start_at, end_at, series_end_at, recurrence_rule, recurrence_until, status, poster_path, submitted_at, opened_by_admin_at, event_private_details(host_name), registrations(count)";
 
 type EventRow = {
   id: string;
@@ -52,6 +57,9 @@ type EventRow = {
   county: string;
   start_at: string;
   end_at: string;
+  series_end_at: string;
+  recurrence_rule: unknown;
+  recurrence_until: string | null;
   status: EventStatus;
   poster_path: string | null;
   submitted_at: string;
@@ -61,12 +69,15 @@ type EventRow = {
 };
 
 function toCard(row: EventRow): EventCard {
+  const next = describeRecurrence(row) ? upcomingOccurrences(row, 1)[0] : undefined;
   return {
     id: row.id,
     title: row.title,
     county: row.county,
-    startAt: row.start_at,
-    endAt: row.end_at,
+    startAt: next?.start ?? row.start_at,
+    endAt: next?.end ?? row.end_at,
+    seriesEndAt: row.series_end_at,
+    repeats: describeRecurrence(row),
     status: row.status,
     posterPath: row.poster_path,
     submittedAt: row.submitted_at,
@@ -84,12 +95,12 @@ export async function getEventsOverview(): Promise<EventsOverview> {
   const cutoff = retentionCutoff();
 
   const [eventsRes, attentionRes] = await Promise.all([
-    supabase.from("events").select(EVENT_FIELDS).gte("end_at", cutoff).returns<EventRow[]>(),
+    supabase.from("events").select(EVENT_FIELDS).gte("series_end_at", cutoff).returns<EventRow[]>(),
     supabase
       .from("attention_items")
-      .select("id, event_id, type, ref_id, needs_decision, created_at, events!inner(title, county, end_at)")
+      .select("id, event_id, type, ref_id, needs_decision, created_at, events!inner(title, county, series_end_at)")
       .is("resolved_at", null)
-      .gte("events.end_at", cutoff)
+      .gte("events.series_end_at", cutoff)
       .order("created_at", { ascending: false }),
   ]);
   if (eventsRes.error) throw eventsRes.error;
@@ -101,10 +112,11 @@ export async function getEventsOverview(): Promise<EventsOverview> {
   const newRequests = cards
     .filter((e) => e.status === "pending")
     .sort((a, b) => b.submittedAt.localeCompare(a.submittedAt));
-  const upcoming = cards.filter((e) => e.status === "live" && e.endAt >= now).sort(byStart);
+  const over = (e: EventCard) => e.seriesEndAt !== "infinity" && e.seriesEndAt < now;
+  const upcoming = cards.filter((e) => e.status === "live" && !over(e)).sort(byStart);
   const past = cards
-    .filter((e) => e.status === "live" && e.endAt < now)
-    .sort((a, b) => b.endAt.localeCompare(a.endAt));
+    .filter((e) => e.status === "live" && over(e))
+    .sort((a, b) => b.seriesEndAt.localeCompare(a.seriesEndAt));
   const other: Record<OtherStatus, EventCard[]> = {
     needs_changes: [],
     declined: [],

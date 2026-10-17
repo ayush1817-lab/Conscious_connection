@@ -13,7 +13,7 @@ export async function regenerateHostLink(supabase: SupabaseClient<Database>, eve
     .update({ host_edit_token_hash: hash })
     .eq("id", eventId)
     .eq("status", "live")
-    .gte("end_at", new Date().toISOString())
+    .gte("series_end_at", new Date().toISOString())
     .select("id, title, county, start_at, end_at")
     .maybeSingle();
   if (error) throw error;

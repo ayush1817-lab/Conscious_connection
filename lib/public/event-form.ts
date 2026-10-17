@@ -1,5 +1,6 @@
 import { isCounty } from "@/lib/counties";
 import { parseDublinDateTime, toDublinInputs } from "@/lib/dublin-time";
+import { repeatsOf, WEEKLY, type RecurrenceRule } from "@/lib/events/recurrence";
 import { checkEmail, checkPhone, checkText, field, type FieldErrors } from "./validate";
 
 // The host event form (H1, and H3 when editing): field names, limits and
@@ -26,6 +27,9 @@ export type EventFormValues = {
   description: string;
   poster_path: string;
   capacity: string;
+  // "none" or "weekly"; repeat_until is the optional last date (YYYY-MM-DD).
+  repeats: string;
+  repeat_until: string;
   exact_address: string;
   host_name: string;
   host_email: string;
@@ -42,6 +46,8 @@ export const EMPTY_EVENT_FORM: EventFormValues = {
   description: "",
   poster_path: "",
   capacity: "",
+  repeats: "none",
+  repeat_until: "",
   exact_address: "",
   host_name: "",
   host_email: "",
@@ -58,6 +64,8 @@ export type EventFields = {
   description: string;
   poster_path: string | null;
   capacity: number | null;
+  recurrence_rule: RecurrenceRule | null;
+  recurrence_until: string | null;
 };
 export type PrivateFields = {
   exact_address: string;
@@ -70,6 +78,8 @@ export type PrivateFields = {
 export function readEventForm(formData: FormData): EventFormValues {
   const values = { ...EMPTY_EVENT_FORM };
   for (const key of Object.keys(values) as (keyof EventFormValues)[]) values[key] = field(formData, key);
+  values.repeats ||= "none";
+  if (values.repeats !== "weekly") values.repeat_until = "";
   values.host_email = values.host_email.toLowerCase();
   return values;
 }
@@ -81,7 +91,11 @@ export function isSubmittedPosterPath(path: string) {
 
 export function validateEventForm(
   v: EventFormValues,
-  { now = new Date(), currentPoster = null }: { now?: Date; currentPoster?: string | null } = {},
+  {
+    now = new Date(),
+    currentPoster = null,
+    currentStart = null,
+  }: { now?: Date; currentPoster?: string | null; currentStart?: string | null } = {},
 ): { errors: FieldErrors; event?: EventFields; details?: PrivateFields } {
   const errors: FieldErrors = {};
   const set = (key: keyof EventFormValues, message: string | null) => {
@@ -101,7 +115,19 @@ export function validateEventForm(
   if (!v.end_time) errors.end_time = "Choose an end time.";
   else if (v.date && !end) errors.end_time = "Enter a time like 13:00.";
   if (start && end && end <= start) errors.end_time = "The end time must be after the start time.";
-  if (start && start <= now && !errors.date) errors.date = "The event must be in the future.";
+  // Editing: keeping the current start (say, of a weekly event that has begun) is fine.
+  const keptStart = start && currentStart && start.getTime() === new Date(currentStart).getTime();
+  if (start && start <= now && !keptStart && !errors.date) errors.date = "The event must be in the future.";
+
+  let recurrence: RecurrenceRule | null = null;
+  let until: string | null = null;
+  if (v.repeats === "weekly") recurrence = WEEKLY;
+  else if (v.repeats && v.repeats !== "none") errors.repeats = "Choose how often the event repeats.";
+  if (recurrence && v.repeat_until) {
+    if (!parseDublinDateTime(v.repeat_until, "12:00")) errors.repeat_until = "Enter a real date, or leave it empty.";
+    else if (v.date && v.repeat_until < v.date) errors.repeat_until = "The last date can't be before the first date.";
+    else until = v.repeat_until;
+  }
 
   set("description", checkText(v.description, "a description", LIMITS.description));
 
@@ -136,6 +162,8 @@ export function validateEventForm(
       description: v.description,
       poster_path: poster,
       capacity,
+      recurrence_rule: recurrence,
+      recurrence_until: until,
     },
     details: {
       exact_address: v.exact_address,
@@ -148,7 +176,10 @@ export function validateEventForm(
 }
 
 // Database rows -> form values, for editing an existing event.
-export function eventToForm(event: EventFields, details: PrivateFields): EventFormValues {
+export function eventToForm(
+  event: Omit<EventFields, "recurrence_rule"> & { recurrence_rule: unknown },
+  details: PrivateFields,
+): EventFormValues {
   const start = toDublinInputs(event.start_at);
   return {
     title: event.title,
@@ -159,6 +190,8 @@ export function eventToForm(event: EventFields, details: PrivateFields): EventFo
     description: event.description,
     poster_path: event.poster_path ?? "",
     capacity: event.capacity === null ? "" : String(event.capacity),
+    repeats: repeatsOf(event.recurrence_rule),
+    repeat_until: event.recurrence_until ?? "",
     ...details,
   };
 }

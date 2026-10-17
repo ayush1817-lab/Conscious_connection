@@ -30,7 +30,7 @@ async function sendFreshLinks(email: string) {
     .from("events")
     .select("id, title, county, start_at, end_at, status, status_reason, event_private_details!inner(host_name, host_email)")
     .ilike("event_private_details.host_email", email.replace(/[\\%_]/g, "\\$&"))
-    .or(`and(status.eq.live,end_at.gt.${new Date().toISOString()}),status.eq.needs_changes`);
+    .or(`and(status.eq.live,series_end_at.gt.${new Date().toISOString()}),status.eq.needs_changes`);
   if (error) {
     console.error("Resend lookup failed", error);
     return;

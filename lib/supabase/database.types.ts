@@ -313,6 +313,9 @@ export type Database = {
           id: string;
           opened_by_admin_at: string | null;
           poster_path: string | null;
+          recurrence_rule: Json | null;
+          recurrence_until: string | null;
+          series_end_at: string;
           start_at: string;
           status: Database["public"]["Enums"]["event_status"];
           status_reason: string | null;
@@ -332,6 +335,9 @@ export type Database = {
           id?: string;
           opened_by_admin_at?: string | null;
           poster_path?: string | null;
+          recurrence_rule?: Json | null;
+          recurrence_until?: string | null;
+          series_end_at?: string;
           start_at: string;
           status?: Database["public"]["Enums"]["event_status"];
           status_reason?: string | null;
@@ -350,6 +356,9 @@ export type Database = {
           id?: string;
           opened_by_admin_at?: string | null;
           poster_path?: string | null;
+          recurrence_rule?: Json | null;
+          recurrence_until?: string | null;
+          series_end_at?: string;
           start_at?: string;
           status?: Database["public"]["Enums"]["event_status"];
           status_reason?: string | null;
@@ -435,6 +444,7 @@ export type Database = {
           event_id: string;
           id: string;
           name: string;
+          occurrence_start: string;
           updated_at: string | null;
         };
         ComputedFields: never;
@@ -445,6 +455,7 @@ export type Database = {
           event_id: string;
           id?: string;
           name: string;
+          occurrence_start?: string;
           updated_at?: string | null;
         };
         Update: {
@@ -454,6 +465,7 @@ export type Database = {
           event_id?: string;
           id?: string;
           name?: string;
+          occurrence_start?: string;
           updated_at?: string | null;
         };
         Relationships: [
@@ -602,9 +614,31 @@ export type Database = {
       };
     };
     Views: {
-      [_ in never]: never;
+      event_listing: {
+        Row: {
+          id: string;
+          title: string;
+          county: string;
+          start_at: string;
+          end_at: string;
+          description: string;
+          poster_path: string | null;
+          capacity: number | null;
+          status: Database["public"]["Enums"]["event_status"];
+          recurrence_rule: Json | null;
+          recurrence_until: string | null;
+          series_end_at: string;
+          next_start_at: string;
+          next_end_at: string;
+        };
+        Relationships: [];
+      };
     };
     Functions: {
+      occurrence_places_left: {
+        Args: { p_event_id: string; p_starts: string[] };
+        Returns: { occurrence_start: string; places_left: number }[];
+      };
       event_places_left: { Args: { event_ids: string[] }; Returns: { event_id: string; places_left: number }[] };
       hit_rate_limit: { Args: { p_key: string; p_limit: number; p_window: string }; Returns: boolean };
       host_cancel_event: { Args: { p_event_id: string; p_token_hash: string }; Returns: string | null };
@@ -629,12 +663,14 @@ export type Database = {
           p_host_email: string;
           p_host_phone: string;
           p_about_group: string;
-          p_emergency_contact_name?: string | null;
-          p_emergency_contact_phone?: string | null;
+          p_extra?: Json;
         };
         Returns: string;
       };
-      register_for_event: { Args: { p_event_id: string; p_name: string; p_email: string }; Returns: string };
+      register_for_event: {
+        Args: { p_event_id: string; p_name: string; p_email: string; p_occurrence_start?: string | null };
+        Returns: string;
+      };
       run_retention: { Args: Record<PropertyKey, never>; Returns: Json };
     };
     Enums: {

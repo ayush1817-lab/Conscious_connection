@@ -1,3 +1,4 @@
+import { describeRecurrence, groupByOccurrence } from "@/lib/events/recurrence";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -122,6 +123,7 @@ async function Live({ host, token, query }: { host: HostEvent; token: string; qu
   const tab = TABS.some((t) => t.key === query.tab) ? query.tab : "details";
   const [names, requests] = await Promise.all([loadRegistrantNames(host.event.id), loadContactRequests(host.event.id)]);
   const e = host.event;
+  const repeats = describeRecurrence(e, { withUntil: true });
   const locked = lockKeyFieldsWhenRegistered() && names.length > 0;
 
   return (
@@ -132,7 +134,8 @@ async function Live({ host, token, query }: { host: HostEvent; token: string; qu
           <PinIcon size={18} /> {e.county}
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <CalendarIcon size={18} /> {formatDate(e.start_at)}
+          <CalendarIcon size={18} /> {repeats ? `${repeats}, from ` : ""}
+          {formatDate(e.start_at)}
         </span>
         <span className="inline-flex items-center gap-1.5">
           <ClockIcon size={18} /> {formatTimeRange(e.start_at, e.end_at)}
@@ -178,13 +181,29 @@ async function Live({ host, token, query }: { host: HostEvent; token: string; qu
         {tab === "registrations" ? (
           <section aria-labelledby="regs-heading">
             <h2 id="regs-heading" className="font-heading text-2xl font-semibold">
-              {plural(names.length, "person", "people")} registered{e.capacity ? ` of ${e.capacity} places` : ""}
+              {plural(names.length, "person", "people")} registered{e.capacity && !repeats ? ` of ${e.capacity} places` : repeats ? " across all dates" : ""}
             </h2>
-            {names.length ? (
+            {names.length && repeats ? (
+              groupByOccurrence(names).map((group) => (
+                <div key={group.start} className="mt-4">
+                  <h3 className="font-heading text-lg font-semibold">
+                    {formatDate(group.start)} · {plural(group.rows.length, "person", "people")}
+                    {e.capacity ? ` of ${e.capacity}` : ""}
+                  </h3>
+                  <ul className="mt-2 divide-y divide-border rounded-card border border-border bg-surface">
+                    {group.rows.map((r, i) => (
+                      <li key={i} className="px-4 py-3">
+                        {r.name}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))
+            ) : names.length ? (
               <ul className="mt-4 divide-y divide-border rounded-card border border-border bg-surface">
-                {names.map((name, i) => (
+                {names.map((r, i) => (
                   <li key={i} className="px-4 py-3">
-                    {name}
+                    {r.name}
                   </li>
                 ))}
               </ul>

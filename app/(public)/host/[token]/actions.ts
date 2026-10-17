@@ -13,6 +13,7 @@ import {
   sendEmail,
   sendQuietly,
 } from "@/lib/email";
+import { parseRule } from "@/lib/events/recurrence";
 import { FIELD_LABELS, formatFieldValue } from "@/lib/events/status";
 import { LOCKABLE_FIELDS, loadHostEvent, lockKeyFieldsWhenRegistered } from "@/lib/host/host-event";
 import { adminAttentionUrl, adminEventUrl } from "@/lib/links";
@@ -71,25 +72,29 @@ export async function saveHostEdit(token: string, _prev: EventFormState, formDat
   const locked = lockKeyFieldsWhenRegistered() && (registered ?? 0) > 0;
   if (locked && LOCKABLE_FIELDS.some((key) => values[key] !== current[key])) {
     return {
-      error: "The date, times, county and address can't be changed because people have already registered.",
+      error: "The date, times, repeat, county and address can't be changed because people have already registered.",
       values: { ...values, ...Object.fromEntries(LOCKABLE_FIELDS.map((k) => [k, current[k]])) },
     };
   }
 
-  const { errors, event, details } = validateEventForm(values, { currentPoster: host.event.poster_path });
-  // Keeping the current date is fine even though it's no longer checked as "in the future" by the host.
+  const { errors, event, details } = validateEventForm(values, { currentPoster: host.event.poster_path, currentStart: host.event.start_at });
   if (event && registered && event.capacity !== null && event.capacity < registered) {
     errors.capacity = `${registered} people have already registered, so the limit can't be lower than ${registered}.`;
   }
   if (Object.keys(errors).length || !event || !details) return { fieldErrors: errors, values };
 
-  const before: EventFields & PrivateFields = { ...host.event, ...host.details };
+  const before: EventFields & PrivateFields = { ...host.event, recurrence_rule: parseRule(host.event.recurrence_rule), ...host.details };
   const after: EventFields & PrivateFields = { ...event, ...details };
   const changes: Record<string, { before: Json; after: Json }> = {};
   for (const key of Object.keys(after) as (keyof typeof after)[]) {
     const a = before[key] ?? null;
     const b = after[key] ?? null;
-    const same = key === "start_at" || key === "end_at" ? new Date(String(a)).getTime() === new Date(String(b)).getTime() : a === b;
+    const same =
+      key === "start_at" || key === "end_at"
+        ? new Date(String(a)).getTime() === new Date(String(b)).getTime()
+        : key === "recurrence_rule"
+          ? JSON.stringify(a) === JSON.stringify(b)
+          : a === b;
     if (!same) changes[key] = { before: a, after: b };
   }
   if (!Object.keys(changes).length) return { notice: "Nothing has changed, so there was nothing to save.", values };

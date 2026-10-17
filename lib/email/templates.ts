@@ -1,3 +1,4 @@
+import { describeRecurrence } from "@/lib/events/recurrence";
 import { formatDate, formatTimeRange } from "@/lib/format";
 
 // Email templates (spec section 9). Each is written once as a list of blocks,
@@ -15,7 +16,16 @@ type Block =
   | { kind: "list"; items: string[] }
   | { kind: "note"; text: string };
 
-type EventSummary = { title: string; county: string; start_at: string; end_at: string };
+// For a recurring event, start_at/end_at is the date the email is about
+// (the first date for hosts, the chosen date for an RSVP).
+type EventSummary = {
+  title: string;
+  county: string;
+  start_at: string;
+  end_at: string;
+  recurrence_rule?: unknown;
+  recurrence_until?: string | null;
+};
 
 const SIGN_OFF = "Thanks,\nConscious Connections";
 
@@ -140,7 +150,7 @@ export function registeredEmail(args: {
       kind: "details",
       rows: [
         ["Event", event.title],
-        ["When", `${formatDate(event.start_at)}, ${formatTimeRange(event.start_at, event.end_at)}`],
+        ...whenWhere(event).filter(([label]) => label !== "County"),
         ["Where", args.exactAddress],
         ["Host", firstName(args.hostName)],
       ],
@@ -318,8 +328,13 @@ export function takenDownEmail(args: { hostName: string; event: EventSummary; re
 }
 
 function whenWhere(event: EventSummary): [string, string][] {
+  const repeats = describeRecurrence(
+    { start_at: event.start_at, end_at: event.end_at, recurrence_rule: event.recurrence_rule, recurrence_until: event.recurrence_until ?? null },
+    { withUntil: true },
+  );
   return [
     ["When", `${formatDate(event.start_at)}, ${formatTimeRange(event.start_at, event.end_at)}`],
+    ...(repeats ? [["Repeats", repeats] as [string, string]] : []),
     ["County", event.county],
   ];
 }

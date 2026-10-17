@@ -45,6 +45,8 @@ async function main() {
 
     console.log("\nPoster");
     await page.locator('input[type="file"]').setInputFiles({ name: "big.png", mimeType: "image/png", buffer: Buffer.alloc(6 * 1024 * 1024) });
+    // The browser first tries to resize the file, so the message can take a moment.
+    await page.getByText(/up to 5MB/).first().waitFor({ timeout: 5000 }).catch(() => {});
     check(await page.getByText(/up to 5MB/).first().isVisible(), "a poster over 5MB is refused");
     await page.locator('input[type="file"]').setInputFiles({ name: "poster.png", mimeType: "image/png", buffer: placeholderPng(400, 300, "#7a3b5d") });
     await page.getByAltText("Poster preview").waitFor();

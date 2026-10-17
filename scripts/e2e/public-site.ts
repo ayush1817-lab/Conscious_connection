@@ -103,10 +103,12 @@ async function checkEvents() {
   const now = new Date().toISOString();
   const { data: all } = await service
     .from("events")
-    .select("id, title, status, end_at, event_private_details(exact_address, host_name, host_email, host_phone, emergency_contact_name), registrations(name, email)");
+    .select("id, title, status, series_end_at, event_private_details(exact_address, host_name, host_email, host_phone, emergency_contact_name), registrations(name, email)");
   const events = all ?? [];
-  const visible = events.filter((e) => e.status === "live" && e.end_at > now);
-  const hidden = events.filter((e) => !(e.status === "live" && e.end_at > now));
+  // series_end_at: when the last date ends ("infinity" for a weekly event without an end date).
+  const upcoming = (e: { status: string; series_end_at: string }) => e.status === "live" && (e.series_end_at === "infinity" || e.series_end_at > now);
+  const visible = events.filter(upcoming);
+  const hidden = events.filter((e) => !upcoming(e));
 
   const list = await html("/events");
   check(visible.every((e) => list.body.includes(e.title.replace(/&/g, "&amp;"))), "the list shows every live upcoming event");
@@ -144,7 +146,7 @@ async function checkEvents() {
   const secrets = events.flatMap((e) => {
     const d = Array.isArray(e.event_private_details) ? e.event_private_details[0] : e.event_private_details;
     return [
-      ...(d ? [d.exact_address, d.host_name, d.host_email, d.host_phone, d.emergency_contact_name] : []),
+      ...(d ? [d.exact_address, d.host_name, d.host_email, d.host_phone, d.emergency_contact_name].filter((v): v is string => !!v) : []),
       ...e.registrations.map((r) => r.email),
     ];
   });
