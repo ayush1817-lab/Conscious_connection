@@ -55,12 +55,48 @@ export class ResendEmailService implements EmailService {
   }
 }
 
+// Used when the site is deployed but RESEND_API_KEY is missing. Before this,
+// a deployed site without the key quietly printed emails to the server log and
+// recorded them as sent, so nobody noticed nothing was arriving.
+export class MissingKeyEmailService implements EmailService {
+  readonly provider = "console" as const;
+
+  async send(to: string, email: RenderedEmail): Promise<SendResult> {
+    console.log(`\n[email ${email.template}] NOT SENT to ${to}: ${email.subject}`);
+    return { ok: false, error: "Not sent: RESEND_API_KEY is not set on this deployment." };
+  }
+}
+
+export const DEFAULT_FROM = "Conscious Connections <no-reply@consciousconnections.ie>";
+
+export type EmailConfig = {
+  mode: "resend" | "console" | "missing_key";
+  from: string;
+  fromDomain: string | null;
+  replyTo: string | null;
+};
+
+// Deployed (Vercel, or a production build) means real people expect real emails.
+// EMAIL_PROVIDER=console opts out, e.g. for a staging copy.
+export function emailConfig(env: Record<string, string | undefined> = process.env): EmailConfig {
+  const from = env.EMAIL_FROM?.trim() || DEFAULT_FROM;
+  const fromDomain = /@([^>\s]+)>?\s*$/.exec(from)?.[1]?.toLowerCase() ?? null;
+  const deployed = Boolean(env.VERCEL) || env.NODE_ENV === "production";
+  const mode = env.RESEND_API_KEY
+    ? "resend"
+    : env.EMAIL_PROVIDER === "console" || !deployed
+      ? "console"
+      : "missing_key";
+  return { mode, from, fromDomain, replyTo: env.EMAIL_REPLY_TO?.trim() || null };
+}
+
 export function emailServiceFromEnv(env: Record<string, string | undefined> = process.env): EmailService {
-  const config: Config = {
-    from: env.EMAIL_FROM || "Conscious Connections <no-reply@consciousconnections.ie>",
-    replyTo: env.EMAIL_REPLY_TO || undefined,
-  };
-  return env.RESEND_API_KEY ? new ResendEmailService(env.RESEND_API_KEY, config) : new ConsoleEmailService();
+  const config = emailConfig(env);
+  if (config.mode === "resend") {
+    return new ResendEmailService(env.RESEND_API_KEY!, { from: config.from, replyTo: config.replyTo ?? undefined });
+  }
+  if (config.mode === "missing_key") return new MissingKeyEmailService();
+  return new ConsoleEmailService();
 }
 
 // Sends an email and records it in email_log, whether it was sent or failed.
@@ -72,7 +108,9 @@ export async function sendAndLog(
   email: RenderedEmail,
 ): Promise<SendResult> {
   const result = await service.send(to, email);
-  if (!result.ok) console.error(`[email ${email.template}] to ${to} failed: ${result.error}`);
+  if (!result.ok) {
+    console.error(JSON.stringify({ event: "email_failed", template: email.template, to, subject: email.subject, error: result.error }));
+  }
 
   const { error } = await log.from("email_log").insert({
     to_email: to,
@@ -83,6 +121,6 @@ export async function sendAndLog(
     sent_at: result.ok ? new Date().toISOString() : null,
     error: result.ok ? null : result.error,
   });
-  if (error) console.error("Could not write email_log", error);
+  if (error) console.error(JSON.stringify({ event: "email_log_failed", template: email.template, to, error: error.message }));
   return result;
 }

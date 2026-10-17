@@ -3,7 +3,16 @@
 import { redirect } from "next/navigation";
 import type { EventFormState } from "@/components/public/event-form";
 import { notifyAdmins } from "@/lib/email/admin-recipients";
-import { contactRequestEmail, eventCancelledEmail, hostCancelledEmail, hostEditedEmail, newSubmissionEmail, sendEmail } from "@/lib/email";
+import {
+  changesReceivedEmail,
+  contactRequestEmail,
+  eventCancelledEmail,
+  hostCancelledEmail,
+  hostEditedEmail,
+  newSubmissionEmail,
+  sendEmail,
+  sendQuietly,
+} from "@/lib/email";
 import { FIELD_LABELS, formatFieldValue } from "@/lib/events/status";
 import { LOCKABLE_FIELDS, loadHostEvent, lockKeyFieldsWhenRegistered } from "@/lib/host/host-event";
 import { adminAttentionUrl, adminEventUrl } from "@/lib/links";
@@ -36,8 +45,13 @@ export async function resubmitEvent(token: string, _prev: EventFormState, formDa
     return { error: "Your changes couldn't be sent. Please reload the page and try again.", values };
   }
 
-  await notifyAdmins(
-    newSubmissionEmail({ event, hostName: details.host_name, about: details.about_group, resubmitted: true, adminUrl: adminEventUrl(host.event.id) }),
+  await sendQuietly("host resubmitted", () =>
+    Promise.all([
+      sendEmail(details.host_email, changesReceivedEmail({ hostName: details.host_name, event, resubmitted: true })),
+      notifyAdmins(
+        newSubmissionEmail({ event, hostName: details.host_name, about: details.about_group, resubmitted: true, adminUrl: adminEventUrl(host.event.id) }),
+      ),
+    ]),
   );
   revalidatePublicSite();
   redirect(`/host/${token}?sent=1`);
@@ -94,16 +108,19 @@ export async function saveHostEdit(token: string, _prev: EventFormState, formDat
     return { error: "Your changes couldn't be saved. Please reload the page and try again.", values };
   }
 
-  await notifyAdmins(
-    hostEditedEmail({
-      event,
-      changes: Object.entries(changes).map(([key, c]) => ({
-        label: FIELD_LABELS[key] ?? key,
-        before: formatFieldValue(key, c.before),
-        after: formatFieldValue(key, c.after),
-      })),
-      adminUrl: adminAttentionUrl(itemId),
-    }),
+  const changeList = Object.entries(changes).map(([key, c]) => ({
+    label: FIELD_LABELS[key] ?? key,
+    before: formatFieldValue(key, c.before),
+    after: formatFieldValue(key, c.after),
+  }));
+  await sendQuietly("host edited", () =>
+    Promise.all([
+      sendEmail(
+        details.host_email,
+        changesReceivedEmail({ hostName: details.host_name, event, resubmitted: false, changed: changeList.map((c) => `${c.label}: ${c.after}`) }),
+      ),
+      notifyAdmins(hostEditedEmail({ event, changes: changeList, adminUrl: adminAttentionUrl(itemId) })),
+    ]),
   );
   revalidatePublicSite();
   redirect(`/host/${token}?saved=1`);
@@ -127,7 +144,7 @@ export async function requestContactDetails(token: string, _prev: ContactState, 
   if (error) console.error("host_request_contact failed", error);
   if (!itemId) return { error: "You already have a request waiting for Karina. You'll get an email when she decides." };
 
-  await notifyAdmins(contactRequestEmail({ event: host.event, reason, adminUrl: adminAttentionUrl(itemId) }));
+  await sendQuietly("contact request", () => notifyAdmins(contactRequestEmail({ event: host.event, reason, adminUrl: adminAttentionUrl(itemId) })));
   revalidatePublicSite();
   redirect(`/host/${token}?tab=contact&requested=1`);
 }
@@ -146,10 +163,12 @@ export async function cancelHostEvent(token: string, _prev: { error?: string }, 
   }
 
   const { data: registrants } = await db.from("registrations").select("name, email").eq("event_id", host.event.id);
-  for (const r of registrants ?? []) {
-    await sendEmail(r.email, eventCancelledEmail({ registrantName: r.name, event: host.event }));
-  }
-  await notifyAdmins(hostCancelledEmail({ event: host.event, registered: registrants?.length ?? 0, adminUrl: adminAttentionUrl(itemId) }));
+  await sendQuietly("host cancelled", async () => {
+    for (const r of registrants ?? []) {
+      await sendEmail(r.email, eventCancelledEmail({ registrantName: r.name, event: host.event }));
+    }
+    await notifyAdmins(hostCancelledEmail({ event: host.event, registered: registrants?.length ?? 0, adminUrl: adminAttentionUrl(itemId) }));
+  });
   revalidatePublicSite();
   redirect(`/host/cancelled?n=${registrants?.length ?? 0}`);
 }

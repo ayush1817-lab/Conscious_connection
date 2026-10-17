@@ -8,6 +8,7 @@ import { getEventsOverview, type AttentionRow, type EventCard, type OtherStatus 
 import { STATUS_LABELS } from "@/lib/events/status";
 import { formatDate, formatShortDate, formatTimeRange, plural, timeAgo } from "@/lib/format";
 import { markAttentionSeen } from "./actions";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 export const metadata: Metadata = { title: "Events · Conscious Connections" };
 
@@ -173,13 +174,13 @@ function AttentionItem({ item }: { item: AttentionRow }) {
           </Link>
         ) : (
           <form action={markAttentionSeen.bind(null, item.id, null)}>
-            <button
-              type="submit"
+            <SubmitButton
+              pendingLabel="Saving…"
               className="min-h-tap rounded-control border border-control-border px-4 font-medium hover:bg-background"
               aria-label={`Mark as seen: ${item.heading}, ${item.eventTitle}`}
             >
               Mark as seen
-            </button>
+            </SubmitButton>
           </form>
         )}
       </div>

@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { siteUrl } from "@/lib/links";
 import { createClient } from "@/lib/supabase/server";
 import { setFlash } from "@/lib/flash";
 
@@ -37,9 +38,8 @@ export async function sendResetLink(_prev: FormState, formData: FormData): Promi
   if (!email || !email.includes("@")) return { error: "Please enter the email address you log in with.", email };
 
   const supabase = await createClient();
-  const siteUrl = process.env.SITE_URL ?? "http://localhost:3000";
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${siteUrl}/auth/confirm?next=/admin/reset-password`,
+    redirectTo: `${siteUrl()}/auth/confirm?next=/admin/reset-password`,
   });
   if (error?.status === 429) {
     return { error: "Too many requests. Please wait a few minutes and try again.", email };

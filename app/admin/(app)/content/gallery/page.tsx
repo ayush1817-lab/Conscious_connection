@@ -6,6 +6,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { publicImageUrl } from "@/lib/storage";
 import { createClient } from "@/lib/supabase/server";
 import { addGalleryImages, deleteGalleryImage, moveGalleryImage, saveCaption } from "../actions";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 export const metadata: Metadata = { title: "Gallery · Website content · Conscious Connections" };
 
@@ -44,14 +45,14 @@ export default async function GalleryPage() {
               />
               <div className="grid grid-cols-2 gap-2">
                 <form action={moveGalleryImage.bind(null, img.id, "up")}>
-                  <button type="submit" disabled={i === 0} className={moveButton} aria-label={`Move image ${i + 1} earlier`}>
+                  <SubmitButton pendingLabel="Moving…" disabled={i === 0} className={moveButton} aria-label={`Move image ${i + 1} earlier`}>
                     ↑ Earlier
-                  </button>
+                  </SubmitButton>
                 </form>
                 <form action={moveGalleryImage.bind(null, img.id, "down")}>
-                  <button type="submit" disabled={i === images.length - 1} className={moveButton} aria-label={`Move image ${i + 1} later`}>
+                  <SubmitButton pendingLabel="Moving…" disabled={i === images.length - 1} className={moveButton} aria-label={`Move image ${i + 1} later`}>
                     ↓ Later
-                  </button>
+                  </SubmitButton>
                 </form>
               </div>
               <ConfirmDialog

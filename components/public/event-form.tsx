@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useRef, useState, type ReactNode } from "react";
+import { useActionState, useEffect, useRef, useState, type ReactNode } from "react";
 import { useUnsavedChanges } from "@/components/content/use-unsaved-changes";
 import { COUNTY_NAMES } from "@/lib/counties";
 import { LIMITS, type EventFormValues } from "@/lib/public/event-form";
@@ -11,7 +11,15 @@ import { useFocusFirstError } from "./forms/use-focus-first-error";
 import { EyeIcon, LockIcon } from "./icons";
 import { PosterUpload } from "./poster-upload";
 
-export type EventFormState = { error?: string; notice?: string; fieldErrors?: FieldErrors; values?: EventFormValues; consent?: boolean };
+export type EventFormState = {
+  error?: string;
+  notice?: string;
+  fieldErrors?: FieldErrors;
+  values?: EventFormValues;
+  consent?: boolean;
+  // Set when the form was sent successfully: the form is replaced by `done`.
+  done?: boolean;
+};
 
 // The host event form: H1 (submit), and H3 when a host fixes or edits their event.
 // Public details and private details are visibly separate (spec section 8).
@@ -24,6 +32,7 @@ export function EventForm({
   locked = [],
   lockedNote,
   footnote,
+  done,
 }: {
   action: (prev: EventFormState, formData: FormData) => Promise<EventFormState>;
   initial: EventFormValues;
@@ -34,6 +43,8 @@ export function EventForm({
   locked?: (keyof EventFormValues)[];
   lockedNote?: ReactNode;
   footnote?: ReactNode;
+  // Shown instead of the form after a successful submit.
+  done?: ReactNode;
 }) {
   const [state, formAction, pending] = useActionState(action, {});
   const formRef = useRef<HTMLFormElement>(null);
@@ -54,6 +65,8 @@ export function EventForm({
   // refills the form with what the server sent back.
   const formKey = JSON.stringify(state.values ?? null);
   const today = new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Dublin" });
+
+  if (state.done && done) return <DoneMessage>{done}</DoneMessage>;
 
   return (
     <form
@@ -189,10 +202,32 @@ export function EventForm({
       <button
         type="submit"
         disabled={pending}
-        className="min-h-tap w-full rounded-control bg-primary px-6 font-medium text-on-primary hover:bg-primary-hover disabled:opacity-60 sm:w-auto"
+        aria-busy={pending || undefined}
+        className="inline-flex min-h-tap w-full items-center justify-center gap-2 rounded-control bg-primary px-6 font-medium text-on-primary hover:bg-primary-hover disabled:cursor-wait disabled:opacity-60 sm:w-auto"
       >
-        {pending ? pendingLabel : submitLabel}
+        {pending ? (
+          <>
+            <span aria-hidden className="h-4 w-4 animate-spin rounded-full border-2 border-on-primary border-t-transparent" />
+            {pendingLabel}
+          </>
+        ) : (
+          submitLabel
+        )}
       </button>
     </form>
+  );
+}
+
+// Takes the form's place after it was sent, and is focused so screen readers read it.
+function DoneMessage({ children }: { children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    ref.current?.scrollIntoView({ block: "start" });
+    ref.current?.focus({ preventScroll: true });
+  }, []);
+  return (
+    <div ref={ref} tabIndex={-1} role="status" className="rounded-card border-2 border-success bg-surface p-6 focus:outline-none md:p-8">
+      {children}
+    </div>
   );
 }

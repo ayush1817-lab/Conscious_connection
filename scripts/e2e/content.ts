@@ -104,9 +104,11 @@ async function main() {
     check(story?.slug === "walking-into-winter" && !story.published && !!story.cover_path, "draft has a slug and cover image");
 
     await page.getByRole("button", { name: "Publish" }).click();
-    check(await visible(page, "Published. The story is now on the website."), "publish confirms");
+    await page.waitForURL(`${BASE_URL}/admin/content/stories`);
+    check(await visible(page, "Published. The story is now on the website."), "publish confirms and goes back to the story list");
     const { data: published } = await service.from("stories").select("published, published_at").eq("id", story!.id).single();
     check(!!published?.published && !!published.published_at, "story is published");
+    await page.goto(`${BASE_URL}/admin/content/stories/${story!.id}`);
     await page.getByRole("button", { name: "Unpublish" }).click();
     check(await visible(page, "Unpublished."), "unpublish confirms");
 
@@ -118,7 +120,8 @@ async function main() {
     await page.getByRole("dialog", { name: "Delete this story?" }).getByRole("button", { name: "Yes, delete it" }).click();
     await page.waitForURL(`${BASE_URL}/admin/content/stories`);
     check(await visible(page, "Story deleted."), "delete confirms");
-    check(!(await page.content()).includes("Walking into winter"), "story is gone from the list");
+    const listText = await page.locator("main").innerText();
+    check(!listText.includes("Walking into winter"), "story is gone from the list", listText.slice(0, 400));
     check(!(await stored("content", story!.cover_path!)), "its cover image is removed from Storage");
 
     console.log("\nPodcasts");
@@ -135,9 +138,11 @@ async function main() {
     await page.getByRole("button", { name: "Save draft" }).click();
     await page.waitForURL(/\/admin\/content\/podcasts\/[0-9a-f-]{36}$/);
     await page.getByRole("button", { name: "Publish" }).click();
-    check(await visible(page, "Published. The podcast is now on the website."), "podcast publishes");
+    await page.waitForURL(`${BASE_URL}/admin/content/podcasts`);
+    check(await visible(page, "Published. The podcast is now on the website."), "podcast publishes and goes back to the list");
     const { data: podcast } = await service.from("podcasts").select("id, published").eq("title", "Episode 6: Winter walks").single();
     check(!!podcast?.published, "podcast is published");
+    await page.goto(`${BASE_URL}/admin/content/podcasts/${podcast!.id}`);
     await page.getByRole("button", { name: "Delete" }).click();
     await page.getByRole("dialog", { name: "Delete this podcast?" }).getByRole("button", { name: "Yes, delete it" }).click();
     await page.waitForURL(`${BASE_URL}/admin/content/podcasts`);

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
+import { siteUrl as siteUrlFromEnv } from "@/lib/links";
 
 // Self-hosted at build time by next/font: no requests to Google from visitors' browsers.
 const body = Poppins({
@@ -10,7 +11,7 @@ const body = Poppins({
   display: "swap",
 });
 
-const siteUrl = process.env.SITE_URL || "http://localhost:3000";
+const siteUrl = siteUrlFromEnv();
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
