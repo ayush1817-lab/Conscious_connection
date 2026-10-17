@@ -8,7 +8,7 @@ import { StatusBadge } from "@/components/events/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { requireAdmin } from "@/lib/auth/admin";
-import { describeRecurrence } from "@/lib/events/recurrence";
+import { describeRecurrence, groupByOccurrence } from "@/lib/events/recurrence";
 import { EDITABLE_STATUSES, retentionCutoff } from "@/lib/events/status";
 import { formatDate, formatDateTime, formatTimeRange, timeAgo } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
@@ -42,7 +42,7 @@ export default async function EventDetailPage({
   const { data: event } = await supabase
     .from("events")
     .select(
-      "*, event_private_details(*), registrations(name, created_at, occurrence_start), event_activity(id, actor, action, note, created_at), attention_items(id, type, needs_decision, created_at, resolved_at)",
+      "*, event_private_details(*), registrations(name, email, created_at, occurrence_start), event_activity(id, actor, action, note, created_at), attention_items(id, type, needs_decision, created_at, resolved_at)",
     )
     .eq("id", id)
     .gte("series_end_at", retentionCutoff())
@@ -198,16 +198,57 @@ export default async function EventDetailPage({
           </div>
 
           {event.status === "live" || registrants.length ? (
-            <section className="rounded-card border border-border bg-surface p-4">
-              <h2 className="font-semibold">Registered ({registrants.length})</h2>
-              {registrants.length ? (
-                <ul className="mt-2 flex flex-wrap gap-2">
-                  {registrants.map((r, i) => (
-                    <li key={i} className="rounded-full border border-border px-3 py-1">
-                      {r.name}
-                    </li>
-                  ))}
-                </ul>
+            <section aria-labelledby="attendees-heading" className="rounded-card border border-border bg-surface p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h2 id="attendees-heading" className="font-semibold">
+                  Attendees ({registrants.length})
+                </h2>
+                {registrants.length ? (
+                  <a
+                    href={`/admin/events/${id}/attendees`}
+                    download
+                    className="inline-flex min-h-tap items-center rounded-control border border-border px-4 font-medium hover:bg-band"
+                  >
+                    Download all as CSV
+                  </a>
+                ) : null}
+              </div>
+              <p className="mt-1 text-sm text-muted">
+                Only you see emails. The host sees first names only. Everything is deleted 7 days after each date.
+              </p>
+              {event.external_registration_url ? (
+                <p className="mt-2 text-muted">People register on the organiser&apos;s own site, so they don&apos;t appear here.</p>
+              ) : registrants.length ? (
+                groupByOccurrence(registrants).map((group) => (
+                  <div key={group.start} className="mt-4">
+                    {repeats ? (
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <h3 className="font-medium">
+                          {formatDate(group.start)} · {group.rows.length} {group.rows.length === 1 ? "person" : "people"}
+                          {event.capacity ? ` of ${event.capacity}` : ""}
+                        </h3>
+                        <a
+                          href={`/admin/events/${id}/attendees?date=${encodeURIComponent(group.start)}`}
+                          download
+                          className="text-sm font-medium text-primary underline underline-offset-4"
+                        >
+                          Download this date<span className="sr-only">, {formatDate(group.start)}</span>
+                        </a>
+                      </div>
+                    ) : null}
+                    <ul className="mt-2 divide-y divide-border rounded-control border border-border">
+                      {group.rows.map((r, i) => (
+                        <li key={i} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 px-3 py-2">
+                          <span className="font-medium">{r.name}</span>
+                          <a href={`mailto:${r.email}`} className="min-w-0 break-all text-primary underline underline-offset-4">
+                            {r.email}
+                          </a>
+                          <span className="w-full text-sm text-muted sm:w-auto">Registered {timeAgo(r.created_at)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))
               ) : (
                 <p className="mt-2 text-muted">Nobody has registered yet.</p>
               )}

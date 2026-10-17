@@ -26,7 +26,7 @@ export default function PrivacyPage() {
           <ul className="mt-2 list-disc space-y-1 pl-6">
             <li>We ask for a name (a first name or nickname is fine) and your email.</li>
             <li>We use your email only to send you the event details, including the exact location.</li>
-            <li>The host sees your name only, not your email.</li>
+            <li>The host sees your name only, not your email. Our team can see your name and email, to help with the event.</li>
             <li>Your details are deleted 7 days after the event.</li>
           </ul>
         </section>
