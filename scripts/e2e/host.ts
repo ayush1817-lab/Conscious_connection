@@ -145,6 +145,8 @@ async function main() {
     await admin.getByRole("button", { name: "Log in" }).click();
     await admin.getByRole("heading", { name: /Welcome/ }).waitFor();
     await admin.goto(`${BASE_URL}/admin/events`);
+    await admin.getByRole("heading", { name: "Events overview" }).waitFor();
+    await admin.getByText(/Attention items \(\d+\)/).first().waitFor();
     const overview = await admin.locator("main").innerText();
     check(/Attention items \(5\)/.test(overview), "the attention count includes the host's edit and request", overview.match(/Attention items \(\d+\)/)?.[0]);
     check(await admin.locator(`a[href="/admin/attention/${editItem!.id}"]`).first().isVisible(), "the host edit is listed");

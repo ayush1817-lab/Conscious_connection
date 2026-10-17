@@ -120,7 +120,8 @@ async function main() {
     await page.goto(`${BASE_URL}/admin/events/${gentleWalk}`);
     await page.getByRole("button", { name: "Approve" }).click();
     await page.waitForURL(`${BASE_URL}/admin/events/${gentleWalk}/approved`);
-    check(await page.getByRole("heading", { name: "Approved." }).isVisible(), "shows Approved.");
+    const approvedShown = await page.getByRole("heading", { name: "Approved." }).waitFor({ timeout: 5000 }).then(() => true, () => false);
+    check(approvedShown, "shows Approved.");
     check(await visible(page, "Mary O'Brien has been emailed their private link."), "says the host has been emailed");
     const live = await eventRow(gentleWalk);
     check(live.status === "live", "status is live");

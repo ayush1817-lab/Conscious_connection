@@ -51,14 +51,21 @@ npm run dev                 # public site at http://localhost:3000, admin at /ad
 | `npm run test:submit` | Browser test of submitting an event at 360px: errors, poster upload, saved request, E1 and E5, and the request in the admin (re-seeds first; app must be running) |
 | `npm run test:resend` | Browser test of "Lost your link?": the same reply for hosts and strangers, a fresh working link (E4 or E2) that replaces the old one, nothing for pending or ended events, and the hourly limit (re-seeds first; app must be running) |
 | `npm run test:host` | Browser test of the private host page: broken links all show the same page, resubmitting, editing with a diff, locked fields, names only, contact requests, cancelling, and each action in the admin's Attention items (re-seeds first; app must be running) |
+| `npm run test:stories` | Browser test of "Share your story": errors, honeypot, confirmation and emails, and approving or declining in the admin (re-seeds first; app must be running) |
+| `npm run test:recurring` | Browser test of weekly events: the listing label, picking a date, places per date, the submission form and the admin event editor (re-seeds first; app must be running) |
+| `npm run test:external` | Browser test of external registration links: checking the link, the "Register here" button, our RSVP refused, and the admin editor (re-seeds first; app must be running) |
+| `npm run test:podcasts` | Browser test of Spotify and uploaded audio podcasts, from the admin form to the public page (re-seeds first; app must be running) |
+| `npm run test:page-content` | Browser test of the editable homepage cards and page introductions (re-seeds first; app must be running) |
+| `npm run test:attendees` | Browser test of the admin attendee list and CSV download (re-seeds first; app must be running) |
 | `npm run lint` | TypeScript type check |
 
 ## Database and migrations
 
-Migrations live in [`supabase/migrations/`](supabase/migrations/). The first one creates every table, enum, RLS policy, the `is_admin()` helper and the storage buckets (`posters`, `gallery`, `content`).
+Migrations live in [`supabase/migrations/`](supabase/migrations/). The first one creates every table, enum, RLS policy, the `is_admin()` helper and the storage buckets (`posters`, `gallery`, `content`; a later migration adds `podcasts` for audio files).
 
 - **Local:** `npm run db:reset` re-applies all migrations from scratch.
 - **Hosted:** `npx supabase link --project-ref <your-project-ref>` once, then `npm run db:push`.
+- **Client feedback changes (Oct 2026):** see [`docs/CHANGELOG-client-feedback.md`](docs/CHANGELOG-client-feedback.md) for the new migrations and a one-file SQL update for the live database.
 
 Row Level Security is on for every table. Private tables (host details, registrations, contact requests, edits, attention items, email log, activity) are readable only by admins. The public can read only live, upcoming events (public-safe columns only) and published content. `npm run test:rls` proves this.
 
