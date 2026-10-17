@@ -27,7 +27,7 @@ function firstName(fullName: string) {
 export function submittedEmail(args: { hostName: string; event: EventSummary }) {
   return render("E1", `We've received your event "${args.event.title}"`, "Thanks, we've got your event", [
     { kind: "p", text: `Hi ${firstName(args.hostName)},` },
-    { kind: "p", text: `Thank you for submitting "${args.event.title}". Karina will review it, usually within 24–48 hours.` },
+    { kind: "p", text: `Thank you for submitting "${args.event.title}". We will review it, usually within 24–48 hours.` },
     { kind: "details", rows: whenWhere(args.event) },
     {
       kind: "list",
@@ -57,11 +57,11 @@ export function newSubmissionEmail(args: { event: EventSummary; hostName: string
   ]);
 }
 
-// E2: Karina requests changes.
+// E2: the admin requests changes.
 export function needsChangesEmail(args: { hostName: string; event: EventSummary; reason: string; editUrl: string }) {
   return render("E2", "We need a few changes to your event", "We need a few changes", [
     { kind: "p", text: `Hi ${firstName(args.hostName)},` },
-    { kind: "p", text: `Thanks for your event submission "${args.event.title}". Karina has asked for a few changes before it can go live.` },
+    { kind: "p", text: `Thanks for your event submission "${args.event.title}". We've asked for a few changes before it can go live.` },
     { kind: "quote", label: "Reason for changes", text: args.reason },
     { kind: "button", label: "Edit your event", url: args.editUrl },
     { kind: "p", text: "Once you've updated the details, we'll review it again." },
@@ -69,7 +69,7 @@ export function needsChangesEmail(args: { hostName: string; event: EventSummary;
   ]);
 }
 
-// E3: Karina declines.
+// E3: the admin declines.
 export function declinedEmail(args: { hostName: string; event: EventSummary; reason: string }) {
   return render("E3", "Your event won't be going live", "Your event won't be going live", [
     { kind: "p", text: `Hi ${firstName(args.hostName)},` },
@@ -83,7 +83,7 @@ export function declinedEmail(args: { hostName: string; event: EventSummary; rea
   ]);
 }
 
-// E4: Karina approves (or regenerates the host link).
+// E4: the admin approves (or regenerates the host link).
 // With resent, it's the regenerated-link version: the old link no longer works.
 export function approvedEmail(args: {
   hostName: string;
@@ -214,7 +214,7 @@ export function contactRequestEmail(args: { event: EventSummary; reason: string;
   ]);
 }
 
-// E9: Karina cancels a live event. Sent to each registrant.
+// E9: the admin cancels a live event. Sent to each registrant.
 export function eventCancelledEmail(args: { registrantName: string; event: EventSummary }) {
   const { event } = args;
   return render("E9", `Cancelled: ${event.title}`, "This event has been cancelled", [
@@ -226,7 +226,7 @@ export function eventCancelledEmail(args: { registrantName: string; event: Event
   ]);
 }
 
-// E10: Karina shares registrants' contact details with the host.
+// E10: the admin shares registrants' contact details with the host.
 export function contactDetailsSharedEmail(args: {
   hostName: string;
   event: EventSummary;
@@ -237,7 +237,7 @@ export function contactDetailsSharedEmail(args: {
     { kind: "p", text: `Hi ${firstName(args.hostName)},` },
     {
       kind: "p",
-      text: `Karina has shared the contact details of the ${count === 1 ? "person" : `${count} people`} registered for "${args.event.title}".`,
+      text: `We've shared the contact details of the ${count === 1 ? "person" : `${count} people`} registered for "${args.event.title}".`,
     },
     { kind: "list", items: args.registrants.map((r) => `${r.name}: ${r.email}`) },
     {
@@ -248,13 +248,13 @@ export function contactDetailsSharedEmail(args: {
   ]);
 }
 
-// E10: Karina declines the host's request for contact details.
+// E10: the admin declines the host's request for contact details.
 export function contactDetailsDeclinedEmail(args: { hostName: string; event: EventSummary; reason: string }) {
   return render("E10", `About your request for "${args.event.title}"`, "About your contact details request", [
     { kind: "p", text: `Hi ${firstName(args.hostName)},` },
     {
       kind: "p",
-      text: `Thanks for your request. Karina has decided not to share registrants' contact details for "${args.event.title}".`,
+      text: `Thanks for your request. We've decided not to share registrants' contact details for "${args.event.title}".`,
     },
     { kind: "quote", label: "Reason", text: args.reason },
     { kind: "p", text: "If you have any questions, you can reply to this email." },
@@ -262,7 +262,7 @@ export function contactDetailsDeclinedEmail(args: { hostName: string; event: Eve
   ]);
 }
 
-// E11: Karina takes down a live event.
+// E11: the admin takes down a live event.
 export function takenDownEmail(args: { hostName: string; event: EventSummary; reason: string }) {
   return render("E11", "Your event has been taken down", "Your event has been taken down", [
     { kind: "p", text: `Hi ${firstName(args.hostName)},` },

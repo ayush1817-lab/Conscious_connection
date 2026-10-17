@@ -5,7 +5,7 @@
  * at 360px and checks: errors keep what was typed and focus the first problem,
  * a poster uploads, the event and private details are saved as a pending
  * request, E1 goes to the host and E5 to the admin, the confirmation replaces the form, and
- * that Karina sees the new request with every private detail in the admin.
+ * that the admin sees the new request with every private detail in the admin.
  */
 import { execSync } from "node:child_process";
 import { placeholderPng } from "../lib/placeholder-png";
@@ -99,7 +99,7 @@ async function main() {
     const publicList = await (await fetch(`${BASE_URL}/events`)).text();
     check(!publicList.includes(title), "a pending event isn't on the public site");
 
-    console.log("\nKarina sees it in the admin");
+    console.log("\nThe admin sees it in the admin");
     const admin = await browser.newPage();
     await admin.goto(`${BASE_URL}/admin/login`);
     await admin.getByLabel("Email").fill(env("SEED_ADMIN_EMAIL"));

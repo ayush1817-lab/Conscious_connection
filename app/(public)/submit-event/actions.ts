@@ -41,7 +41,7 @@ export async function submitEvent(_prev: SubmitState, formData: FormData): Promi
   if (isLikelyBot(formData)) return { done: true };
 
   const { errors, event, details } = validateEventForm(values);
-  if (!consent) errors.consent = "Please tick the box to agree, so Karina can review your event.";
+  if (!consent) errors.consent = "Please tick the box to agree, so we can review your event.";
   if (Object.keys(errors).length || !event || !details) return { fieldErrors: errors, values, consent };
 
   if (!(await withinRateLimit("submit"))) return { error: RATE_LIMITED_MESSAGE, values, consent };

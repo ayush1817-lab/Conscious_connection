@@ -14,7 +14,7 @@ import { getGallery, getPodcasts, getSections, getStories } from "@/lib/public/c
 import { getPlacesLeft, getUpcomingEvents, placesBadge } from "@/lib/public/events";
 import { publicImageUrl } from "@/lib/storage";
 
-// P1 Homepage: Karina's sections, the next 3 events, latest stories, latest podcast, gallery strip.
+// P1 Homepage: the admin's sections, the next 3 events, latest stories, latest podcast, gallery strip.
 export default async function HomePage() {
   const [sections, events, stories, podcasts, gallery] = await Promise.all([
     getSections("home"),

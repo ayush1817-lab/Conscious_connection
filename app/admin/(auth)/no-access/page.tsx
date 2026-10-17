@@ -10,7 +10,7 @@ export default function NoAccessPage() {
     <>
       <h1 className="mt-1 text-center text-2xl font-semibold">You don&apos;t have access</h1>
       <p className="mt-4 text-center text-muted">
-        This account isn&apos;t set up as an admin. If you think it should be, please contact Karina.
+        This account isn&apos;t set up as an admin. If you think it should be, please contact the site's admin team.
       </p>
       <form action={logout} className="mt-6">
         <Button type="submit" variant="secondary" className="w-full">

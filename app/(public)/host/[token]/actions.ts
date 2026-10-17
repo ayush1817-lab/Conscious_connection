@@ -24,7 +24,7 @@ import type { Json } from "@/lib/supabase/database.types";
 
 const GONE = "This link is no longer active. Please reload the page.";
 
-// H3 (needs changes): fix the event and send it back to Karina.
+// H3 (needs changes): fix the event and send it back for review.
 export async function resubmitEvent(token: string, _prev: EventFormState, formData: FormData): Promise<EventFormState> {
   const host = await loadHostEvent(token);
   if (!host || host.view !== "needs_changes") return { error: GONE };
@@ -57,7 +57,7 @@ export async function resubmitEvent(token: string, _prev: EventFormState, formDa
   redirect(`/host/${token}?sent=1`);
 }
 
-// H3 (live): save changes. Only changed fields are written, and Karina gets a before/after.
+// H3 (live): save changes. Only changed fields are written, and the admin gets a before/after.
 export async function saveHostEdit(token: string, _prev: EventFormState, formData: FormData): Promise<EventFormState> {
   const host = await loadHostEvent(token);
   if (!host || host.view !== "live") return { error: GONE };
@@ -128,12 +128,12 @@ export async function saveHostEdit(token: string, _prev: EventFormState, formDat
 
 export type ContactState = { error?: string; reasonError?: string };
 
-// H3 (live): ask Karina for registrants' contact details.
+// H3 (live): ask the admin team for registrants' contact details.
 export async function requestContactDetails(token: string, _prev: ContactState, formData: FormData): Promise<ContactState> {
   const host = await loadHostEvent(token);
   if (!host || host.view !== "live") return { error: GONE };
   const reason = field(formData, "reason");
-  if (!reason) return { reasonError: "Tell Karina why you need the contact details." };
+  if (!reason) return { reasonError: "Tell us why you need the contact details." };
   if (reason.length > 500) return { reasonError: `Please keep this under 500 characters (it's ${reason.length}).` };
 
   const { data: itemId, error } = await createAdminClient().rpc("host_request_contact", {
@@ -142,14 +142,14 @@ export async function requestContactDetails(token: string, _prev: ContactState, 
     p_reason: reason,
   });
   if (error) console.error("host_request_contact failed", error);
-  if (!itemId) return { error: "You already have a request waiting for Karina. You'll get an email when she decides." };
+  if (!itemId) return { error: "You already have a request waiting for our team. We'll email you when it's been decided." };
 
   await sendQuietly("contact request", () => notifyAdmins(contactRequestEmail({ event: host.event, reason, adminUrl: adminAttentionUrl(itemId) })));
   revalidatePublicSite();
   redirect(`/host/${token}?tab=contact&requested=1`);
 }
 
-// H4: cancel the event. Every registrant gets E9 and Karina gets E7.
+// H4: cancel the event. Every registrant gets E9 and the admins get E7.
 export async function cancelHostEvent(token: string, _prev: { error?: string }, formData: FormData): Promise<{ error?: string }> {
   if (formData.get("confirmed") !== "yes") return { error: "Please confirm first." };
   const host = await loadHostEvent(token);

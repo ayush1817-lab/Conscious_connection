@@ -65,11 +65,11 @@ function NeedsChanges({ host, token }: { host: HostEvent; token: string }) {
       <StatusBar tone="action">Needs changes</StatusBar>
       <section aria-labelledby="reason-heading" className="mt-6 rounded-card border-2 border-warning bg-private p-5">
         <h2 id="reason-heading" className="font-heading text-xl font-semibold">
-          Karina asked for a few changes
+          We've asked for a few changes
         </h2>
         <p className="mt-2 text-lg whitespace-pre-line">{host.event.status_reason}</p>
       </section>
-      <p className="my-6">Update your event below, then send it back. Karina will review it again.</p>
+      <p className="my-6">Update your event below, then send it back. Our team will review it again.</p>
       <EventForm
         action={resubmitEvent.bind(null, token)}
         initial={eventToForm(host.event, host.details)}
@@ -85,10 +85,10 @@ function Pending({ host, sent }: { host: HostEvent; sent: boolean }) {
   const e = host.event;
   return (
     <>
-      <StatusBar tone="waiting">Waiting for Karina&apos;s review</StatusBar>
-      {sent ? <Notice>Thanks! Your changes have been sent to Karina.</Notice> : null}
+      <StatusBar tone="waiting">Waiting for review</StatusBar>
+      {sent ? <Notice>Thanks! Your changes have been sent to our team.</Notice> : null}
       <p className="mt-6 text-lg">
-        Karina will look at your event soon. If it&apos;s approved, we&apos;ll email you a new private link to manage it.
+        Our team will look at your event soon. If it&apos;s approved, we&apos;ll email you a new private link to manage it.
       </p>
       <dl className="mt-6 space-y-3 rounded-card border border-border bg-surface p-5">
         <SummaryRow label="County">{e.county}</SummaryRow>
@@ -143,7 +143,7 @@ async function Live({ host, token, query }: { host: HostEvent; token: string; qu
           See your event on the website
         </Link>
       </p>
-      {query.saved === "1" ? <Notice>Saved. Your changes are live, and Karina has been told.</Notice> : null}
+      {query.saved === "1" ? <Notice>Saved. Your changes are live, and our team has been told.</Notice> : null}
 
       <nav aria-label="Manage your event" className="mt-6 border-b border-border">
         <ul className="-mb-px flex flex-wrap">
@@ -171,7 +171,7 @@ async function Live({ host, token, query }: { host: HostEvent; token: string; qu
             withConsent={false}
             locked={locked ? [...LOCKABLE_FIELDS] : []}
             lockedNote="These can't be changed because people have already registered. To change them, cancel this event and submit a new one."
-            footnote="Changes go live immediately. Karina will be notified."
+            footnote="Changes go live immediately. Our team will be notified."
           />
         ) : null}
 
@@ -203,17 +203,17 @@ async function Live({ host, token, query }: { host: HostEvent; token: string; qu
             <h2 id="contact-heading" className="font-heading text-2xl font-semibold">
               Request contact details
             </h2>
-            {query.requested === "1" ? <Notice>Request sent. Karina will email you when she decides.</Notice> : null}
+            {query.requested === "1" ? <Notice>Request sent. We'll email you once it's been decided.</Notice> : null}
             {requests.length ? (
               <ul className="space-y-3">
                 {requests.map((r) => (
                   <li key={r.id} className="rounded-card border border-border bg-surface p-4">
                     <p className="font-semibold">
-                      {r.status === "requested" ? "Waiting for Karina" : r.status === "shared" ? "Shared by email" : "Declined"}
+                      {r.status === "requested" ? "Waiting for our team" : r.status === "shared" ? "Shared by email" : "Declined"}
                       <span className="font-normal text-muted"> · asked {formatDateTime(r.created_at)}</span>
                     </p>
                     <p className="mt-1 text-muted">&ldquo;{r.host_reason}&rdquo;</p>
-                    {r.status === "declined" && r.admin_reason ? <p className="mt-1">Karina&apos;s reason: {r.admin_reason}</p> : null}
+                    {r.status === "declined" && r.admin_reason ? <p className="mt-1">Our reason: {r.admin_reason}</p> : null}
                   </li>
                 ))}
               </ul>

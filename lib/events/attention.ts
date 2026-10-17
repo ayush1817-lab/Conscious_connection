@@ -31,7 +31,7 @@ export async function markSeen(supabase: Client, itemId: string) {
   return item;
 }
 
-// Records Karina's decision on a contact request and clears its attention item.
+// Records the admin's decision on a contact request and clears its attention item.
 // Only works once: a request already decided elsewhere is refused.
 export async function decideContactRequest(
   supabase: Client,

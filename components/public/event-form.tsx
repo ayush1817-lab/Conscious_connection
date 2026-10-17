@@ -145,7 +145,7 @@ export function EventForm({
           2. Private details
         </legend>
         <p className="-mt-2">
-          <strong>Only visible to Karina.</strong> These are never shown on the website.
+          <strong>Only visible to our team.</strong> These are never shown on the website.
         </p>
         <TextAreaField
           id="exact_address"
@@ -169,7 +169,7 @@ export function EventForm({
           required
           rows={3}
           maxLength={LIMITS.about}
-          hint={`Helps Karina get to know who's hosting. Up to ${LIMITS.about} characters.`}
+          hint={`Helps our team get to know who's hosting. Up to ${LIMITS.about} characters.`}
           defaultValue={v.about_group}
           error={e.about_group}
         />
@@ -186,7 +186,7 @@ export function EventForm({
       {withConsent ? (
         <div className="space-y-3">
           <p className="text-muted">
-            Karina uses these details only to review and run your event. Private details are deleted 7 days after the event.{" "}
+            We use these details only to review and run your event. Private details are deleted 7 days after the event.{" "}
             <Link href="/privacy" className="font-medium text-primary underline underline-offset-4">
               Privacy
             </Link>

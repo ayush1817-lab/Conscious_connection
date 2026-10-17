@@ -1,6 +1,6 @@
 import { Fragment, type ReactNode } from "react";
 
-// The "basic formatting" Karina can use in content text:
+// The "basic formatting" the admin can use in content text:
 // a blank line starts a new paragraph, **bold** and *italic*.
 // Rendered as React elements, so no HTML from the text is ever trusted.
 export function RichText({ text, className = "" }: { text: string; className?: string }) {

@@ -219,7 +219,7 @@ async function main() {
   check(logged.ok && log?.template === "E3" && log.provider === "console" && !!log.sent_at && !log.error, "console provider logs to email_log as sent");
 
   let request: { url: string; init: RequestInit } | null = null;
-  const resend = new ResendEmailService("re_test", { from: "CC <no-reply@cc.ie>", replyTo: "karina@cc.ie" }, (async (url: string, init: RequestInit) => {
+  const resend = new ResendEmailService("re_test", { from: "CC <no-reply@cc.ie>", replyTo: "team@cc.ie" }, (async (url: string, init: RequestInit) => {
     request = { url, init };
     return new Response("{}", { status: 200 });
   }) as typeof fetch);
@@ -229,7 +229,7 @@ async function main() {
     request!.url === "https://api.resend.com/emails" &&
       (request!.init.headers as Record<string, string>).Authorization === "Bearer re_test" &&
       sentBody.to[0] === "host@example.com" &&
-      sentBody.reply_to === "karina@cc.ie" &&
+      sentBody.reply_to === "team@cc.ie" &&
       !!sentBody.html &&
       !!sentBody.text,
     "Resend provider posts the email with the API key",

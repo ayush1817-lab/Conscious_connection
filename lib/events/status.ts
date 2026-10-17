@@ -11,7 +11,7 @@ export function retentionCutoff(now = Date.now()) {
   return new Date(now - ADMIN_RETENTION_DAYS * 24 * 60 * 60 * 1000).toISOString();
 }
 
-// Plain-language names shown to Karina.
+// Plain-language names shown to the admin.
 export const STATUS_LABELS: Record<EventStatus, string> = {
   pending: "New request",
   needs_changes: "Needs changes",
