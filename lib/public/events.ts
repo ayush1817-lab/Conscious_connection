@@ -1,6 +1,7 @@
 import "server-only";
 import { endOfDublinMonth, endOfDublinWeek } from "@/lib/dublin-time";
 import { createPublicClient } from "@/lib/supabase/public";
+import { isMissingSchema, warnMissingSchema } from "./schema-guard";
 
 // Public event columns only, read from the event_listing view (see the
 // recurring events migration). The view runs with the caller's rights, so RLS
@@ -77,20 +78,47 @@ export const FEW_PLACES = 5; // "X places left" shows only below this (spec sect
 
 export type When = "week" | "month" | "all";
 
-function visibleEvents() {
-  return createPublicClient()
-    .from("event_listing")
-    .select(LISTING_COLUMNS, { count: "exact" })
-    .eq("status", "live")
-    .gt("next_end_at", new Date().toISOString());
+// Columns that existed before the recurring events update, for the fallback below.
+const LEGACY_COLUMNS = "id, title, county, start_at, end_at, description, poster_path, capacity" as const;
+
+type Listing = { query: ReturnType<typeof listingQuery>; start: "next_start_at" | "start_at" };
+
+function listingQuery(legacy: boolean) {
+  const client = createPublicClient();
+  const now = new Date().toISOString();
+  return legacy
+    ? client.from("events").select(LEGACY_COLUMNS, { count: "exact" }).eq("status", "live").gt("end_at", now)
+    : client.from("event_listing").select(LISTING_COLUMNS, { count: "exact" }).eq("status", "live").gt("next_end_at", now);
+}
+
+// Runs a listing query against the event_listing view. If the database hasn't
+// had the recurring events update yet, the view is missing: run it again on the
+// events table, where every event is one-off.
+async function withListing<T extends { error: { code?: string; message?: string } | null }>(run: (l: Listing) => PromiseLike<T>): Promise<T> {
+  const result = await run({ query: listingQuery(false), start: "next_start_at" });
+  if (!isMissingSchema(result.error)) return result;
+  warnMissingSchema("event_listing", result.error);
+  return run({ query: listingQuery(true), start: "start_at" });
 }
 
 function rows(data: unknown): PublicEvent[] {
-  return ((data as ListingRow[] | null) ?? []).map(toPublicEvent);
+  return ((data as Partial<ListingRow>[] | null) ?? []).map(fromAnyRow);
+}
+
+// A row from the view, or from the events table before the update.
+function fromAnyRow(row: Partial<ListingRow>): PublicEvent {
+  return toPublicEvent({
+    recurrence_rule: null,
+    recurrence_until: null,
+    external_registration_url: null,
+    ...row,
+    next_start_at: row.next_start_at ?? row.start_at!,
+    next_end_at: row.next_end_at ?? row.end_at!,
+  } as ListingRow);
 }
 
 export async function getUpcomingEvents(limit: number): Promise<PublicEvent[]> {
-  const { data, error } = await visibleEvents().order("next_start_at").limit(limit);
+  const { data, error } = await withListing(({ query, start }) => query.order(start).limit(limit));
   if (error) throw error;
   return rows(data);
 }
@@ -98,12 +126,13 @@ export async function getUpcomingEvents(limit: number): Promise<PublicEvent[]> {
 // P2: soonest first, filtered by county name and time window, PAGE_SIZE per page.
 // A recurring event is listed once, at its next date.
 export async function listEvents({ county, when, page }: { county: string | null; when: When; page: number }) {
-  let query = visibleEvents();
-  if (county) query = query.eq("county", county);
-  if (when === "week") query = query.lt("next_start_at", endOfDublinWeek().toISOString());
-  if (when === "month") query = query.lt("next_start_at", endOfDublinMonth().toISOString());
   const from = (page - 1) * PAGE_SIZE;
-  const { data, count, error } = await query.order("next_start_at").order("id").range(from, from + PAGE_SIZE - 1);
+  const { data, count, error } = await withListing(({ query, start }) => {
+    if (county) query = query.eq("county", county);
+    if (when === "week") query = query.lt(start, endOfDublinWeek().toISOString());
+    if (when === "month") query = query.lt(start, endOfDublinMonth().toISOString());
+    return query.order(start).order("id").range(from, from + PAGE_SIZE - 1);
+  });
   // Asking for a page past the end is an error in PostgREST; treat it as empty.
   if (error && error.code !== "PGRST103") throw error;
   return { events: rows(data), total: count ?? 0 };
@@ -111,16 +140,16 @@ export async function listEvents({ county, when, page }: { county: string | null
 
 export async function getEvent(id: string): Promise<PublicEvent | null> {
   if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
-  const { data, error } = await visibleEvents().eq("id", id).maybeSingle();
+  const { data, error } = await withListing(({ query }) => query.eq("id", id).maybeSingle());
   if (error) throw error;
-  return data ? toPublicEvent(data as ListingRow) : null;
+  return data ? fromAnyRow(data as Partial<ListingRow>) : null;
 }
 
 // Other events to suggest on an event page: same county first, then the soonest.
 export async function getSimilarEvents(event: PublicEvent, limit = 3): Promise<PublicEvent[]> {
   const [sameCounty, soonest] = await Promise.all([
-    visibleEvents().eq("county", event.county).neq("id", event.id).order("next_start_at").limit(limit),
-    visibleEvents().neq("id", event.id).order("next_start_at").limit(limit * 2),
+    withListing(({ query, start }) => query.eq("county", event.county).neq("id", event.id).order(start).limit(limit)),
+    withListing(({ query, start }) => query.neq("id", event.id).order(start).limit(limit * 2)),
   ]);
   const seen = new Set<string>();
   return [...rows(sameCounty.data), ...rows(soonest.data)]
@@ -132,6 +161,10 @@ export async function getSimilarEvents(event: PublicEvent, limit = 3): Promise<P
 export async function getOccurrencePlacesLeft(id: string, starts: string[]): Promise<Map<string, number>> {
   if (!starts.length) return new Map();
   const { data, error } = await createPublicClient().rpc("occurrence_places_left", { p_event_id: id, p_starts: starts });
+  if (isMissingSchema(error)) {
+    warnMissingSchema("occurrence_places_left", error);
+    return new Map();
+  }
   if (error) throw error;
   return new Map((data ?? []).map((row) => [new Date(row.occurrence_start).toISOString(), row.places_left]));
 }
