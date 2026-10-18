@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { PageIntro } from "@/components/public/section-heading";
-import { getGallery } from "@/lib/public/content";
+import { getPageIntro, getGallery } from "@/lib/public/content";
 import { publicImageUrl } from "@/lib/storage";
 
 export const metadata: Metadata = {
@@ -10,10 +10,10 @@ export const metadata: Metadata = {
 };
 
 export default async function GalleryPage() {
-  const images = await getGallery();
+  const [images, intro] = await Promise.all([getGallery(), getPageIntro("gallery")]);
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
-      <PageIntro title="Gallery">Moments from our events and community.</PageIntro>
+      <PageIntro title={intro.heading} intro={intro.body} />
       {images.length ? (
         <ul className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
           {images.map((img) => (

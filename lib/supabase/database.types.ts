@@ -254,8 +254,8 @@ export type Database = {
         Row: {
           about_group: string;
           created_at: string;
-          emergency_contact_name: string;
-          emergency_contact_phone: string;
+          emergency_contact_name: string | null;
+          emergency_contact_phone: string | null;
           event_id: string;
           exact_address: string;
           host_email: string;
@@ -268,8 +268,8 @@ export type Database = {
         Insert: {
           about_group: string;
           created_at?: string;
-          emergency_contact_name: string;
-          emergency_contact_phone: string;
+          emergency_contact_name?: string | null;
+          emergency_contact_phone?: string | null;
           event_id: string;
           exact_address: string;
           host_email: string;
@@ -281,8 +281,8 @@ export type Database = {
         Update: {
           about_group?: string;
           created_at?: string;
-          emergency_contact_name?: string;
-          emergency_contact_phone?: string;
+          emergency_contact_name?: string | null;
+          emergency_contact_phone?: string | null;
           event_id?: string;
           exact_address?: string;
           host_email?: string;
@@ -313,6 +313,10 @@ export type Database = {
           id: string;
           opened_by_admin_at: string | null;
           poster_path: string | null;
+          recurrence_rule: Json | null;
+          recurrence_until: string | null;
+          series_end_at: string;
+          external_registration_url: string | null;
           start_at: string;
           status: Database["public"]["Enums"]["event_status"];
           status_reason: string | null;
@@ -332,6 +336,10 @@ export type Database = {
           id?: string;
           opened_by_admin_at?: string | null;
           poster_path?: string | null;
+          recurrence_rule?: Json | null;
+          recurrence_until?: string | null;
+          series_end_at?: string;
+          external_registration_url?: string | null;
           start_at: string;
           status?: Database["public"]["Enums"]["event_status"];
           status_reason?: string | null;
@@ -350,6 +358,10 @@ export type Database = {
           id?: string;
           opened_by_admin_at?: string | null;
           poster_path?: string | null;
+          recurrence_rule?: Json | null;
+          recurrence_until?: string | null;
+          series_end_at?: string;
+          external_registration_url?: string | null;
           start_at?: string;
           status?: Database["public"]["Enums"]["event_status"];
           status_reason?: string | null;
@@ -389,35 +401,44 @@ export type Database = {
       };
       podcasts: {
         Row: {
+          audio_path: string | null;
           created_at: string;
           description: string;
           id: string;
           published: boolean;
           published_at: string | null;
+          source: Database["public"]["Enums"]["podcast_source"];
+          spotify_url: string | null;
           title: string;
           updated_at: string | null;
-          youtube_url: string;
+          youtube_url: string | null;
         };
         ComputedFields: never;
         Insert: {
+          audio_path?: string | null;
           created_at?: string;
           description?: string;
           id?: string;
           published?: boolean;
           published_at?: string | null;
+          source?: Database["public"]["Enums"]["podcast_source"];
+          spotify_url?: string | null;
           title: string;
           updated_at?: string | null;
-          youtube_url: string;
+          youtube_url?: string | null;
         };
         Update: {
+          audio_path?: string | null;
           created_at?: string;
           description?: string;
           id?: string;
           published?: boolean;
           published_at?: string | null;
+          source?: Database["public"]["Enums"]["podcast_source"];
+          spotify_url?: string | null;
           title?: string;
           updated_at?: string | null;
-          youtube_url?: string;
+          youtube_url?: string | null;
         };
         Relationships: [];
       };
@@ -435,6 +456,7 @@ export type Database = {
           event_id: string;
           id: string;
           name: string;
+          occurrence_start: string;
           updated_at: string | null;
         };
         ComputedFields: never;
@@ -445,6 +467,7 @@ export type Database = {
           event_id: string;
           id?: string;
           name: string;
+          occurrence_start?: string;
           updated_at?: string | null;
         };
         Update: {
@@ -454,6 +477,7 @@ export type Database = {
           event_id?: string;
           id?: string;
           name?: string;
+          occurrence_start?: string;
           updated_at?: string | null;
         };
         Relationships: [
@@ -472,6 +496,7 @@ export type Database = {
           created_at: string;
           heading: string;
           id: string;
+          image_alt: string | null;
           image_path: string | null;
           key: string;
           page: string;
@@ -484,6 +509,7 @@ export type Database = {
           created_at?: string;
           heading?: string;
           id?: string;
+          image_alt?: string | null;
           image_path?: string | null;
           key: string;
           page: string;
@@ -495,6 +521,7 @@ export type Database = {
           created_at?: string;
           heading?: string;
           id?: string;
+          image_alt?: string | null;
           image_path?: string | null;
           key?: string;
           page?: string;
@@ -505,6 +532,7 @@ export type Database = {
       };
       stories: {
         Row: {
+          author_name: string | null;
           body: string;
           cover_path: string | null;
           created_at: string;
@@ -517,6 +545,7 @@ export type Database = {
         };
         ComputedFields: never;
         Insert: {
+          author_name?: string | null;
           body?: string;
           cover_path?: string | null;
           created_at?: string;
@@ -528,6 +557,7 @@ export type Database = {
           updated_at?: string | null;
         };
         Update: {
+          author_name?: string | null;
           body?: string;
           cover_path?: string | null;
           created_at?: string;
@@ -540,11 +570,88 @@ export type Database = {
         };
         Relationships: [];
       };
+      story_submissions: {
+        Row: {
+          author_name: string | null;
+          body: string;
+          created_at: string;
+          decided_at: string | null;
+          decision_reason: string | null;
+          email: string | null;
+          id: string;
+          image_path: string | null;
+          status: Database["public"]["Enums"]["story_submission_status"];
+          story_id: string | null;
+          title: string;
+          updated_at: string | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          author_name?: string | null;
+          body: string;
+          created_at?: string;
+          decided_at?: string | null;
+          decision_reason?: string | null;
+          email?: string | null;
+          id?: string;
+          image_path?: string | null;
+          status?: Database["public"]["Enums"]["story_submission_status"];
+          story_id?: string | null;
+          title: string;
+          updated_at?: string | null;
+        };
+        Update: {
+          author_name?: string | null;
+          body?: string;
+          created_at?: string;
+          decided_at?: string | null;
+          decision_reason?: string | null;
+          email?: string | null;
+          id?: string;
+          image_path?: string | null;
+          status?: Database["public"]["Enums"]["story_submission_status"];
+          story_id?: string | null;
+          title?: string;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "story_submissions_story_id_fkey";
+            columns: ["story_id"];
+            isOneToOne: false;
+            referencedRelation: "stories";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: {
-      [_ in never]: never;
+      event_listing: {
+        Row: {
+          id: string;
+          title: string;
+          county: string;
+          start_at: string;
+          end_at: string;
+          description: string;
+          poster_path: string | null;
+          capacity: number | null;
+          status: Database["public"]["Enums"]["event_status"];
+          recurrence_rule: Json | null;
+          recurrence_until: string | null;
+          series_end_at: string;
+          next_start_at: string;
+          next_end_at: string;
+          external_registration_url: string | null;
+        };
+        Relationships: [];
+      };
     };
     Functions: {
+      occurrence_places_left: {
+        Args: { p_event_id: string; p_starts: string[] };
+        Returns: { occurrence_start: string; places_left: number }[];
+      };
       event_places_left: { Args: { event_ids: string[] }; Returns: { event_id: string; places_left: number }[] };
       hit_rate_limit: { Args: { p_key: string; p_limit: number; p_window: string }; Returns: boolean };
       host_cancel_event: { Args: { p_event_id: string; p_token_hash: string }; Returns: string | null };
@@ -569,19 +676,23 @@ export type Database = {
           p_host_email: string;
           p_host_phone: string;
           p_about_group: string;
-          p_emergency_contact_name: string;
-          p_emergency_contact_phone: string;
+          p_extra?: Json;
         };
         Returns: string;
       };
-      register_for_event: { Args: { p_event_id: string; p_name: string; p_email: string }; Returns: string };
+      register_for_event: {
+        Args: { p_event_id: string; p_name: string; p_email: string; p_occurrence_start?: string | null };
+        Returns: string;
+      };
       run_retention: { Args: Record<PropertyKey, never>; Returns: Json };
     };
     Enums: {
       activity_actor: "admin" | "host" | "system";
+      story_submission_status: "pending" | "approved" | "declined";
       attention_type: "host_edited" | "host_cancelled" | "contact_request";
       contact_request_status: "requested" | "shared" | "declined";
       email_provider: "console" | "resend";
+      podcast_source: "youtube" | "spotify" | "audio";
       event_status: "pending" | "needs_changes" | "declined" | "live" | "cancelled" | "taken_down";
     };
     CompositeTypes: {

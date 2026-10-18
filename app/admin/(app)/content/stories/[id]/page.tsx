@@ -14,7 +14,7 @@ export default async function EditStoryPage({ params }: { params: Promise<{ id: 
   const supabase = await createClient();
   const { data: story } = await supabase
     .from("stories")
-    .select("id, title, body, cover_path, published, published_at, updated_at")
+    .select("id, title, body, cover_path, author_name, published, published_at, updated_at")
     .eq("id", id)
     .maybeSingle();
   if (!story) notFound();

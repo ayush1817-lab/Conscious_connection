@@ -114,6 +114,7 @@ export function EventForm({
         </div>
         {/* A disabled select isn't sent with the form, so send the locked county separately. */}
         {isLocked("county") ? <input type="hidden" name="county" value={v.county} /> : null}
+        <RepeatFields values={v} errors={e} locked={isLocked("repeats")} lockHint={lockHint("repeats")} min={v.date || today} />
         <TextAreaField
           id="description"
           label="Description"
@@ -136,6 +137,17 @@ export function EventForm({
           error={e.capacity}
           className="sm:max-w-xs"
         />
+        <InputField
+          id="external_registration_url"
+          label="Registration link (optional)"
+          type="url"
+          inputMode="url"
+          maxLength={LIMITS.url}
+          placeholder="https://www.eventbrite.ie/…"
+          hint="Only if people must sign up on another website, like Eventbrite. We'll show a “Register here” button that opens it, instead of our own form."
+          defaultValue={v.external_registration_url}
+          error={e.external_registration_url}
+        />
         <PosterUpload defaultPath={v.poster_path} error={e.poster_path} onChange={() => setDirty(true)} />
       </fieldset>
 
@@ -145,7 +157,7 @@ export function EventForm({
           2. Private details
         </legend>
         <p className="-mt-2">
-          <strong>Only visible to Karina.</strong> These are never shown on the website.
+          <strong>Only visible to our team.</strong> These are never shown on the website.
         </p>
         <TextAreaField
           id="exact_address"
@@ -169,24 +181,16 @@ export function EventForm({
           required
           rows={3}
           maxLength={LIMITS.about}
-          hint={`Helps Karina get to know who's hosting. Up to ${LIMITS.about} characters.`}
+          hint={`Helps our team get to know who's hosting. Up to ${LIMITS.about} characters.`}
           defaultValue={v.about_group}
           error={e.about_group}
         />
-        <div>
-          <p className="font-medium">Emergency contact</p>
-          <p className="mb-2 text-sm text-muted">Only used if something goes wrong on the day.</p>
-          <div className="grid gap-5 sm:grid-cols-2">
-            <InputField id="emergency_contact_name" label="Name" required maxLength={LIMITS.name} defaultValue={v.emergency_contact_name} error={e.emergency_contact_name} />
-            <InputField id="emergency_contact_phone" label="Phone" type="tel" required maxLength={30} defaultValue={v.emergency_contact_phone} error={e.emergency_contact_phone} />
-          </div>
-        </div>
       </fieldset>
 
       {withConsent ? (
         <div className="space-y-3">
           <p className="text-muted">
-            Karina uses these details only to review and run your event. Private details are deleted 7 days after the event.{" "}
+            We use these details only to review and run your event. Private details are deleted 7 days after the event.{" "}
             <Link href="/privacy" className="font-medium text-primary underline underline-offset-4">
               Privacy
             </Link>
@@ -215,6 +219,52 @@ export function EventForm({
         )}
       </button>
     </form>
+  );
+}
+
+// "Does it repeat?" and, for a weekly event, an optional last date.
+function RepeatFields({
+  values,
+  errors,
+  locked,
+  lockHint,
+  min,
+}: {
+  values: EventFormValues;
+  errors: FieldErrors;
+  locked: boolean;
+  lockHint?: ReactNode;
+  min: string;
+}) {
+  const [repeats, setRepeats] = useState(values.repeats || "none");
+  return (
+    <div className="grid gap-5 sm:grid-cols-2">
+      <SelectField
+        id="repeats"
+        label="Does it repeat?"
+        value={repeats}
+        onChange={(event) => setRepeats(event.target.value)}
+        disabled={locked}
+        hint={lockHint ?? "A weekly event repeats on the same day and time as the date above."}
+        error={errors.repeats}
+      >
+        <option value="none">No, it happens once</option>
+        <option value="weekly">Yes, every week</option>
+      </SelectField>
+      {locked ? <input type="hidden" name="repeats" value={repeats} /> : null}
+      {repeats === "weekly" ? (
+        <InputField
+          id="repeat_until"
+          label="Last date (optional)"
+          type="date"
+          min={min}
+          hint={locked ? lockHint : "Leave empty if it keeps going."}
+          defaultValue={values.repeat_until}
+          readOnly={locked}
+          error={errors.repeat_until}
+        />
+      ) : null}
+    </div>
   );
 }
 

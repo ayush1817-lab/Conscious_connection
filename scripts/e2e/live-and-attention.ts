@@ -204,7 +204,7 @@ async function main() {
 
     console.log("\nCounts");
     await overview(page);
-    check((await countTile(page, "live events")) === "4", "live count drops from 6 to 4");
+    check((await countTile(page, "live events")) === "5", "live count drops from 7 to 5");
     check((await countTile(page, "attention items")) === "0", "attention count is 0");
     await page.getByText("Other events").click();
     const other = await page.locator("details").innerText();

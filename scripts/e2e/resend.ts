@@ -87,7 +87,7 @@ async function main() {
     check(e2.length === 1 && e2[0].template === "E2", "a needs-changes event gets E2 with a new link");
     const pottery = e2[0]?.body.match(/\/host\/([A-Za-z0-9_-]{43})/)?.[1];
     await page.goto(`${BASE_URL}/host/${pottery}`);
-    check(await page.getByText("Karina asked for a few changes").isVisible(), "that link opens the needs-changes page");
+    check(await page.getByText("We've asked for a few changes").isVisible(), "that link opens the needs-changes page");
 
     await ask(page, "mary@example.com"); // pending request and an ended event only
     await page.waitForTimeout(1500);

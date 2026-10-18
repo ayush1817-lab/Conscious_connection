@@ -6,6 +6,7 @@
  * Safe to re-run. Creates (or updates) the admin login from SEED_ADMIN_EMAIL /
  * SEED_ADMIN_PASSWORD. Never run against production data you want to keep.
  */
+import { upcomingOccurrences } from "../lib/events/recurrence";
 import { generateHostToken, hashHostToken } from "../lib/events/host-token";
 import type { Database } from "../lib/supabase/database.types";
 import { env, serviceClient } from "./lib/env";
@@ -58,7 +59,7 @@ async function seedAdmin() {
 
   const { error } = await db
     .from("admins")
-    .upsert({ user_id: userId, display_name: "Karina" }, { onConflict: "user_id" });
+    .upsert({ user_id: userId, display_name: "Admin" }, { onConflict: "user_id" });
   if (error) fail("adding the admin row", error);
   console.log(`✓ Admin login: ${email}`);
 }
@@ -69,6 +70,7 @@ async function clearData() {
     "events",
     "event_activity",
     "site_sections",
+    "story_submissions",
     "stories",
     "podcasts",
     "gallery_images",
@@ -84,6 +86,8 @@ async function clearData() {
 
   const { data: files } = await db.storage.from("gallery").list("seed");
   if (files?.length) await db.storage.from("gallery").remove(files.map((f) => `seed/${f.name}`));
+  const { data: audio } = await db.storage.from("podcasts").list("episodes", { limit: 1000 });
+  if (audio?.length) await db.storage.from("podcasts").remove(audio.map((f) => `episodes/${f.name}`));
   console.log("✓ Cleared existing event and content data");
 }
 
@@ -101,8 +105,6 @@ function host(name: string, email: string, address: string, about: string): Priv
     host_phone: "+353 87 000 0000",
     about_group: about,
     exact_address: address,
-    emergency_contact_name: "Siobhán O'Brien",
-    emergency_contact_phone: "+353 86 000 0000",
   };
 }
 
@@ -339,6 +341,25 @@ const events: SeedEvent[] = [
     host: host("Siobhán Kenny", "siobhan@example.com", "Portumna Forest Park entrance", "Nature therapy group"),
     registrants: ["Clodagh"],
   },
+  // --- Live, every week (started a few days ago, no end date) ---
+  {
+    key: "weekly-walk",
+    event: {
+      title: "Weekly Evening Walk",
+      county: "Co. Kildare",
+      start_at: dublin(-4, "19:00"),
+      end_at: dublin(-4, "20:00"),
+      recurrence_rule: { freq: "weekly", interval: 1 },
+      description: "An easy hour around the town park after work. Same time every week, come when you can.",
+      capacity: 10,
+      status: "live",
+      submitted_at: ago(9 * DAY),
+      opened_by_admin_at: ago(8 * DAY),
+      approved_at: ago(8 * DAY),
+    },
+    host: host("Declan Moore", "declan@example.com", "Main gate, Town Park, Naas", "A few neighbours who like to walk"),
+    registrants: ["Fiona", "Tadhg"],
+  },
   {
     key: "open-mic",
     event: {
@@ -379,6 +400,10 @@ async function seedEvents() {
       const { error: rErr } = await db.from("registrations").insert(
         registrants.map((name, i) => ({
           event_id: data.id,
+          // A weekly event's RSVPs are for its next date; one-off events default to their own date.
+          ...(event.recurrence_rule
+            ? { occurrence_start: upcomingOccurrences({ ...event, recurrence_rule: event.recurrence_rule, recurrence_until: event.recurrence_until ?? null }, 1)[0].start }
+            : {}),
           name,
           email: `${name.toLowerCase().replace(/[^a-z]/g, "") || "guest"}${i}@example.com`,
           consented_at: ago((i + 1) * DAY),
@@ -466,7 +491,7 @@ async function seedContent() {
     { page: "home", key: "hero", heading: "Real people. Meaningful connections.", body: "Conscious Connections brings women and non-binary people in rural Ireland together through shared interests, wellbeing and nature.", sort_order: 1 },
     { page: "home", key: "intro", heading: "A friendly community for connection", body: "Find a local event, meet like-minded people, or host something of your own. Everyone is welcome.", sort_order: 2 },
     { page: "home", key: "host_cta", heading: "Host an event", body: "Have an idea for a walk, a workshop or a cuppa and a chat? Share it with the community.", sort_order: 3 },
-    { page: "about", key: "about", heading: "About Conscious Connections", body: "Conscious Connections was started by Karina to make it easier to find your people in rural Ireland.", sort_order: 1 },
+    { page: "about", key: "about", heading: "About Conscious Connections", body: "Conscious Connections was started to make it easier to find your people in rural Ireland.", sort_order: 1 },
   ];
   const { error: sErr } = await db.from("site_sections").insert(sections);
   if (sErr) fail("inserting homepage sections", sErr);

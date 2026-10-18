@@ -14,7 +14,7 @@ export default async function EditPodcastPage({ params }: { params: Promise<{ id
   const supabase = await createClient();
   const { data: podcast } = await supabase
     .from("podcasts")
-    .select("id, title, description, youtube_url, published, published_at, updated_at")
+    .select("id, title, description, source, youtube_url, spotify_url, audio_path, published, published_at, updated_at")
     .eq("id", id)
     .maybeSingle();
   if (!podcast) notFound();

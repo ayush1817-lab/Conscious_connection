@@ -3,18 +3,19 @@ import Link from "next/link";
 import { ConnectionLoops } from "@/components/public/brand-mark";
 import { BackgroundWaves } from "@/components/public/background-waves";
 import { EventCard } from "@/components/public/event-card";
+import { PhotoGrid } from "@/components/public/photo-grid";
 import { CalendarIcon, HeartIcon, PeopleIcon } from "@/components/public/icons";
 import { SectionHeading } from "@/components/public/section-heading";
 import { StoryCard } from "@/components/public/story-card";
-import { YouTubeEmbed } from "@/components/public/youtube-embed";
+import { PodcastPlayer } from "@/components/public/podcast-player";
 import { buttonClass } from "@/components/ui/button";
 import { RichText } from "@/lib/content/rich-text";
-import { youtubeVideoId } from "@/lib/content/youtube";
-import { getGallery, getPodcasts, getSections, getStories } from "@/lib/public/content";
+import { podcastMedia } from "@/lib/content/podcast-media";
+import { getGallery, getPodcasts, getSections, getStories, photosOf } from "@/lib/public/content";
 import { getPlacesLeft, getUpcomingEvents, placesBadge } from "@/lib/public/events";
 import { publicImageUrl } from "@/lib/storage";
 
-// P1 Homepage: Karina's sections, the next 3 events, latest stories, latest podcast, gallery strip.
+// P1 Homepage: the admin's sections, the next 3 events, latest stories, latest podcast, gallery strip.
 export default async function HomePage() {
   const [sections, events, stories, podcasts, gallery] = await Promise.all([
     getSections("home"),
@@ -24,9 +25,10 @@ export default async function HomePage() {
     getGallery(6),
   ]);
   const { hero, intro, host_cta: hostCta } = sections;
+  const photos = photosOf(sections);
   const places = await getPlacesLeft(events.filter((e) => e.capacity).map((e) => e.id));
   const podcast = podcasts[0];
-  const videoId = podcast ? youtubeVideoId(podcast.youtube_url) : null;
+  const media = podcast ? podcastMedia(podcast) : null;
 
   return (
     <>
@@ -52,7 +54,7 @@ export default async function HomePage() {
           <div className="home-hero-media">
           <div className="home-hero-photo relative aspect-[4/3] overflow-hidden rounded-card bg-band">
             {hero?.image_path ? (
-              <Image src={publicImageUrl("content", hero.image_path)} alt="" fill preload sizes="(min-width: 1536px) 752px, (min-width: 768px) 46vw, 100vw" className="object-cover" />
+              <Image src={publicImageUrl("content", hero.image_path)} alt={hero.image_alt} fill preload sizes="(min-width: 1536px) 752px, (min-width: 768px) 46vw, 100vw" className="object-cover" />
             ) : (
               <Image src="/images/community-gathering.webp" alt="" fill preload sizes="(min-width: 1536px) 752px, (min-width: 768px) 46vw, 100vw" className="object-cover" />
             )}
@@ -77,11 +79,11 @@ export default async function HomePage() {
         )}
         <ul className="home-values grid gap-6 text-center sm:grid-cols-3">
           {[
-            { icon: CalendarIcon, title: "Local events", text: "Find gatherings near you across rural counties." },
-            { icon: PeopleIcon, title: "A safe and inclusive space", text: "For LGBTQ+ women and non-binary people." },
-            { icon: HeartIcon, title: "Community led", text: "Created by and for our community." },
-          ].map(({ icon: Icon, title, text }) => (
-            <li key={title} className="home-value">
+            { icon: CalendarIcon, card: sections.value_1 },
+            { icon: PeopleIcon, card: sections.value_2 },
+            { icon: HeartIcon, card: sections.value_3 },
+          ].map(({ icon: Icon, card: { key, heading: title, body: text } }) => (
+            <li key={key} className="home-value">
               <span className="home-value-icon flex h-14 w-14 items-center justify-center rounded-full bg-hero text-primary">
                 <Icon size={28} />
               </span>
@@ -91,6 +93,14 @@ export default async function HomePage() {
           ))}
         </ul>
       </section>
+
+      {/* Event photos (Website content > Homepage) */}
+      {photos.length ? (
+        <section aria-labelledby="photos-heading" className="home-section mx-auto max-w-6xl px-4 py-8">
+          <SectionHeading id="photos-heading" title="Moments from our events" link={{ href: "/gallery", label: "See the gallery" }} />
+          <PhotoGrid photos={photos} />
+        </section>
+      ) : null}
 
       {/* Upcoming events */}
       <section aria-labelledby="events-heading" className="home-section home-events mx-auto max-w-6xl px-4 py-8">
@@ -131,11 +141,11 @@ export default async function HomePage() {
       ) : null}
 
       {/* Latest podcast */}
-      {podcast && videoId ? (
+      {podcast && media ? (
         <section aria-labelledby="podcast-heading" className="home-section mx-auto max-w-6xl px-4 py-8">
           <SectionHeading id="podcast-heading" title="Latest podcast" link={{ href: "/podcasts", label: "All episodes" }} />
           <div className="home-podcast-panel grid items-center gap-6 rounded-card border border-border bg-surface p-4 md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] md:p-6">
-            <YouTubeEmbed videoId={videoId} title={podcast.title} />
+            <PodcastPlayer media={media} title={podcast.title} />
             <div>
               <h3 className="font-heading text-xl font-semibold">{podcast.title}</h3>
               {podcast.description ? <p className="mt-2 text-muted">{podcast.description}</p> : null}

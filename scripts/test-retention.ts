@@ -48,8 +48,6 @@ async function eventEnded(daysAgo: number, title: string) {
     host_email: "retention-host@example.com",
     host_phone: "087 000 0000",
     about_group: "Test group",
-    emergency_contact_name: "Someone",
-    emergency_contact_phone: "087 111 1111",
   });
   await service.from("registrations").insert([
     { event_id, name: "Aoife", email: "aoife-retention@example.com", consented_at: end.toISOString() },
@@ -183,6 +181,43 @@ async function main() {
     .eq("action", "retention_cleanup")
     .gte("created_at", startedAt);
   check(runs === 2, "every run is logged, even when there is nothing to remove");
+
+  console.log("\nWeekly events");
+  // Started 15 days ago and still running: RSVPs for its first date are past the
+  // 7 days and go; RSVPs for a coming date and the host's details stay.
+  const first = new Date(Date.now() - 15 * DAY);
+  const { data: weekly, error: weeklyError } = await service
+    .from("events")
+    .insert({
+      title: "Retention test: weekly",
+      county: "Co. Clare",
+      start_at: first.toISOString(),
+      end_at: new Date(first.getTime() + 60 * 60 * 1000).toISOString(),
+      recurrence_rule: { freq: "weekly", interval: 1 },
+      description: "Retention test event.",
+      status: "live",
+    })
+    .select("id")
+    .single();
+  if (weeklyError) throw weeklyError;
+  await service.from("event_private_details").insert({
+    event_id: weekly.id,
+    exact_address: "Town Hall",
+    host_name: "Weekly Host",
+    host_email: "weekly-host@example.com",
+    host_phone: "087 000 0000",
+    about_group: "Test group",
+  });
+  const coming = new Date(first.getTime() + 21 * DAY).toISOString(); // occurrence 3, in 6 days
+  await service.from("registrations").insert([
+    { event_id: weekly.id, name: "Past", email: "past-weekly@example.com", consented_at: first.toISOString(), occurrence_start: first.toISOString() },
+    { event_id: weekly.id, name: "Coming", email: "coming-weekly@example.com", consented_at: first.toISOString(), occurrence_start: coming },
+  ]);
+  await runRetention(service);
+  const { data: weeklyRegs } = await service.from("registrations").select("name").eq("event_id", weekly.id);
+  check(weeklyRegs?.length === 1 && weeklyRegs[0].name === "Coming", "removes RSVPs for a date over 7 days ago, keeps ones for coming dates", JSON.stringify(weeklyRegs));
+  const { count: weeklyDetails } = await service.from("event_private_details").select("event_id", { count: "exact", head: true }).eq("event_id", weekly.id);
+  check(weeklyDetails === 1, "keeps the host's details while the series runs");
 
   console.log("\nCron route");
   const reachable = await fetch(`${BASE_URL}/api/cron/retention`).then(

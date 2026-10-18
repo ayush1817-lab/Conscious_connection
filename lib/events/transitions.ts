@@ -27,7 +27,7 @@ export const REASON_MAX_LENGTH = 1000;
 
 export class TransitionError extends Error {}
 
-// Plain-language reasons, shown to Karina as-is.
+// Plain-language reasons, shown to the admin as-is.
 const ACTION_NAMES: Partial<Record<EventStatus, string>> = {
   live: "approved",
   needs_changes: "sent back for changes",

@@ -5,12 +5,12 @@ export const metadata: Metadata = {
   description: "How Conscious Connections uses and protects your details.",
 };
 
-// Placeholder wording (spec section 4). Karina must review it, ideally with GDPR advice.
+// Placeholder wording (spec section 4). The team must review it, ideally with GDPR advice.
 export default function PrivacyPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
       <p className="mb-6 rounded-card border border-warning bg-private p-4 font-medium">
-        Draft: Karina to review. This wording is a placeholder and hasn&apos;t been checked for GDPR yet.
+        Draft: to be reviewed. This wording is a placeholder and hasn&apos;t been checked for GDPR yet.
       </p>
       <h1 className="font-heading text-3xl font-semibold md:text-4xl">Privacy</h1>
       <div className="mt-6 space-y-6 text-lg">
@@ -26,7 +26,7 @@ export default function PrivacyPage() {
           <ul className="mt-2 list-disc space-y-1 pl-6">
             <li>We ask for a name (a first name or nickname is fine) and your email.</li>
             <li>We use your email only to send you the event details, including the exact location.</li>
-            <li>The host sees your name only, not your email.</li>
+            <li>The host sees your name only, not your email. Our team can see your name and email, to help with the event.</li>
             <li>Your details are deleted 7 days after the event.</li>
           </ul>
         </section>
@@ -34,7 +34,7 @@ export default function PrivacyPage() {
           <h2 className="font-heading text-xl font-semibold">When you host an event</h2>
           <ul className="mt-2 list-disc space-y-1 pl-6">
             <li>The title, county, date, times, description and poster are shown publicly.</li>
-            <li>The exact address, your contact details and your emergency contact are only seen by Karina.</li>
+            <li>The exact address and your contact details are only seen by our team.</li>
             <li>The exact address is emailed to people who register.</li>
             <li>Your private details are deleted 7 days after the event.</li>
           </ul>

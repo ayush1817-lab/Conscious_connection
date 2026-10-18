@@ -25,9 +25,9 @@ export default async function GalleryPage() {
     <div className="space-y-4">
       <GalleryUploader addImages={addGalleryImages} />
       {images?.length ? (
-        <ol className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <ol className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {images.map((img, i) => (
-            <li key={img.id} className="flex flex-col gap-3 rounded-card border border-border bg-surface p-3">
+            <li key={img.id} className="flex min-w-0 flex-col gap-3 rounded-card border border-border bg-surface p-3">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={publicImageUrl("gallery", img.image_path)}

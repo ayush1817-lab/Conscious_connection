@@ -30,10 +30,10 @@ export default async function AttentionItemPage({ params }: { params: Promise<{ 
   const { data: item } = await supabase
     .from("attention_items")
     .select(
-      "id, type, ref_id, needs_decision, created_at, resolved_at, events!inner(id, title, county, start_at, end_at, status, event_private_details(host_name, host_email), registrations(count))",
+      "id, type, ref_id, needs_decision, created_at, resolved_at, events!inner(id, title, county, start_at, end_at, series_end_at, status, event_private_details(host_name, host_email), registrations(count))",
     )
     .eq("id", id)
-    .gte("events.end_at", retentionCutoff())
+    .gte("events.series_end_at", retentionCutoff())
     .maybeSingle();
   if (!item) notFound();
 
@@ -41,7 +41,7 @@ export default async function AttentionItemPage({ params }: { params: Promise<{ 
   const host = event.event_private_details;
   const registered = event.registrations[0]?.count ?? 0;
   const open = !item.resolved_at;
-  const isUpcomingLive = event.status === "live" && new Date(event.end_at).getTime() > Date.now();
+  const isUpcomingLive = event.status === "live" && (event.series_end_at === "infinity" || new Date(event.series_end_at).getTime() > Date.now());
 
   const [edit, request] = await Promise.all([
     item.type === "host_edited" && item.ref_id

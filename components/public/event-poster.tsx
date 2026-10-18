@@ -41,7 +41,7 @@ export function PosterPlaceholder({ county, startAt }: { county: string; startAt
     >
       <span className="font-heading text-xl font-semibold text-primary">{county}</span>
       <span className="text-sm font-medium text-text">{formatShortDate(startAt)}</span>
-      <span className="mt-2 text-xs tracking-wide text-muted uppercase">Conscious Connections</span>
+      <span className="mt-2 text-xs tracking-wide text-text uppercase">Conscious Connections</span>
     </div>
   );
 }

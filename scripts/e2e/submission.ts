@@ -5,7 +5,7 @@
  * at 360px and checks: errors keep what was typed and focus the first problem,
  * a poster uploads, the event and private details are saved as a pending
  * request, E1 goes to the host and E5 to the admin, the confirmation replaces the form, and
- * that Karina sees the new request with every private detail in the admin.
+ * that the admin sees the new request with every private detail in the admin.
  */
 import { execSync } from "node:child_process";
 import { placeholderPng } from "../lib/placeholder-png";
@@ -45,6 +45,8 @@ async function main() {
 
     console.log("\nPoster");
     await page.locator('input[type="file"]').setInputFiles({ name: "big.png", mimeType: "image/png", buffer: Buffer.alloc(6 * 1024 * 1024) });
+    // The browser first tries to resize the file, so the message can take a moment.
+    await page.getByText(/up to 5MB/).first().waitFor({ timeout: 5000 }).catch(() => {});
     check(await page.getByText(/up to 5MB/).first().isVisible(), "a poster over 5MB is refused");
     await page.locator('input[type="file"]').setInputFiles({ name: "poster.png", mimeType: "image/png", buffer: placeholderPng(400, 300, "#7a3b5d") });
     await page.getByAltText("Poster preview").waitFor();
@@ -61,8 +63,7 @@ async function main() {
     await page.getByLabel("Your email").fill("Ciara.Test@Example.com");
     await page.getByLabel("Your phone").fill("087 123 4567");
     await page.getByLabel("About you or your group").fill("A small walking group");
-    await page.getByLabel("Name", { exact: true }).fill("Sorcha");
-    await page.getByLabel("Phone", { exact: true }).fill("086 765 4321");
+    check(!(await page.getByText("Emergency contact").count()), "hosts aren't asked for an emergency contact");
     await page.getByLabel(/I agree/).check();
     await page.getByRole("button", { name: "Submit event for review" }).click();
     check(await page.getByRole("button", { name: "Sending…" }).isDisabled().catch(() => true), "the button shows it's sending and can't be pressed twice");
@@ -86,7 +87,7 @@ async function main() {
     check(saved?.host_edit_token_hash === null, "no host link exists before approval");
     const d = saved?.event_private_details;
     check(
-      d?.exact_address === "Car park at Sliabh an Iarainn, Drumshanbo" && d.host_email === "ciara.test@example.com" && d.emergency_contact_name === "Sorcha",
+      d?.exact_address === "Car park at Sliabh an Iarainn, Drumshanbo" && d.host_email === "ciara.test@example.com" && d.emergency_contact_name === null,
       "every private detail is saved",
     );
 
@@ -99,7 +100,7 @@ async function main() {
     const publicList = await (await fetch(`${BASE_URL}/events`)).text();
     check(!publicList.includes(title), "a pending event isn't on the public site");
 
-    console.log("\nKarina sees it in the admin");
+    console.log("\nThe admin sees it in the admin");
     const admin = await browser.newPage();
     await admin.goto(`${BASE_URL}/admin/login`);
     await admin.getByLabel("Email").fill(env("SEED_ADMIN_EMAIL"));
@@ -115,7 +116,7 @@ async function main() {
     await admin.getByText("Only visible to you").first().waitFor();
     const detail = await admin.locator("main").innerText();
     check(
-      ["Car park at Sliabh an Iarainn", "Ciara Test", "ciara.test@example.com", "087 123 4567", "A small walking group", "Sorcha", "086 765 4321"].every((t) => detail.includes(t)),
+      ["Car park at Sliabh an Iarainn", "Ciara Test", "ciara.test@example.com", "087 123 4567", "A small walking group"].every((t) => detail.includes(t)),
       "the request shows all the private details",
     );
   } finally {
