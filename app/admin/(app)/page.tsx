@@ -1,12 +1,21 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth/admin";
 import { getEventsOverview } from "@/lib/events/overview";
+import { emailConfig } from "@/lib/email/service";
 import { plural } from "@/lib/format";
+import { createClient } from "@/lib/supabase/server";
 
 // A1 – Admin home
 export default async function AdminHome() {
-  const [admin, overview] = await Promise.all([requireAdmin(), getEventsOverview()]);
+  const supabase = await createClient();
+  const weekAgo = new Date(Date.now() - 7 * 86_400_000).toISOString();
+  const [admin, overview, { count: failedEmails }] = await Promise.all([
+    requireAdmin(),
+    getEventsOverview(),
+    supabase.from("email_log").select("id", { count: "exact", head: true }).is("sent_at", null).gte("created_at", weekAgo),
+  ]);
   const { newRequests, attention } = overview.counts;
+  const notSending = emailConfig().mode === "missing_key";
 
   return (
     <div className="py-4 sm:py-8">
@@ -21,6 +30,15 @@ export default async function AdminHome() {
         </HomeCard>
         <HomeCard href="/admin/content" title="Website content" icon={<PageIcon />}>
           Update homepage, stories, podcasts, gallery and about.
+        </HomeCard>
+        <HomeCard href="/admin/email" title="Emails" icon={<MailIcon />}>
+          {notSending ? (
+            <span className="font-medium text-danger">Emails aren&apos;t being sent. Open to fix.</span>
+          ) : failedEmails ? (
+            <span className="font-medium text-danger">{plural(failedEmails, "email")} not sent this week.</span>
+          ) : (
+            "Check emails are working and send a test."
+          )}
         </HomeCard>
       </div>
     </div>
@@ -48,6 +66,15 @@ function CalendarIcon() {
     <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
       <rect x="3" y="5" width="18" height="16" rx="2" />
       <path d="M3 10h18M8 3v4M16 3v4" />
+    </svg>
+  );
+}
+
+function MailIcon() {
+  return (
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="m3 7 9 6 9-6" />
     </svg>
   );
 }

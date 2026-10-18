@@ -140,13 +140,23 @@ export async function saveStory(id: string, _prev: FormState, formData: FormData
 export async function setStoryPublished(id: string, published: boolean) {
   await requireAdmin();
   const supabase = await createClient();
-  const { data: story } = await supabase.from("stories").select("published_at").eq("id", id).maybeSingle();
-  if (!story) return;
-  await supabase
+  const { data: story } = await supabase.from("stories").select("published_at, slug").eq("id", id).maybeSingle();
+  if (!story) {
+    await setFlash("This story can't be found. It may have been deleted.", "error");
+    redirect("/admin/content/stories");
+  }
+  const { error } = await supabase
     .from("stories")
     .update({ published, published_at: published ? (story.published_at ?? new Date().toISOString()) : story.published_at })
     .eq("id", id);
+  if (error) {
+    console.error("setStoryPublished failed", error);
+    await setFlash(`The story couldn't be ${published ? "published" : "unpublished"}. Please try again.`, "error");
+    revalidatePublicSite();
+    return;
+  }
   await done(published ? "Published. The story is now on the website." : "Unpublished. The story is hidden from the website.");
+  if (published) redirect("/admin/content/stories");
 }
 
 export async function deleteStory(id: string, _prev: FormState, _formData: FormData): Promise<FormState> {
@@ -201,12 +211,22 @@ export async function setPodcastPublished(id: string, published: boolean) {
   await requireAdmin();
   const supabase = await createClient();
   const { data: podcast } = await supabase.from("podcasts").select("published_at").eq("id", id).maybeSingle();
-  if (!podcast) return;
-  await supabase
+  if (!podcast) {
+    await setFlash("This podcast can't be found. It may have been deleted.", "error");
+    redirect("/admin/content/podcasts");
+  }
+  const { error } = await supabase
     .from("podcasts")
     .update({ published, published_at: published ? (podcast.published_at ?? new Date().toISOString()) : podcast.published_at })
     .eq("id", id);
+  if (error) {
+    console.error("setPodcastPublished failed", error);
+    await setFlash(`The podcast couldn't be ${published ? "published" : "unpublished"}. Please try again.`, "error");
+    revalidatePublicSite();
+    return;
+  }
   await done(published ? "Published. The podcast is now on the website." : "Unpublished. The podcast is hidden from the website.");
+  if (published) redirect("/admin/content/podcasts");
 }
 
 export async function deletePodcast(id: string, _prev: FormState, _formData: FormData): Promise<FormState> {

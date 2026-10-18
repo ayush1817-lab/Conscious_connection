@@ -11,6 +11,7 @@ import { createClient } from "@/lib/supabase/server";
 import { markAttentionSeen } from "../../events/actions";
 import { takeDownEvent } from "../../events/[id]/actions";
 import { declineContactRequest, shareContactDetails } from "./actions";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 export const metadata: Metadata = { title: "Attention item · Conscious Connections" };
 
@@ -177,12 +178,12 @@ export default async function AttentionItemPage({ params }: { params: Promise<{ 
           ) : null}
           {item.type !== "contact_request" ? (
             <form action={markAttentionSeen.bind(null, item.id, "/admin/events")}>
-              <button
-                type="submit"
+              <SubmitButton
+                pendingLabel="Saving…"
                 className="inline-flex min-h-tap w-full items-center justify-center rounded-control bg-primary px-5 font-medium text-on-primary hover:bg-primary-hover sm:w-auto"
               >
                 Mark as seen
-              </button>
+              </SubmitButton>
             </form>
           ) : null}
           {item.type === "host_edited" && isUpcomingLive && host ? (

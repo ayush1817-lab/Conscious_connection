@@ -187,13 +187,16 @@ The lavender theme uses pale lilac surfaces, deeper violet controls, aubergine t
    | `NEXT_PUBLIC_SUPABASE_URL` | Supabase > Project Settings > API > Project URL |
    | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase > Project Settings > API > `anon` `public` key |
    | `SUPABASE_SERVICE_ROLE_KEY` | Supabase > Project Settings > API > `service_role` key (secret: never prefix with `NEXT_PUBLIC_`) |
-   | `SITE_URL` | The site's address, e.g. `https://consciousconnections.ie` |
-   | `EMAIL_FROM` | e.g. `Conscious Connections <no-reply@consciousconnections.ie>` |
+   | `SITE_URL` | The site's address, e.g. `https://consciousconnections.ie`. Used for links in emails (falls back to the Vercel address if missing) |
+   | `RESEND_API_KEY` | **Required for emails.** Resend > API Keys. Without it a deployed site sends nothing, and every email shows as "Not sent" in Admin > Emails |
+   | `EMAIL_FROM` | e.g. `Conscious Connections <no-reply@consciousconnections.ie>`. The domain must be verified in Resend > Domains (SPF and DKIM records, plus a DMARC record so mail doesn't land in spam) |
+   | `EMAIL_REPLY_TO` | Optional; an inbox the team reads, so replies to "you can reply to this email" arrive somewhere |
    | `CRON_SECRET` | Any long random string, e.g. from `openssl rand -hex 32`. Vercel sends it to the daily cleanup job |
    | `ADMIN_NOTIFY_EMAIL` | Optional; where admin notifications go (defaults to the admin logins' emails) |
-   | `RESEND_API_KEY` | Optional; without it emails are only logged (from milestone 4) |
+   | `EMAIL_PROVIDER` | Optional; set to `console` only on a test deployment that should print emails instead of sending them |
 
-5. **Redeploy.** `NEXT_PUBLIC_` values are built into the site, so they only take effect in a new deployment.
+5. **Redeploy**, then open **Admin > Emails**: it shows whether Resend is set up, whether the sending domain is verified, every email sent in the last 30 days (with the error for any that failed) and a **Send test email** button.
+   `NEXT_PUBLIC_` values are built into the site, so they only take effect in a new deployment.
 
 `vercel.json` pins the Next.js framework preset and schedules the daily cleanup job (see "Data retention"). If the Supabase settings are missing, every page shows a "not connected to its database yet" page (`/setup`) listing which settings are missing, instead of a server error.
 

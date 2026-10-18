@@ -4,7 +4,7 @@
  * Needs the app running. Re-seeds first. Submits an event through /submit-event
  * at 360px and checks: errors keep what was typed and focus the first problem,
  * a poster uploads, the event and private details are saved as a pending
- * request, E1 goes to the host and E5 to the admin, the thanks page (H2), and
+ * request, E1 goes to the host and E5 to the admin, the confirmation replaces the form, and
  * that Karina sees the new request with every private detail in the admin.
  */
 import { execSync } from "node:child_process";
@@ -65,13 +65,16 @@ async function main() {
     await page.getByLabel("Phone", { exact: true }).fill("086 765 4321");
     await page.getByLabel(/I agree/).check();
     await page.getByRole("button", { name: "Submit event for review" }).click();
-    await page.waitForURL(`${BASE_URL}/submit-event/thanks`);
-    check(await page.getByRole("heading", { name: "Your event has been submitted" }).isVisible(), "lands on the thanks page (H2)");
+    check(await page.getByRole("button", { name: "Sending…" }).isDisabled().catch(() => true), "the button shows it's sending and can't be pressed twice");
+    await page.getByRole("heading", { name: "Event submitted" }).waitFor();
     const thanks = await page.locator("main").innerText();
-    check(/24–48 hours/.test(thanks) && /private link/.test(thanks) && /spam/.test(thanks), "explains what happens next");
-    check(!/dashboard|my events|account/i.test(thanks), "no account or dashboard language");
-    check((await page.content()).includes('name="robots" content="noindex'), "the thanks page isn't indexed");
-    await axe(page, "thanks page");
+    check(
+      thanks.includes("Thanks! Your event has been submitted and we'll review it shortly. We'll email you once it's approved."),
+      "the confirmation replaces the form",
+    );
+    check(!(await page.getByLabel("Event title").count()), "the form is cleared away");
+    check(/spam/.test(thanks) && !/dashboard|my events|account/i.test(thanks), "mentions spam, no account language");
+    await axe(page, "submitted confirmation");
 
     const { data: saved } = await service
       .from("events")
