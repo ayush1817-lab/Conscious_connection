@@ -488,10 +488,10 @@ async function seedAttention(ids: Record<string, string>) {
 
 async function seedContent() {
   const sections = [
-    { page: "home", key: "hero", heading: "Real people. Meaningful connections.", body: "Conscious Connections brings women and non-binary people in rural Ireland together through shared interests, wellbeing and nature.", sort_order: 1 },
+    { page: "home", key: "hero", heading: "Real people. Meaningful connections.", body: "Conscious Connections brings women and non-binary people across the island of Ireland together through shared interests, wellbeing and nature.", sort_order: 1 },
     { page: "home", key: "intro", heading: "A friendly community for connection", body: "Find a local event, meet like-minded people, or host something of your own. Everyone is welcome.", sort_order: 2 },
     { page: "home", key: "host_cta", heading: "Host an event", body: "Have an idea for a walk, a workshop or a cuppa and a chat? Share it with the community.", sort_order: 3 },
-    { page: "about", key: "about", heading: "About Conscious Connections", body: "Conscious Connections was started to make it easier to find your people in rural Ireland.", sort_order: 1 },
+    { page: "about", key: "about", heading: "About Conscious Connections", body: "Conscious Connections was started to make it easier to find your people across the island of Ireland.", sort_order: 1 },
   ];
   const { error: sErr } = await db.from("site_sections").insert(sections);
   if (sErr) fail("inserting homepage sections", sErr);

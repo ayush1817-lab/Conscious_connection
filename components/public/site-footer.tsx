@@ -7,7 +7,7 @@ export function SiteFooter() {
       <div className="site-footer-inner mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 md:flex-row md:items-start md:justify-between">
         <div className="max-w-sm">
           <div className="footer-brand"><BrandMark /><p className="font-heading text-lg font-semibold text-text">Conscious Connections</p></div>
-          <p className="footer-description text-muted">A community for women and non-binary people across rural Ireland.</p>
+          <p className="footer-description text-muted">A community for LGBTQ+ women and non-binary people across the island of Ireland.</p>
         </div>
         <nav aria-label="Footer">
           <ul className="flex flex-wrap gap-x-2 gap-y-1">

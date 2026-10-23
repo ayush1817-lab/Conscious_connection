@@ -10,7 +10,7 @@ import { getPageIntro } from "@/lib/public/content";
 
 export const metadata: Metadata = {
   title: "Events",
-  description: "Discover local events for LGBTQ+ women and non-binary people across rural Ireland.",
+  description: "Discover local events for LGBTQ+ women and non-binary people across the island of Ireland.",
 };
 
 type Props = { searchParams: Promise<{ county?: string; when?: string; page?: string }> };

@@ -16,8 +16,30 @@ export type SectionDef = {
   body: boolean;
   bodyLabel?: string;
   image: boolean;
+  // Longer page text: sub-headings ("## "), bullet points ("* ") and links.
+  blocks?: boolean;
   defaults: { heading: string; body: string };
 };
+
+export const HERO_HEADING = "A community for LGBTQ+ women and non-binary people across the island of Ireland.";
+export const STORIES_TITLE = "Stories and Poetry from our Community";
+
+// Karina's About text (October 2026).
+export const ABOUT_BODY = `## Who We Are
+
+Conscious Connections is a vibrant community dedicated to LGBTQ+ women and non-binary people across the island of Ireland. We know that building meaningful connections can sometimes feel challenging, which is why we've created a welcoming, open space to bridge the gaps and build a true sense of belonging everywhere on the island.
+
+## What We're About
+
+* **Community-Led & Open Events:** This space belongs to everyone. Anyone in our community can host and upload their own gatherings, from coffee socials to local meetups, making it easy to connect with people close to home.
+* **Shared Voices:** Built entirely by our community, this network thrives on shared stories, podcasts and member-led activities that reflect our collective experiences.
+* **A Safe & Inclusive Space:** We are proudly and fiercely inclusive, providing a safe, affirming environment specifically for LGBTQ+ women and non-binary individuals.
+
+## Join Us
+
+Whether you want to attend a local gathering, host and submit your own event or share your story, there is a place for you here.
+
+Contact us for more information: karina@kmurray.ie`;
 
 const value = (n: number, heading: string, body: string): SectionDef => ({
   key: `value_${n}`,
@@ -62,10 +84,10 @@ export const PAGE_SECTIONS: Record<ContentPage, SectionDef[]> = {
       heading: "required",
       body: true,
       image: true,
-      defaults: { heading: "A community for women and non-binary people across rural Ireland.", body: "" },
+      defaults: { heading: HERO_HEADING, body: "" },
     },
     { key: "intro", title: "Introduction", heading: "optional", body: true, image: false, defaults: { heading: "", body: "" } },
-    value(1, "Local events", "Find gatherings near you across rural counties."),
+    value(1, "Local events", "Find gatherings near you."),
     value(2, "A safe and inclusive space", "For LGBTQ+ women and non-binary people."),
     value(3, "Community led", "Created by and for our community."),
     photo(1, "on the homepage under “Moments from our events”"),
@@ -84,20 +106,23 @@ export const PAGE_SECTIONS: Record<ContentPage, SectionDef[]> = {
     {
       key: "about",
       title: "About Conscious Connections",
+      hint: "A line starting with ## is a sub-heading. Lines starting with * are bullet points. Email addresses become links.",
       heading: "required",
       body: true,
+      bodyLabel: "Text",
       image: true,
-      defaults: { heading: "About Conscious Connections", body: "" },
+      blocks: true,
+      defaults: { heading: "About Conscious Connections", body: ABOUT_BODY },
     },
     photo(1, "on the About page, under the text"),
     photo(2, "on the About page, under the text"),
     photo(3, "on the About page, under the text"),
   ],
   pages: [
-    intro("events", "Events", "Events", "Discover local events for LGBTQ+ women and non-binary people across rural Ireland."),
-    intro("stories", "Stories", "Stories", "Real experiences from our community."),
-    intro("share_story", "Share your story", "Share your story", "Your experience could help someone feel less alone. Tell us about finding community, moving somewhere new, or anything you'd like others to hear."),
-    intro("podcasts", "Podcasts", "Podcasts", "Conversations about community, identity and life in rural Ireland."),
+    intro("events", "Events", "Events", "Discover local events for LGBTQ+ women and non-binary people across the island of Ireland."),
+    intro("stories", "Stories and poetry", STORIES_TITLE, "Real experiences, stories and poems from our community."),
+    intro("share_story", "Share your story", "Share your story or poem", "Your experience could help someone feel less alone. Tell us about finding community, moving somewhere new, or share a poem you'd like others to read."),
+    intro("podcasts", "Podcasts", "Podcasts", "Conversations about community, identity and life across the island of Ireland."),
     intro("gallery", "Gallery", "Gallery", "Moments from our events and community."),
     intro(
       "submit_event",

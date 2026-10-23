@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: { default: "Conscious Connections", template: "%s · Conscious Connections" },
   description:
-    "A community for women and non-binary people across rural Ireland. Find local events, read stories and meet your people.",
+    "A community for LGBTQ+ women and non-binary people across the island of Ireland. Find local events, read stories and meet your people.",
   openGraph: { siteName: "Conscious Connections", locale: "en_IE", type: "website" },
   twitter: { card: "summary_large_image" },
 };

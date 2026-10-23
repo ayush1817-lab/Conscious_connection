@@ -9,7 +9,7 @@ import { publicImageUrl } from "@/lib/storage";
 
 export const metadata: Metadata = {
   title: "About",
-  description: "Why Conscious Connections exists and who it's for.",
+  description: "Conscious Connections is a community for LGBTQ+ women and non-binary people across the island of Ireland.",
 };
 
 export default async function AboutPage() {
@@ -25,7 +25,7 @@ export default async function AboutPage() {
           <Image src={publicImageUrl("content", about.image_path)} alt={about.image_alt} fill preload sizes="(min-width: 768px) 720px, 100vw" className="object-cover" />
         </div>
       ) : null}
-      {about?.body ? <RichText text={about.body} className="mt-6 text-lg" /> : null}
+      {about?.body ? <RichText text={about.body} className="mt-6 text-lg" blocks /> : null}
       {photos.length ? (
         <section aria-label="Photos from our events" className="mt-8">
           <PhotoGrid photos={photos} />
