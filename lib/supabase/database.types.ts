@@ -570,6 +570,61 @@ export type Database = {
         };
         Relationships: [];
       };
+      gallery_submissions: {
+        Row: {
+          caption: string | null;
+          created_at: string;
+          decided_at: string | null;
+          event_id: string | null;
+          event_title: string;
+          gallery_image_id: string | null;
+          id: string;
+          image_path: string | null;
+          status: Database["public"]["Enums"]["gallery_submission_status"];
+          updated_at: string | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          caption?: string | null;
+          created_at?: string;
+          decided_at?: string | null;
+          event_id?: string | null;
+          event_title: string;
+          gallery_image_id?: string | null;
+          id?: string;
+          image_path?: string | null;
+          status?: Database["public"]["Enums"]["gallery_submission_status"];
+          updated_at?: string | null;
+        };
+        Update: {
+          caption?: string | null;
+          created_at?: string;
+          decided_at?: string | null;
+          event_id?: string | null;
+          event_title?: string;
+          gallery_image_id?: string | null;
+          id?: string;
+          image_path?: string | null;
+          status?: Database["public"]["Enums"]["gallery_submission_status"];
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "gallery_submissions_event_id_fkey";
+            columns: ["event_id"];
+            isOneToOne: false;
+            referencedRelation: "events";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "gallery_submissions_gallery_image_id_fkey";
+            columns: ["gallery_image_id"];
+            isOneToOne: false;
+            referencedRelation: "gallery_images";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       story_submissions: {
         Row: {
           author_name: string | null;
@@ -688,6 +743,7 @@ export type Database = {
     };
     Enums: {
       activity_actor: "admin" | "host" | "system";
+      gallery_submission_status: "pending" | "approved" | "declined";
       story_submission_status: "pending" | "approved" | "declined";
       attention_type: "host_edited" | "host_cancelled" | "contact_request";
       contact_request_status: "requested" | "shared" | "declined";

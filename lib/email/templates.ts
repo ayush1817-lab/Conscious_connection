@@ -4,7 +4,7 @@ import { formatDate, formatTimeRange } from "@/lib/format";
 // Email templates (spec section 9). Each is written once as a list of blocks,
 // which render to both a plain-text and a simple HTML version.
 
-export type TemplateId = "E1" | "E2" | "E3" | "E4" | "E5" | "E6" | "E7" | "E8" | "E9" | "E10" | "E11" | "E12" | "S1" | "S2" | "S3" | "S4" | "TEST";
+export type TemplateId = "E1" | "E2" | "E3" | "E4" | "E5" | "E6" | "E7" | "E8" | "E9" | "E10" | "E11" | "E12" | "S1" | "S2" | "S3" | "S4" | "G1" | "TEST";
 
 export type RenderedEmail = { template: TemplateId; subject: string; text: string; html: string };
 
@@ -232,6 +232,16 @@ export function storyDeclinedEmail(args: { name: string | null; title: string; r
     { kind: "quote", label: "Reason", text: args.reason },
     { kind: "p", text: "You're welcome to share another story in the future. If you have any questions, you can reply to this email." },
     { kind: "p", text: SIGN_OFF },
+  ]);
+}
+
+// G1: a host sent photos from their event, to the admin(s).
+export function newGalleryPhotosEmail(args: { eventTitle: string; count: number; adminUrl: string }) {
+  const photos = args.count === 1 ? "1 photo" : `${args.count} photos`;
+  return render("G1", `New photos to review: ${args.eventTitle}`, "New photos for the gallery", [
+    { kind: "p", text: `The host of "${args.eventTitle}" has sent ${photos} for the gallery.` },
+    { kind: "p", text: "They won't appear on the website until you approve them." },
+    { kind: "button", label: "Review the photos", url: args.adminUrl },
   ]);
 }
 

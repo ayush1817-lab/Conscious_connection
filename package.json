@@ -33,7 +33,8 @@
     "test:external": "tsx scripts/e2e/external-registration.ts",
     "test:podcasts": "tsx scripts/e2e/podcasts.ts",
     "test:page-content": "tsx scripts/e2e/page-content.ts",
-    "test:attendees": "tsx scripts/e2e/attendees.ts"
+    "test:attendees": "tsx scripts/e2e/attendees.ts",
+    "test:gallery-photos": "tsx scripts/e2e/gallery-photos.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

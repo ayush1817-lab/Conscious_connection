@@ -3,7 +3,8 @@
 import { revalidatePublicSite } from "@/lib/revalidate";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth/admin";
-import { IMAGE_TARGETS, isUploadedImagePath, type ImageTarget } from "@/lib/content/images";
+import { IMAGE_TARGETS, isUploadedImagePath, newImagePath, type ImageTarget } from "@/lib/content/images";
+import { PHOTO_BUCKET } from "@/lib/host/photos";
 import { sectionDef } from "@/lib/content/sections";
 import { slugify } from "@/lib/content/slug";
 import { AUDIO_BUCKET, isAudioPath } from "@/lib/content/podcast-audio";
@@ -67,7 +68,7 @@ export async function saveSection(id: string, _prev: FormState, formData: FormDa
   const error =
     (!heading && def?.heading !== "optional" && def?.heading !== "none" ? "Please add a heading." : null) ??
     tooLong(heading, 150, "The heading") ??
-    tooLong(body, 3000, "The text") ??
+    tooLong(body, def?.maxBody ?? 3000, "The text") ??
     ("error" in image ? image.error! : null) ??
     (image.path && !alt ? "Please describe the image, for people who use screen readers." : null) ??
     tooLong(alt, 300, "The image description");
@@ -344,5 +345,70 @@ export async function deleteGalleryImage(id: string, _prev: FormState, _formData
   const { data: image } = await supabase.from("gallery_images").delete().eq("id", id).select("image_path").maybeSingle();
   if (image) await supabase.storage.from("gallery").remove([image.image_path]);
   await done("Image deleted from the gallery.");
+  return {};
+}
+
+// ---------------------------------------------------------------------------
+// Photos sent by hosts (waiting in the private gallery-submissions bucket)
+// ---------------------------------------------------------------------------
+
+// Approve: copy the photo into the public gallery (at the end), with the
+// caption the admin settled on, then remove the private copy.
+export async function approveGalleryPhoto(id: string, _prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdmin();
+  const caption = text(formData, "caption");
+  const error = tooLong(caption, 200, "The caption");
+  if (error) return { error };
+  const supabase = await createClient();
+  const { data: sub } = await supabase.from("gallery_submissions").select("id, status, image_path").eq("id", id).maybeSingle();
+  if (!sub || sub.status !== "pending" || !sub.image_path) {
+    await done("This photo has already been reviewed.");
+    return {};
+  }
+
+  const { data: file, error: downloadError } = await supabase.storage.from(PHOTO_BUCKET).download(sub.image_path);
+  if (downloadError || !file) return { error: "The photo couldn't be found. Please try again." };
+  const ext = sub.image_path.split(".").pop() ?? "jpg";
+  const type = ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg";
+  const path = newImagePath(IMAGE_TARGETS.gallery.folder, type);
+  const { error: uploadError } = await supabase.storage.from("gallery").upload(path, file, { contentType: type });
+  if (uploadError) return { error: "The photo couldn't be added to the gallery. Please try again." };
+
+  const { data: last } = await supabase.from("gallery_images").select("sort_order").order("sort_order", { ascending: false }).limit(1).maybeSingle();
+  const { data: image, error: insertError } = await supabase
+    .from("gallery_images")
+    .insert({ image_path: path, caption: caption || null, sort_order: (last?.sort_order ?? 0) + 1 })
+    .select("id")
+    .single();
+  if (insertError || !image) {
+    await supabase.storage.from("gallery").remove([path]);
+    return { error: "The photo couldn't be added to the gallery. Please try again." };
+  }
+  await supabase
+    .from("gallery_submissions")
+    .update({ status: "approved", decided_at: new Date().toISOString(), image_path: null, caption: caption || null, gallery_image_id: image.id })
+    .eq("id", id);
+  await supabase.storage.from(PHOTO_BUCKET).remove([sub.image_path]);
+  await done("Approved. The photo is now in the gallery.");
+  return {};
+}
+
+// Decline: delete the photo; the row stays as a record for the host page.
+export async function declineGalleryPhoto(id: string, _prev: FormState, _formData: FormData): Promise<FormState> {
+  await requireAdmin();
+  const supabase = await createClient();
+  const { data: sub } = await supabase.from("gallery_submissions").select("status, image_path").eq("id", id).maybeSingle();
+  if (!sub || sub.status !== "pending") {
+    await done("This photo has already been reviewed.");
+    return {};
+  }
+  const { error } = await supabase
+    .from("gallery_submissions")
+    .update({ status: "declined", decided_at: new Date().toISOString(), image_path: null })
+    .eq("id", id)
+    .eq("status", "pending");
+  if (error) return { error: "The photo couldn't be declined. Please try again." };
+  if (sub.image_path) await supabase.storage.from(PHOTO_BUCKET).remove([sub.image_path]);
+  await done("Declined. The photo has been deleted.");
   return {};
 }

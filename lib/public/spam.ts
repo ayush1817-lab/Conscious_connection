@@ -16,6 +16,8 @@ export const LIMITS = {
   posterUpload: 10,
   story: 3,
   storyImageUpload: 10,
+  hostPhotoUpload: 60,
+  hostPhotos: 10,
 } as const;
 
 // Real people never see or fill the honeypot field; simple bots fill every field.

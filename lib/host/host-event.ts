@@ -8,7 +8,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 const TOKEN_SHAPE = /^[A-Za-z0-9_-]{43}$/; // 32 random bytes, base64url
 
-export type HostView = "needs_changes" | "pending" | "live";
+// "ended": the event is over. The link keeps working until the 7-day clean-up
+// clears it, but only for sending photos.
+export type HostView = "needs_changes" | "pending" | "live" | "ended";
 
 export async function loadHostEvent(token: string) {
   if (!TOKEN_SHAPE.test(token)) return null;
@@ -30,8 +32,8 @@ export async function loadHostEvent(token: string) {
   // A recurring event has ended when its last date has.
   const ended = new Date(event.series_end_at).getTime() <= Date.now();
   const view: HostView | null =
-    event.status === "needs_changes" ? "needs_changes" : event.status === "pending" ? "pending" : event.status === "live" && !ended ? "live" : null;
-  if (!view) return null; // ended, cancelled, taken down or declined: H5
+    event.status === "needs_changes" ? "needs_changes" : event.status === "pending" ? "pending" : event.status === "live" ? (ended ? "ended" : "live") : null;
+  if (!view) return null; // cancelled, taken down or declined: H5
 
   const { host_edit_token_hash: _hash, event_private_details: details, ...rest } = event;
   return { hash, view, event: rest, details };

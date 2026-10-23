@@ -47,7 +47,7 @@ async function main() {
     console.log("Links that don't work (H5)");
     const bodies: string[] = [];
     const statuses: number[] = [];
-    // Old: a link replaced by a newer one. Cleared: the Beach Clean event's link is set to null.
+    // Old: a link replaced by a newer one. Beach Clean ended 2 days ago, so its current link opens the photos page.
     const { data: beach } = await service.from("events").select("id").eq("title", "Beach Clean & Connect").single();
     await service.from("events").update({ host_edit_token_hash: hashHostToken("old-link".padEnd(43, "x")) }).eq("id", beach!.id);
     await service.from("events").update({ host_edit_token_hash: hashHostToken("cleared-link".padEnd(43, "x")) }).eq("id", beach!.id);
@@ -55,7 +55,6 @@ async function main() {
       ["made-up", "nonsense"],
       ["well-formed but unknown", "z".repeat(43)],
       ["replaced by a newer link", "old-link".padEnd(43, "x")],
-      ["for an ended event", "cleared-link".padEnd(43, "x")],
     ]) {
       const res = await page.goto(`${BASE_URL}/host/${token}`);
       statuses.push(res?.status() ?? 0);
@@ -65,6 +64,10 @@ async function main() {
     }
     check(statuses.every((s) => s === 404) && bodies.every((b) => b === bodies[0]), "every broken link gets the identical page and status");
     check(await page.getByRole("link", { name: "Send me a new link" }).isVisible(), "H5 links to the resend page");
+    // An event that ended in the last 7 days: the link still opens, for sending photos only.
+    await page.goto(`${BASE_URL}/host/${"cleared-link".padEnd(43, "x")}`);
+    check(await page.getByText("This event has finished").isVisible(), "a link for a recently ended event opens the photos page");
+    check(!(await page.getByRole("button", { name: "Cancel event" }).count()), "and can't change the event");
     const headers = (await fetch(live)).headers;
     check(headers.get("referrer-policy") === "no-referrer", "host pages send Referrer-Policy: no-referrer");
     check((headers.get("x-robots-tag") ?? "").includes("noindex"), "host pages aren't indexed");

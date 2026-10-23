@@ -16,7 +16,13 @@ export default async function StoriesPage() {
     <div className="mx-auto max-w-6xl px-4 py-10">
       <PageIntro title={intro.heading} intro={intro.body} />
       <div className="-mt-2 mb-8 flex flex-col gap-3 rounded-card bg-band p-5 sm:flex-row sm:items-center sm:justify-between">
-        <p>Have a story or poem you&apos;d like to share? We&apos;d love to read it.</p>
+        <p>
+          Have a story or poem you&apos;d like to share? We&apos;d love to read it. Please read our{" "}
+          <Link href="/guidelines#stories" className="font-medium text-primary underline underline-offset-4">
+            story guidelines
+          </Link>{" "}
+          first.
+        </p>
         <Link href="/stories/share" className={buttonClass("primary", "shrink-0")}>
           Share your story
         </Link>
