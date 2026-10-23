@@ -8,7 +8,7 @@ import { BrandMark } from "./brand-mark";
 
 export const NAV_LINKS = [
   { href: "/events", label: "Events" },
-  { href: "/stories", label: "Stories" },
+  { href: "/stories", label: "Stories & Poetry" },
   { href: "/podcasts", label: "Podcasts" },
   { href: "/gallery", label: "Gallery" },
   { href: "/about", label: "About" },

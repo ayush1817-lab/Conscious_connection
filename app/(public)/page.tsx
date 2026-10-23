@@ -11,6 +11,7 @@ import { PodcastPlayer } from "@/components/public/podcast-player";
 import { buttonClass } from "@/components/ui/button";
 import { RichText } from "@/lib/content/rich-text";
 import { podcastMedia } from "@/lib/content/podcast-media";
+import { HERO_HEADING, STORIES_TITLE } from "@/lib/content/sections";
 import { getGallery, getPodcasts, getSections, getStories, photosOf } from "@/lib/public/content";
 import { getPlacesLeft, getUpcomingEvents, placesBadge } from "@/lib/public/events";
 import { publicImageUrl } from "@/lib/storage";
@@ -38,7 +39,7 @@ export default async function HomePage() {
         <div className="home-hero-inner mx-auto grid max-w-6xl items-center gap-8 px-4 py-10 md:grid-cols-2 md:py-16">
           <div className="home-hero-copy">
             <h1 className="home-hero-title font-heading text-4xl leading-tight font-semibold md:text-5xl">
-              {hero?.heading || "A community for women and non-binary people across rural Ireland."}
+              {hero?.heading || HERO_HEADING}
             </h1>
             {hero?.body ? <RichText text={hero.body} className="mt-4 text-lg" /> : null}
             <div className="mt-6 flex flex-wrap gap-3">
@@ -46,7 +47,7 @@ export default async function HomePage() {
                 Find events
               </Link>
               <Link href="/stories" className={buttonClass("secondary")}>
-                Stories
+                Stories &amp; poetry
               </Link>
             </div>
             <ConnectionLoops />
@@ -126,10 +127,25 @@ export default async function HomePage() {
         )}
       </section>
 
+      {/* Invitation to host */}
+      <section aria-labelledby="host-heading" className="home-section mx-auto max-w-6xl px-4 py-8">
+        <div className="home-host-panel flex flex-col gap-4 rounded-card bg-band p-6 md:flex-row md:items-center md:justify-between md:p-8">
+          <ConnectionLoops />
+          <div className="max-w-2xl">
+            <h2 id="host-heading" className="font-heading text-2xl font-semibold">
+              {hostCta?.heading || "Want to host an event?"}
+            </h2>
+            {hostCta?.body ? <RichText text={hostCta.body} className="mt-2 text-muted" /> : null}
+          </div>
+          <Link href="/submit-event" className={buttonClass("primary", "shrink-0")}>
+            Host an event
+          </Link>
+        </div>
+      </section>
       {/* Stories */}
       {stories.length ? (
         <section aria-labelledby="stories-heading" className="home-section home-stories mx-auto max-w-6xl px-4 py-8">
-          <SectionHeading id="stories-heading" title="Stories from our community" link={{ href: "/stories", label: "View all stories" }} />
+          <SectionHeading id="stories-heading" title={STORIES_TITLE} link={{ href: "/stories", label: "View all stories and poems" }} />
           <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {stories.map((story) => (
               <li key={story.id}>
@@ -168,21 +184,6 @@ export default async function HomePage() {
         </section>
       ) : null}
 
-      {/* Invitation to host */}
-      <section aria-labelledby="host-heading" className="home-section mx-auto max-w-6xl px-4 py-8">
-        <div className="home-host-panel flex flex-col gap-4 rounded-card bg-band p-6 md:flex-row md:items-center md:justify-between md:p-8">
-          <ConnectionLoops />
-          <div className="max-w-2xl">
-            <h2 id="host-heading" className="font-heading text-2xl font-semibold">
-              {hostCta?.heading || "Want to host an event?"}
-            </h2>
-            {hostCta?.body ? <RichText text={hostCta.body} className="mt-2 text-muted" /> : null}
-          </div>
-          <Link href="/submit-event" className={buttonClass("primary", "shrink-0")}>
-            Host an event
-          </Link>
-        </div>
-      </section>
     </>
   );
 }

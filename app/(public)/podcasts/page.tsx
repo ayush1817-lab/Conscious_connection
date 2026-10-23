@@ -7,7 +7,7 @@ import { getPageIntro, getPodcasts } from "@/lib/public/content";
 
 export const metadata: Metadata = {
   title: "Podcasts",
-  description: "Conversations about community, identity and life in rural Ireland.",
+  description: "Conversations about community, identity and life across the island of Ireland.",
 };
 
 export default async function PodcastsPage() {

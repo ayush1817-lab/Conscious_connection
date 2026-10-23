@@ -87,7 +87,7 @@ export function SectionEditor({ def, section, action }: { def: SectionDef; secti
                 <h3 className="text-xl font-semibold">{heading || def.defaults.heading || "Heading"}</h3>
               )
             ) : null}
-            {def.body ? body ? <RichText text={body} /> : <p className="text-muted">Your text will appear here.</p> : null}
+            {def.body ? body ? <RichText text={body} blocks={def.blocks} /> : <p className="text-muted">Your text will appear here.</p> : null}
           </div>
         </div>
       </div>

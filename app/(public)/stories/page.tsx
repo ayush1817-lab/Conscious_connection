@@ -6,8 +6,8 @@ import { buttonClass } from "@/components/ui/button";
 import { getPageIntro, getStories } from "@/lib/public/content";
 
 export const metadata: Metadata = {
-  title: "Stories",
-  description: "Real experiences from the Conscious Connections community in rural Ireland.",
+  title: "Stories and poetry",
+  description: "Stories and poetry from the Conscious Connections community across the island of Ireland.",
 };
 
 export default async function StoriesPage() {
@@ -16,7 +16,7 @@ export default async function StoriesPage() {
     <div className="mx-auto max-w-6xl px-4 py-10">
       <PageIntro title={intro.heading} intro={intro.body} />
       <div className="-mt-2 mb-8 flex flex-col gap-3 rounded-card bg-band p-5 sm:flex-row sm:items-center sm:justify-between">
-        <p>Have something you&apos;d like to share? We&apos;d love to hear it.</p>
+        <p>Have a story or poem you&apos;d like to share? We&apos;d love to read it.</p>
         <Link href="/stories/share" className={buttonClass("primary", "shrink-0")}>
           Share your story
         </Link>
