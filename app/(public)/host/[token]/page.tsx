@@ -16,7 +16,11 @@ import {
   type HostEvent,
 } from "@/lib/host/host-event";
 import { eventToForm } from "@/lib/public/event-form";
+import { HostPhotoUpload } from "@/components/public/host-photo-upload";
+import { loadHostPhotos } from "@/lib/host/host-photos";
+import { MAX_PHOTOS_PER_EVENT } from "@/lib/host/photos";
 import { cancelHostEvent, requestContactDetails, resubmitEvent, saveHostEdit } from "./actions";
+import { createHostPhotoUpload, sendHostPhotos } from "./photo-actions";
 
 export const metadata: Metadata = {
   title: "Manage your event",
@@ -43,6 +47,7 @@ export default async function HostPage({ params, searchParams }: Props) {
       {host.view === "needs_changes" ? <NeedsChanges host={host} token={token} /> : null}
       {host.view === "pending" ? <Pending host={host} sent={query.sent === "1"} /> : null}
       {host.view === "live" ? <Live host={host} token={token} query={query} /> : null}
+      {host.view === "ended" ? <Ended host={host} token={token} /> : null}
     </div>
   );
 }
@@ -117,7 +122,63 @@ const TABS = [
   { key: "details", label: "Event details" },
   { key: "registrations", label: "Registrations" },
   { key: "contact", label: "Request contact details" },
+  { key: "photos", label: "Photos" },
 ] as const;
+
+// After the event: the link still works for a few days, for sending photos.
+function Ended({ host, token }: { host: HostEvent; token: string }) {
+  return (
+    <>
+      <StatusBar tone="waiting">This event has finished</StatusBar>
+      <p className="mt-4 text-lg">Thank you for hosting! If you took photos, you can share them with the community here.</p>
+      <div className="mt-6">
+        <Photos host={host} token={token} />
+      </div>
+    </>
+  );
+}
+
+const PHOTO_STATUS = { pending: "Waiting for our team", approved: "In the gallery", declined: "Not used" } as const;
+
+async function Photos({ host, token }: { host: HostEvent; token: string }) {
+  const photos = await loadHostPhotos(host.event.id);
+  const used = photos.filter((p) => p.status !== "declined").length;
+  return (
+    <section aria-labelledby="photos-heading" className="space-y-5">
+      <h2 id="photos-heading" className="font-heading text-2xl font-semibold">
+        Add photos from your event
+      </h2>
+      <p>
+        Share photos from your event for the website&apos;s gallery. Our team checks every photo before it goes online, and you can
+        add a short description to each one.
+      </p>
+      <HostPhotoUpload
+        requestUpload={createHostPhotoUpload.bind(null, token)}
+        action={sendHostPhotos.bind(null, token)}
+        remaining={MAX_PHOTOS_PER_EVENT - used}
+      />
+      {photos.length ? (
+        <div>
+          <h3 className="font-heading text-lg font-semibold">Photos you&apos;ve sent</h3>
+          <ul className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {photos.map((p) => (
+              <li key={p.id} className="min-w-0 rounded-card border border-border bg-surface p-2">
+                {p.url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={p.url} alt={p.caption ?? ""} className="aspect-square w-full rounded-control object-cover" />
+                ) : (
+                  <div className="aspect-square w-full rounded-control bg-band" />
+                )}
+                <p className="mt-2 text-sm font-medium">{PHOTO_STATUS[p.status]}</p>
+                {p.caption ? <p className="text-sm break-words text-muted">{p.caption}</p> : null}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+    </section>
+  );
+}
 
 async function Live({ host, token, query }: { host: HostEvent; token: string; query: Awaited<Props["searchParams"]> }) {
   const tab = TABS.some((t) => t.key === query.tab) ? query.tab : "details";
@@ -220,6 +281,8 @@ async function Live({ host, token, query }: { host: HostEvent; token: string; qu
             </p>
           </section>
         ) : null}
+
+        {tab === "photos" ? <Photos host={host} token={token} /> : null}
 
         {tab === "contact" ? (
           <section aria-labelledby="contact-heading" className="space-y-5">

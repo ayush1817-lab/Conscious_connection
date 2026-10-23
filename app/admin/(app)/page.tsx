@@ -9,11 +9,12 @@ import { createClient } from "@/lib/supabase/server";
 export default async function AdminHome() {
   const supabase = await createClient();
   const weekAgo = new Date(Date.now() - 7 * 86_400_000).toISOString();
-  const [admin, overview, { count: failedEmails }, { count: storiesWaiting }] = await Promise.all([
+  const [admin, overview, { count: failedEmails }, { count: storiesWaiting }, { count: photosWaiting }] = await Promise.all([
     requireAdmin(),
     getEventsOverview(),
     supabase.from("email_log").select("id", { count: "exact", head: true }).is("sent_at", null).gte("created_at", weekAgo),
     supabase.from("story_submissions").select("id", { count: "exact", head: true }).eq("status", "pending"),
+    supabase.from("gallery_submissions").select("id", { count: "exact", head: true }).eq("status", "pending"),
   ]);
   const { newRequests, attention } = overview.counts;
   const notSending = emailConfig().mode === "missing_key";
@@ -30,8 +31,13 @@ export default async function AdminHome() {
           {plural(newRequests, "new request")} · {attention} need{attention === 1 ? "s" : ""} attention
         </HomeCard>
         <HomeCard href="/admin/content" title="Website content" icon={<PageIcon />}>
-          {storiesWaiting ? (
-            <span className="font-medium text-text">{plural(storiesWaiting, "shared story", "shared stories")} to review.</span>
+          {storiesWaiting || photosWaiting ? (
+            <span className="font-medium text-text">
+              {[storiesWaiting ? plural(storiesWaiting, "shared story", "shared stories") : null, photosWaiting ? plural(photosWaiting, "photo") : null]
+                .filter(Boolean)
+                .join(" and ")}{" "}
+              to review.
+            </span>
           ) : (
             "Update homepage, stories, podcasts, gallery and about."
           )}

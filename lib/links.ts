@@ -35,6 +35,10 @@ export function publicStoryUrl(slug: string) {
   return `${siteUrl()}/stories/${slug}`;
 }
 
+export function adminGalleryUrl() {
+  return `${siteUrl()}/admin/content/gallery`;
+}
+
 export function adminStorySubmissionUrl(id: string) {
   return `${siteUrl()}/admin/content/stories/submissions/${id}`;
 }

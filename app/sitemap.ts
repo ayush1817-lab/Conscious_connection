@@ -10,7 +10,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const site = siteUrl();
   const [events, stories] = await Promise.all([getUpcomingEvents(500), getStories()]);
   return [
-    ...["", "/events", "/stories", "/podcasts", "/gallery", "/about", "/submit-event", "/stories/share", "/privacy"].map((path) => ({ url: `${site}${path}` })),
+    ...["", "/events", "/stories", "/podcasts", "/gallery", "/about", "/submit-event", "/stories/share", "/guidelines", "/privacy"].map((path) => ({ url: `${site}${path}` })),
     ...events.map((e) => ({ url: `${site}/events/${e.id}` })),
     ...stories.map((s) => ({ url: `${site}/stories/${s.slug}`, lastModified: s.published_at ?? undefined })),
   ];

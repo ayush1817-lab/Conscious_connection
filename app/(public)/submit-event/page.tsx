@@ -18,7 +18,15 @@ export default async function SubmitEventPage() {
   const intro = await getPageIntro("submit_event");
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
-      <PageIntro title={intro.heading} intro={intro.body} />
+      <PageIntro title={intro.heading} intro={intro.body}>
+        <p>
+          Please read our{" "}
+          <Link href="/guidelines#events" className="font-medium text-primary underline underline-offset-4">
+            guidelines for events
+          </Link>{" "}
+          before you submit.
+        </p>
+      </PageIntro>
       <EventForm
         action={submitEvent}
         initial={EMPTY_EVENT_FORM}

@@ -15,6 +15,7 @@ export function SiteFooter() {
               { href: "/events", label: "Events" },
               { href: "/submit-event", label: "Host an event" },
               { href: "/about", label: "About" },
+              { href: "/guidelines", label: "Community Guidelines" },
               { href: "/privacy", label: "Privacy" },
             ].map((link) => (
               <li key={link.href}>

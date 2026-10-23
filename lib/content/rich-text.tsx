@@ -7,7 +7,19 @@ import { Fragment, type ReactNode } from "react";
 // addresses and web links become links. Stories leave it off, so a poem's
 // lines are never turned into a list.
 // Rendered as React elements, so no HTML from the text is ever trusted.
-export function RichText({ text, className = "", blocks = false }: { text: string; className?: string; blocks?: boolean }) {
+export function RichText({
+  text,
+  className = "",
+  blocks = false,
+  headingLevel = 2,
+}: {
+  text: string;
+  className?: string;
+  blocks?: boolean;
+  // Sub-headings ("## ") become <h2> by default; <h3> under a page section.
+  headingLevel?: 2 | 3;
+}) {
+  const Heading = headingLevel === 3 ? "h3" : "h2";
   const paragraphs = text
     .replace(/\r\n/g, "\n")
     .split(/\n\s*\n/)
@@ -30,9 +42,9 @@ export function RichText({ text, className = "", blocks = false }: { text: strin
           const key = `${i}-${k}`;
           if (block.kind === "heading")
             return (
-              <h2 key={key} className="rich-heading pt-2 font-heading text-xl font-semibold text-text md:text-2xl">
+              <Heading key={key} className={`rich-heading pt-2 font-heading text-xl font-semibold text-text ${headingLevel === 2 ? "md:text-2xl" : ""}`}>
                 {lineText(block.text)}
-              </h2>
+              </Heading>
             );
           if (block.kind === "list")
             return (

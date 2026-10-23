@@ -37,7 +37,15 @@ export default async function EventsPage({ searchParams }: Props) {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
-      <PageIntro title={intro.heading} intro={intro.body} />
+      <PageIntro title={intro.heading} intro={intro.body}>
+        <p>
+          Hosting or coming along? Read our{" "}
+          <Link href="/guidelines#events" className="font-medium text-primary underline underline-offset-4">
+            community guidelines for events
+          </Link>
+          .
+        </p>
+      </PageIntro>
 
       <EventFilters county={county?.slug ?? ""} when={when} />
 

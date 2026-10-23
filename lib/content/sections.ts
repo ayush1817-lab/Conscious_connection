@@ -3,7 +3,7 @@
 // field is left empty, so the site never shows a blank section.
 
 // "pages" holds the title and introduction of the other public pages.
-export type ContentPage = "home" | "about" | "pages";
+export type ContentPage = "home" | "about" | "pages" | "guidelines";
 
 export type SectionDef = {
   key: string;
@@ -18,6 +18,8 @@ export type SectionDef = {
   image: boolean;
   // Longer page text: sub-headings ("## "), bullet points ("* ") and links.
   blocks?: boolean;
+  // Longest text allowed (default 3000 characters).
+  maxBody?: number;
   defaults: { heading: string; body: string };
 };
 
@@ -64,6 +66,22 @@ const intro = (key: string, page: string, heading: string, body: string): Sectio
   image: false,
   defaults: { heading, body },
 });
+
+const guideline = (key: string, heading: string): SectionDef => ({
+  key,
+  title: heading,
+  hint: "Shown on the Community Guidelines page. Leave the text empty to show \"coming soon\". A line starting with ## is a sub-heading, lines starting with * are bullet points.",
+  heading: "required",
+  headingLabel: "Section title",
+  body: true,
+  bodyLabel: "Guidelines",
+  image: false,
+  blocks: true,
+  maxBody: GUIDELINES_MAX,
+  defaults: { heading, body: "" },
+});
+
+export const GUIDELINES_MAX = 20000;
 
 const photo = (n: number, where: string): SectionDef => ({
   key: `photo_${n}`,
@@ -130,6 +148,24 @@ export const PAGE_SECTIONS: Record<ContentPage, SectionDef[]> = {
       "Host an event",
       "Create a local event and bring people together. It's quick and easy, and it helps build our community. Our team reviews every event before it goes live.",
     ),
+  ],
+  // Community Guidelines (/guidelines). Each part has its own link: /guidelines#events, /guidelines#stories.
+  guidelines: [
+    {
+      key: "intro",
+      title: "Page title and introduction",
+      heading: "required",
+      headingLabel: "Page title",
+      body: true,
+      bodyLabel: "Introduction",
+      image: false,
+      defaults: {
+        heading: "Community Guidelines",
+        body: "These guidelines help keep Conscious Connections a safe, welcoming and inclusive space for everyone.",
+      },
+    },
+    guideline("events", "Hosting and attending events"),
+    guideline("stories", "Sharing stories and poetry"),
   ],
 };
 
