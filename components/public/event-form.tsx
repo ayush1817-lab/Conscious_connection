@@ -98,57 +98,65 @@ export function EventForm({
           </p>
         ) : null}
 
-        <InputField id="title" label="Event title" required maxLength={LIMITS.title} placeholder="e.g. Coffee meetup, hill walk, book club" defaultValue={v.title} error={e.title} />
-        <div className="grid gap-5 sm:grid-cols-2">
-          <SelectField id="county" label="County" required defaultValue={v.county} error={e.county} disabled={isLocked("county")} hint={lockHint("county")}>
-            <option value="">Select a county</option>
-            {COUNTY_NAMES.map((name) => (
-              <option key={name} value={name}>
-                {name}
-              </option>
-            ))}
-          </SelectField>
-          <InputField id="date" label="Date" type="date" required min={today} defaultValue={v.date} error={e.date} readOnly={isLocked("date")} hint={lockHint("date")} />
-          <InputField id="start_time" label="Start time" type="time" required defaultValue={v.start_time} error={e.start_time} readOnly={isLocked("start_time")} hint={lockHint("start_time")} />
-          <InputField id="end_time" label="End time" type="time" required defaultValue={v.end_time} error={e.end_time} readOnly={isLocked("end_time")} hint={lockHint("end_time")} />
+        <div className="event-form-columns">
+          <div className="event-form-col">
+            <p className="event-form-col-title">When and where</p>
+            <InputField id="title" label="Event title" required maxLength={LIMITS.title} placeholder="e.g. Coffee meetup, hill walk, book club" defaultValue={v.title} error={e.title} />
+            <div className="grid gap-5 sm:grid-cols-2">
+              <SelectField id="county" label="County" required defaultValue={v.county} error={e.county} disabled={isLocked("county")} hint={lockHint("county")}>
+                <option value="">Select a county</option>
+                {COUNTY_NAMES.map((name) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
+              </SelectField>
+              <InputField id="date" label="Date" type="date" required min={today} defaultValue={v.date} error={e.date} readOnly={isLocked("date")} hint={lockHint("date")} />
+              <InputField id="start_time" label="Start time" type="time" required defaultValue={v.start_time} error={e.start_time} readOnly={isLocked("start_time")} hint={lockHint("start_time")} />
+              <InputField id="end_time" label="End time" type="time" required defaultValue={v.end_time} error={e.end_time} readOnly={isLocked("end_time")} hint={lockHint("end_time")} />
+            </div>
+            {/* A disabled select isn't sent with the form, so send the locked county separately. */}
+            {isLocked("county") ? <input type="hidden" name="county" value={v.county} /> : null}
+            <RepeatFields values={v} errors={e} locked={isLocked("repeats")} lockHint={lockHint("repeats")} min={v.date || today} />
+            <InputField
+              id="capacity"
+              label="How many people can come?"
+              type="number"
+              inputMode="numeric"
+              min={1}
+              max={LIMITS.capacityMax}
+              hint="Leave empty if there's no limit."
+              defaultValue={v.capacity}
+              error={e.capacity}
+            />
+          </div>
+          <div className="event-form-col">
+            <p className="event-form-col-title">What to expect</p>
+            <TextAreaField
+              id="description"
+              label="Description"
+              required
+              rows={6}
+              maxLength={LIMITS.description}
+              hint={`Tell people what to expect, what to bring and anything about access. Up to ${LIMITS.description} characters.`}
+              placeholder="A relaxed walk at an easy pace, followed by tea…"
+              defaultValue={v.description}
+              error={e.description}
+            />
+            <InputField
+              id="external_registration_url"
+              label="Registration link"
+              type="url"
+              inputMode="url"
+              maxLength={LIMITS.url}
+              placeholder="https://www.eventbrite.ie/…"
+              hint="Only if people must sign up on another website, like Eventbrite. We'll show a “Register here” button that opens it, instead of our own form."
+              defaultValue={v.external_registration_url}
+              error={e.external_registration_url}
+            />
+            <PosterUpload defaultPath={v.poster_path} error={e.poster_path} onChange={() => setDirty(true)} />
+          </div>
         </div>
-        {/* A disabled select isn't sent with the form, so send the locked county separately. */}
-        {isLocked("county") ? <input type="hidden" name="county" value={v.county} /> : null}
-        <RepeatFields values={v} errors={e} locked={isLocked("repeats")} lockHint={lockHint("repeats")} min={v.date || today} />
-        <TextAreaField
-          id="description"
-          label="Description"
-          required
-          maxLength={LIMITS.description}
-          hint={`Tell people what to expect, what to bring and anything about access. Up to ${LIMITS.description} characters.`}
-          placeholder="A relaxed walk at an easy pace, followed by tea…"
-          defaultValue={v.description}
-          error={e.description}
-        />
-        <InputField
-          id="capacity"
-          label="How many people can come?"
-          type="number"
-          inputMode="numeric"
-          min={1}
-          max={LIMITS.capacityMax}
-          hint="Leave empty if there's no limit."
-          defaultValue={v.capacity}
-          error={e.capacity}
-          className="sm:max-w-xs"
-        />
-        <InputField
-          id="external_registration_url"
-          label="Registration link (optional)"
-          type="url"
-          inputMode="url"
-          maxLength={LIMITS.url}
-          placeholder="https://www.eventbrite.ie/…"
-          hint="Only if people must sign up on another website, like Eventbrite. We'll show a “Register here” button that opens it, instead of our own form."
-          defaultValue={v.external_registration_url}
-          error={e.external_registration_url}
-        />
-        <PosterUpload defaultPath={v.poster_path} error={e.poster_path} onChange={() => setDirty(true)} />
       </fieldset>
 
       <fieldset className="space-y-5 rounded-card border-2 border-private-border bg-private p-5 md:p-6">
@@ -159,32 +167,36 @@ export function EventForm({
         <p className="-mt-2">
           <strong>Only visible to our team.</strong> These are never shown on the website.
         </p>
-        <TextAreaField
-          id="exact_address"
-          label="Exact address"
-          required
-          rows={2}
-          maxLength={LIMITS.address}
-          hint={isLocked("exact_address") ? lockHint("exact_address") : "Never shown publicly. We email it only to people who register."}
-          defaultValue={v.exact_address}
-          error={e.exact_address}
-          readOnly={isLocked("exact_address")}
-        />
-        <div className="grid gap-5 sm:grid-cols-2">
-          <InputField id="host_name" label="Your name" required maxLength={LIMITS.name} autoComplete="name" defaultValue={v.host_name} error={e.host_name} />
-          <InputField id="host_email" label="Your email" type="email" required maxLength={254} autoComplete="email" inputMode="email" defaultValue={v.host_email} error={e.host_email} />
-          <InputField id="host_phone" label="Your phone" type="tel" required maxLength={30} autoComplete="tel" defaultValue={v.host_phone} error={e.host_phone} />
+        <div className="event-form-columns">
+          <div className="event-form-col">
+            <TextAreaField
+              id="exact_address"
+              label="Exact address"
+              required
+              rows={2}
+              maxLength={LIMITS.address}
+              hint={isLocked("exact_address") ? lockHint("exact_address") : "Never shown publicly. We email it only to people who register."}
+              defaultValue={v.exact_address}
+              error={e.exact_address}
+              readOnly={isLocked("exact_address")}
+            />
+            <TextAreaField
+              id="about_group"
+              label="About you or your group"
+              required
+              rows={4}
+              maxLength={LIMITS.about}
+              hint={`Helps our team get to know who's hosting. Up to ${LIMITS.about} characters.`}
+              defaultValue={v.about_group}
+              error={e.about_group}
+            />
+          </div>
+          <div className="event-form-col">
+            <InputField id="host_name" label="Your name" required maxLength={LIMITS.name} autoComplete="name" defaultValue={v.host_name} error={e.host_name} />
+            <InputField id="host_email" label="Your email" type="email" required maxLength={254} autoComplete="email" inputMode="email" defaultValue={v.host_email} error={e.host_email} />
+            <InputField id="host_phone" label="Your phone" type="tel" required maxLength={30} autoComplete="tel" defaultValue={v.host_phone} error={e.host_phone} />
+          </div>
         </div>
-        <TextAreaField
-          id="about_group"
-          label="About you or your group"
-          required
-          rows={3}
-          maxLength={LIMITS.about}
-          hint={`Helps our team get to know who's hosting. Up to ${LIMITS.about} characters.`}
-          defaultValue={v.about_group}
-          error={e.about_group}
-        />
       </fieldset>
 
       {withConsent ? (
@@ -238,7 +250,7 @@ function RepeatFields({
 }) {
   const [repeats, setRepeats] = useState(values.repeats || "none");
   return (
-    <div className="grid gap-5 sm:grid-cols-2">
+    <div className="repeat-fields grid gap-5 sm:grid-cols-2">
       <SelectField
         id="repeats"
         label="Does it repeat?"
