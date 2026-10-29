@@ -132,9 +132,9 @@ export const PAGE_SECTIONS: Record<ContentPage, SectionDef[]> = {
       blocks: true,
       defaults: { heading: "About Conscious Connections", body: ABOUT_BODY },
     },
-    photo(1, "on the About page, under the text"),
-    photo(2, "on the About page, under the text"),
-    photo(3, "on the About page, under the text"),
+    photo(1, "on the About page, beside the first part of the text (the first ## sub-heading)"),
+    photo(2, "on the About page, beside the second part of the text"),
+    photo(3, "on the About page, beside the third part of the text"),
   ],
   pages: [
     intro("events", "Events", "Events", "Discover local events for LGBTQ+ women and non-binary people across the island of Ireland."),
