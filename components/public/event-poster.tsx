@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { formatShortDate } from "@/lib/format";
 import { publicImageUrl } from "@/lib/storage";
+import { Doodle } from "./doodles";
 
 // The event's poster, or a branded placeholder showing the county and date
 // (spec section 5), so there is never a broken image.
@@ -39,9 +40,12 @@ export function PosterPlaceholder({ county, startAt }: { county: string; startAt
       aria-hidden
       className="poster-placeholder flex h-full w-full flex-col items-center justify-center gap-1 p-4 text-center"
     >
-      <span className="font-heading text-xl font-semibold text-primary">{county}</span>
-      <span className="text-sm font-medium text-text">{formatShortDate(startAt)}</span>
-      <span className="mt-2 text-xs tracking-wide text-text uppercase">Conscious Connections</span>
+      <Doodle name="loop" tone="primary" className="poster-doodle poster-doodle-loop" />
+      <Doodle name="sparkle" tone="orchid" className="poster-doodle poster-doodle-spark" />
+      <Doodle name="heart" tone="lilac" className="poster-doodle poster-doodle-heart" />
+      <span className="poster-date rounded-full bg-surface px-3 py-1 text-sm font-medium text-text">{formatShortDate(startAt)}</span>
+      <span className="poster-county font-heading font-semibold text-primary">{county}</span>
+      <span className="mt-1 text-xs tracking-wide text-text uppercase">Conscious Connections</span>
     </div>
   );
 }

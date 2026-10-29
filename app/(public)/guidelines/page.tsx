@@ -17,7 +17,7 @@ export default async function GuidelinesPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
-      <PageIntro title={sections.intro.heading} intro={sections.intro.body} />
+      <PageIntro title={sections.intro.heading} intro={sections.intro.body} eyebrow="Look after each other" illustration="guidelines" />
       <nav aria-label="On this page" className="mb-8">
         <ul className="flex flex-wrap gap-3">
           {parts.map((part) => (

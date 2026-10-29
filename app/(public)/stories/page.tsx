@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PageIntro } from "@/components/public/section-heading";
+import { Doodle } from "@/components/public/doodles";
 import { StoryCard } from "@/components/public/story-card";
 import { buttonClass } from "@/components/ui/button";
 import { getPageIntro, getStories } from "@/lib/public/content";
@@ -14,8 +15,9 @@ export default async function StoriesPage() {
   const [stories, intro] = await Promise.all([getStories(), getPageIntro("stories")]);
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
-      <PageIntro title={intro.heading} intro={intro.body} />
-      <div className="-mt-2 mb-8 flex flex-col gap-3 rounded-card bg-band p-5 sm:flex-row sm:items-center sm:justify-between">
+      <PageIntro title={intro.heading} intro={intro.body} eyebrow="From the community" illustration="story" />
+      <div className="share-banner -mt-2 mb-8">
+        <Doodle name="loop" tone="orchid" />
         <p>
           Have a story or poem you&apos;d like to share? We&apos;d love to read it. Please read our{" "}
           <Link href="/guidelines#stories" className="font-medium text-primary underline underline-offset-4">
@@ -28,10 +30,10 @@ export default async function StoriesPage() {
         </Link>
       </div>
       {stories.length ? (
-        <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {stories.map((story) => (
+        <ul className="stories-grid">
+          {stories.map((story, i) => (
             <li key={story.id}>
-              <StoryCard story={story} level={2} />
+              <StoryCard story={story} level={2} tone={i} featured={i === 0} />
             </li>
           ))}
         </ul>
