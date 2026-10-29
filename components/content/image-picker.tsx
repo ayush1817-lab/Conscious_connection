@@ -27,8 +27,10 @@ export function ImagePicker({
   value,
   onChange,
   name,
+  hint,
 }: {
   label: string;
+  hint?: string;
   target: ImageTarget;
   value: string | null;
   onChange: (path: string | null) => void;
@@ -93,7 +95,7 @@ export function ImagePicker({
         </div>
       </div>
       <p id={`${id}-hint`} className="mt-1 text-sm text-muted">
-        JPG, PNG or WebP. Large phone photos are resized automatically.
+        {hint ? `${hint} ` : ""}JPG, PNG or WebP. Large phone photos are resized automatically.
       </p>
       {error ? (
         <p role="alert" className="mt-1 font-medium text-danger">

@@ -15,7 +15,7 @@ export default async function StoriesPage() {
   const [stories, intro] = await Promise.all([getStories(), getPageIntro("stories")]);
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
-      <PageIntro title={intro.heading} intro={intro.body} eyebrow="From the community" illustration="story" />
+      <PageIntro title={intro.heading} intro={intro.body} eyebrow={intro.eyebrow} illustration="story" />
       <div className="share-banner -mt-2 mb-8">
         <Doodle name="loop" tone="orchid" />
         <p>

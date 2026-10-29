@@ -1,20 +1,14 @@
 import type { Metadata } from "next";
-import { Toaster } from "@/components/ui/toaster";
-import { readFlash } from "@/lib/flash";
 
 // Admin pages must never be indexed.
 // Admin page titles already end in "· Conscious Connections".
+// The "Saved" toasts live in the (app) and (auth) layouts, so the website
+// preview (admin/preview) never shows or clears one.
 export const metadata: Metadata = {
   title: { template: "%s", default: "Admin · Conscious Connections" },
   robots: { index: false, follow: false },
 };
 
-export default async function AdminRootLayout({ children }: { children: React.ReactNode }) {
-  const flash = await readFlash();
-  return (
-    <>
-      {children}
-      <Toaster flash={flash} />
-    </>
-  );
+export default function AdminRootLayout({ children }: { children: React.ReactNode }) {
+  return children;
 }

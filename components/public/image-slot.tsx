@@ -1,5 +1,7 @@
 import Image from "next/image";
 import { BRAND_IMAGES, SHOW_PLACEHOLDERS, type BrandImageSlot } from "@/lib/brand-images";
+import type { SectionValues } from "@/lib/content/sections";
+import { publicImageUrl } from "@/lib/storage";
 import { Doodle } from "./doodles";
 
 // A labelled stand-in for a photo that hasn't been supplied yet: says which
@@ -35,7 +37,7 @@ export function PhotoPlaceholder({
 }
 
 // A design photo slot: the photo once it's in public/images/brand/, otherwise its placeholder.
-export function BrandPhoto({ slot, className = "", sizes }: { slot: BrandImageSlot; className?: string; sizes: string }) {
+export function BrandPhoto({ slot, className = "", sizes, where }: { slot: BrandImageSlot; className?: string; sizes: string; where?: string }) {
   const img = BRAND_IMAGES[slot];
   if (img.file) {
     return (
@@ -44,5 +46,30 @@ export function BrandPhoto({ slot, className = "", sizes }: { slot: BrandImageSl
       </div>
     );
   }
-  return <PhotoPlaceholder label={img.label} suggestion={img.suggestion} size={img.size} className={className} />;
+  return <PhotoPlaceholder label={img.label} suggestion={img.suggestion} size={img.size} where={where} className={className} />;
+}
+
+// A design photo the admin can upload (Website content > Homepage). Falls back
+// to the file in public/images/brand/, then to the labelled placeholder.
+export function SlotPhoto({
+  section,
+  slot,
+  className = "",
+  sizes,
+  where,
+}: {
+  section: SectionValues | undefined;
+  slot: BrandImageSlot;
+  className?: string;
+  sizes: string;
+  where?: string;
+}) {
+  if (section?.image_path) {
+    return (
+      <div className={`relative overflow-hidden ${className}`}>
+        <Image src={publicImageUrl("content", section.image_path)} alt={section.image_alt} fill sizes={sizes} className="object-cover" />
+      </div>
+    );
+  }
+  return <BrandPhoto slot={slot} className={className} sizes={sizes} where={where} />;
 }

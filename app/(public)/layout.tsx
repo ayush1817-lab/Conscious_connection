@@ -1,12 +1,13 @@
 import { SiteFooter } from "@/components/public/site-footer";
 import { SiteHeader } from "@/components/public/site-header";
 import { BackgroundWaves } from "@/components/public/background-waves";
+import { getFooterText } from "@/lib/public/content";
 
 // Every public page reads the database on each request, so the admin's edits in
 // the admin show up straight away (spec section 5, "Freshness").
 export const dynamic = "force-dynamic";
 
-export default function PublicLayout({ children }: { children: React.ReactNode }) {
+export default async function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="public-site flex min-h-screen flex-col">
       <a
@@ -20,7 +21,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
         <BackgroundWaves />
         {children}
       </main>
-      <SiteFooter />
+      <SiteFooter description={await getFooterText()} />
     </div>
   );
 }

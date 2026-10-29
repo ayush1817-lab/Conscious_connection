@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BrandMark, ConnectionLoops } from "./brand-mark";
 import { Doodle } from "./doodles";
+import { FOOTER_TEXT } from "@/lib/content/sections";
 
 const EXPLORE = [
   { href: "/events", label: "Events" },
@@ -15,7 +16,8 @@ const MORE = [
   { href: "/privacy", label: "Privacy" },
 ];
 
-export function SiteFooter() {
+// `description` is the line under the name (Website content > Homepage > Footer).
+export function SiteFooter({ description = FOOTER_TEXT }: { description?: string }) {
   return (
     <footer className="site-footer mt-10">
       <ConnectionLoops className="footer-loops" />
@@ -24,7 +26,7 @@ export function SiteFooter() {
       <div className="site-footer-inner mx-auto flex max-w-6xl flex-col gap-8 px-4 py-8 md:flex-row md:items-start md:justify-between">
         <div className="max-w-sm">
           <div className="footer-brand"><BrandMark /><p className="font-heading text-lg font-semibold">Conscious Connections</p></div>
-          <p className="footer-description">A community for LGBTQ+ women and non-binary people across the island of Ireland.</p>
+          <p className="footer-description">{description}</p>
         </div>
         <nav aria-label="Footer" className="footer-nav">
           {[

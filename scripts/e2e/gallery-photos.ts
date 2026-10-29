@@ -52,7 +52,7 @@ async function main() {
     await admin.getByRole("heading", { name: /Welcome/ }).waitFor();
     await admin.goto(`${BASE_URL}/admin/content/guidelines`);
     const events = admin.getByRole("region", { name: "Hosting and attending events" });
-    await events.waitFor();
+    await events.getByRole("button", { name: "Hosting and attending events" }).click();
     const long = "## Before your event\n\n* Be welcoming to everyone.\n* Share the meeting point.\n\n" + "Please be kind. ".repeat(250);
     await events.getByLabel("Guidelines").fill(long);
     await events.getByRole("button", { name: /Save/ }).click();

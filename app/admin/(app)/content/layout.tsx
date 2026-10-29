@@ -1,3 +1,4 @@
+import { AdminPageHeader } from "@/components/admin/page-header";
 import { ContentTabs } from "@/components/content/content-tabs";
 import { requireAdmin } from "@/lib/auth/admin";
 
@@ -6,10 +7,9 @@ export default async function ContentLayout({ children }: { children: React.Reac
   await requireAdmin();
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold sm:text-3xl">Website content</h1>
-        <p className="mt-1 text-muted">Changes go live on the website as soon as you save.</p>
-      </div>
+      <AdminPageHeader eyebrow="Website content" title="Edit the website">
+        Pick a page, then change its words and photos. The preview shows how the page will look. Changes go live as soon as you save.
+      </AdminPageHeader>
       <ContentTabs />
       {children}
     </div>

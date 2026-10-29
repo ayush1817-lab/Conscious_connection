@@ -20,7 +20,7 @@ export default async function SubmitEventPage() {
   const intro = await getPageIntro("submit_event");
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
-      <PageIntro title={intro.heading} intro={intro.body} eyebrow="Bring people together" illustration="host">
+      <PageIntro title={intro.heading} intro={intro.body} eyebrow={intro.eyebrow} illustration="host">
         <p>
           Please read our{" "}
           <Link href="/guidelines#events" className="font-medium text-primary underline underline-offset-4">

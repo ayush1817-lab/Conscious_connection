@@ -1,18 +1,25 @@
-import { SectionEditor } from "@/components/content/section-editor";
-import { PAGE_SECTIONS, type ContentPage } from "@/lib/content/sections";
+import { PageEditor, type Draft } from "@/components/content/page-editor";
+import { PAGE_AREAS, PAGE_SECTIONS, type ContentPage } from "@/lib/content/sections";
 import { createClient } from "@/lib/supabase/server";
-import { saveSection } from "@/app/admin/(app)/content/actions";
 
-// A8 Homepage / About / Other pages: one editor per section, in page order. Any section that
-// doesn't have a row yet (e.g. a new database) is created from the built-in
-// wording first, so there is always something to edit.
+// Where each page's "Open the live page" link goes. Other pages: one per part.
+const LIVE: Record<ContentPage, string | Record<string, string>> = {
+  home: "/",
+  about: "/about",
+  guidelines: "/guidelines",
+  pages: { events: "/events", stories: "/stories", share_story: "/stories/share", podcasts: "/podcasts", gallery: "/gallery", submit_event: "/submit-event" },
+};
+
+// A8 Homepage / About / Other pages / Guidelines: the page's parts, each with
+// its own Save, beside a live preview of the page. Any section that doesn't
+// have a row yet (e.g. a new database, or one added since) is created from the
+// built-in wording first, so there is always something to edit.
 export async function PageSections({ page }: { page: ContentPage }) {
   const supabase = await createClient();
   const defs = PAGE_SECTIONS[page];
-  const load = () =>
-    supabase.from("site_sections").select("id, key, heading, body, image_path, image_alt, updated_at").eq("page", page);
+  const columns = "id, key, heading, body, image_path, image_alt";
 
-  const { data } = await load();
+  const { data } = await supabase.from("site_sections").select(columns).eq("page", page);
   let rows = data ?? [];
   const missing = defs.filter((d) => !rows.some((r) => r.key === d.key));
   if (missing.length) {
@@ -24,25 +31,25 @@ export async function PageSections({ page }: { page: ContentPage }) {
         missing.map((d) => ({ page, key: d.key, heading: d.defaults.heading, body: d.defaults.body, sort_order: defs.indexOf(d) + 1 })),
         { onConflict: "page,key", ignoreDuplicates: true },
       )
-      .select("id, key, heading, body, image_path, image_alt, updated_at");
+      .select(columns);
     rows = [...rows, ...(added ?? [])];
   }
 
-  return (
-    <div className="space-y-6">
-      {defs.map((def) => {
-        const row = rows.find((r) => r.key === def.key);
-        if (!row) return null;
-        return (
-          <SectionEditor
-            // Remount after a save so the form starts from the saved values.
-            key={`${row.id}-${row.updated_at}`}
-            def={def}
-            section={row}
-            action={saveSection.bind(null, row.id)}
-          />
-        );
-      })}
-    </div>
-  );
+  // Empty fields show the built-in wording, as the website does.
+  const initial: Record<string, Draft> = {};
+  for (const def of defs) {
+    const row = rows.find((r) => r.key === def.key);
+    if (!row) continue;
+    initial[def.key] = {
+      heading: row.heading?.trim() ? row.heading : def.defaults.heading,
+      body: row.body?.trim() ? row.body : def.defaults.body,
+      image_path: row.image_path,
+      image_alt: row.image_alt ?? "",
+    };
+  }
+  const areas = PAGE_AREAS[page]
+    .map((area) => ({ ...area, defs: area.rows.map((key) => defs.find((d) => d.key === key)!).filter((d) => initial[d.key]) }))
+    .filter((area) => area.defs.length);
+
+  return <PageEditor page={page} areas={areas} initial={initial} live={LIVE[page]} />;
 }

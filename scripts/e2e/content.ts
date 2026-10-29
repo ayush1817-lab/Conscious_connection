@@ -46,11 +46,14 @@ async function main() {
     await page.getByRole("heading", { name: /Welcome/ }).waitFor();
 
     console.log("Homepage");
-    await page.getByRole("link", { name: /Website content/ }).click();
+    await page.getByRole("main").getByRole("link", { name: /Website content/ }).click();
     await page.waitForURL(`${BASE_URL}/admin/content/homepage`);
     const banner = page.getByRole("region", { name: "Top banner" });
-    await banner.getByLabel("Heading").fill("Find your people");
-    check(await banner.getByRole("heading", { name: "Find your people" }).isVisible(), "preview updates as you type");
+    const preview = page.frameLocator('iframe[title^="Preview"]');
+    await preview.getByRole("heading", { level: 1 }).waitFor();
+    await banner.getByLabel("Headline", { exact: true }).fill("Find your people");
+    const typed = await preview.getByRole("heading", { name: "Find your people" }).waitFor({ timeout: 10000 }).then(() => true, () => false);
+    check(typed, "the preview of the real homepage updates as you type");
     check(await banner.getByText("You have unsaved changes.").isVisible(), "shows unsaved changes");
 
     let asked = "";
@@ -62,14 +65,14 @@ async function main() {
     await page.waitForTimeout(500);
     check(asked.includes("unsaved changes") && page.url().endsWith("/homepage"), "warns before leaving with unsaved changes");
 
-    await banner.getByLabel("Image").setInputFiles({ name: "notes.txt", mimeType: "text/plain", buffer: Buffer.from("hi") });
+    await banner.getByLabel("Main photo").setInputFiles({ name: "notes.txt", mimeType: "text/plain", buffer: Buffer.from("hi") });
     check(await visible(banner, `"notes.txt" isn't a JPG, PNG or WebP image.`), "refuses a file that isn't an image");
-    await banner.getByLabel("Image").setInputFiles({ name: "huge.png", mimeType: "image/png", buffer: Buffer.alloc(6 * 1024 * 1024) });
+    await banner.getByLabel("Main photo").setInputFiles({ name: "huge.png", mimeType: "image/png", buffer: Buffer.alloc(6 * 1024 * 1024) });
     check(await visible(banner, `"huge.png" is 6.0MB. Images can be up to 5MB.`), "refuses an image over 5MB");
-    await banner.getByLabel("Image").setInputFiles(png("banner.png"));
+    await banner.getByLabel("Main photo").setInputFiles(png("banner.png"));
     await banner.getByRole("button", { name: "Change image" }).waitFor();
     await banner.getByRole("button", { name: "Save" }).click();
-    check(await visible(banner, "Please describe the image"), "an image needs a description (alt text)");
+    check(await visible(banner, "Please describe"), "an image needs a description (alt text)");
     await banner.getByLabel("Describe the image").fill("People chatting over tea");
     await banner.getByRole("button", { name: "Save" }).click();
     check(await visible(page, "Saved. Your changes are live."), "save shows a confirmation");
@@ -79,13 +82,15 @@ async function main() {
     check(!(await banner.getByText("You have unsaved changes.").isVisible()), "no unsaved changes after saving");
 
     console.log("\nEvent photos");
-    const photo = page.getByRole("region", { name: "Event photo 1" });
-    await photo.getByLabel("Photo").setInputFiles({ name: "phone.png", mimeType: "image/png", buffer: placeholderPng(3200, 2400, "#8888aa") });
+    await page.getByRole("button", { name: "Moments from our events" }).click();
+    const photos = page.getByRole("region", { name: "Moments from our events" });
+    const photo = photos.getByRole("group", { name: "Event photo 1" });
+    await photo.getByLabel("Photo", { exact: true }).setInputFiles({ name: "phone.png", mimeType: "image/png", buffer: placeholderPng(3200, 2400, "#8888aa") });
     await photo.getByRole("button", { name: "Change image" }).waitFor({ timeout: 15000 });
     await photo.getByLabel("Describe the image").fill("A walking group on a forest path");
     await photo.getByLabel("Caption (optional)").fill("Autumn walk, Co. Clare");
-    await photo.getByRole("button", { name: "Save" }).click();
-    check(await photo.getByText("You have unsaved changes.").waitFor({ state: "hidden" }).then(() => true, () => false), "a photo slot saves");
+    await photos.getByRole("button", { name: "Save" }).click();
+    check(await photos.getByText("You have unsaved changes.").waitFor({ state: "hidden" }).then(() => true, () => false), "a photo slot saves");
     const { data: photoRow } = await service.from("site_sections").select("image_path, image_alt").eq("page", "home").eq("key", "photo_1").single();
     check(!!photoRow?.image_path?.endsWith(".webp"), "a large phone photo is converted to WebP before upload", photoRow?.image_path ?? "");
     const blob = photoRow?.image_path ? (await service.storage.from("content").download(photoRow.image_path)).data : null;
@@ -103,9 +108,12 @@ async function main() {
 
     console.log("\nAbout");
     await page.getByRole("link", { name: "About" }).click();
-    const about = page.getByRole("region", { name: "About Conscious Connections" });
-    await about.getByLabel("Text").fill("We are **small** and *friendly*.\n\nSecond paragraph.");
-    check((await about.locator("strong", { hasText: "small" }).count()) === 1 && (await about.locator("em", { hasText: "friendly" }).count()) === 1, "bold and italic show in the preview");
+    const about = page.getByRole("region", { name: "Title and text" });
+    const aboutPreview = page.frameLocator('iframe[title^="Preview"]');
+    await aboutPreview.getByRole("heading", { level: 1 }).waitFor();
+    await about.getByLabel("Text", { exact: true }).fill("We are **small** and *friendly*.\n\nSecond paragraph.");
+    const formatted = await aboutPreview.locator("strong", { hasText: "small" }).waitFor({ timeout: 10000 }).then(() => true, () => false);
+    check(formatted && (await aboutPreview.locator("em", { hasText: "friendly" }).count()) === 1, "bold and italic show in the preview");
     await about.getByRole("button", { name: "Save" }).click();
     // The homepage's toast may still be showing, so wait for the form to be clean instead.
     check(await about.getByText("You have unsaved changes.").waitFor({ state: "hidden" }).then(() => true, () => false), "about page saves");
@@ -207,7 +215,7 @@ async function main() {
     await phone.setViewportSize({ width: 360, height: 780 });
     for (const tab of ["homepage", "stories", "stories/new", "podcasts/new", "gallery", "about"]) {
       await phone.goto(`${BASE_URL}/admin/content/${tab}`);
-      await phone.getByRole("heading", { name: "Website content" }).waitFor();
+      await phone.getByRole("heading", { name: "Edit the website" }).waitFor();
       const overflow = await phone.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
       check(overflow <= 0, `${tab} has no sideways scrolling at 360px`, `${overflow}px too wide`);
     }
@@ -216,7 +224,7 @@ async function main() {
       await page.setViewportSize({ width: 1280, height: 900 });
       for (const tab of ["homepage", "stories", "podcasts", "gallery"]) {
         await page.goto(`${BASE_URL}/admin/content/${tab}`);
-        await page.getByRole("heading", { name: "Website content" }).waitFor();
+        await page.getByRole("heading", { name: "Edit the website" }).waitFor();
         await page.waitForTimeout(300);
         await page.screenshot({ path: `${dir}/a8-${tab}.png`, fullPage: true });
       }

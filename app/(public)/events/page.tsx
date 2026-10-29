@@ -50,7 +50,7 @@ export default async function EventsPage({ searchParams }: Props) {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
-      <PageIntro title={intro.heading} intro={intro.body} eyebrow="What's on" illustration="map" />
+      <PageIntro title={intro.heading} intro={intro.body} eyebrow={intro.eyebrow} illustration="map" />
 
       <div className="events-layout">
         <aside className="events-aside" aria-label="Filter events">

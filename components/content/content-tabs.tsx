@@ -16,8 +16,8 @@ const TABS = [
 export function ContentTabs() {
   const pathname = usePathname();
   return (
-    <nav aria-label="Website content" className="-mx-4 overflow-x-auto px-4">
-      <ul className="flex min-w-max gap-1 border-b border-border">
+    <nav aria-label="Website content" className="content-tabs -mx-4 overflow-x-auto px-4">
+      <ul className="flex min-w-max gap-2">
         {TABS.map((tab) => {
           const current = pathname === tab.href || pathname.startsWith(`${tab.href}/`);
           return (
@@ -25,9 +25,7 @@ export function ContentTabs() {
               <Link
                 href={tab.href}
                 aria-current={current ? "page" : undefined}
-                className={`-mb-px inline-flex min-h-tap items-center border-b-2 px-4 font-medium ${
-                  current ? "border-primary text-text" : "border-transparent text-muted hover:text-text"
-                }`}
+                className="content-tab"
               >
                 {tab.label}
               </Link>
