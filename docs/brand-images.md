@@ -3,16 +3,16 @@
 The site shows a labelled, dashed placeholder wherever a photo is still missing.
 Each one says what to photograph and at what size.
 
-## Design photos (send these to the developer)
+## Design photos (upload these in the admin)
 
-These are part of the design, not edited in the admin. To add one, put the file in
-`public/images/brand/` and set its `file` in `lib/brand-images.ts`.
+Admin › Website content › Homepage. A developer can also set a fallback file in
+`public/images/brand/` (its `file` in `lib/brand-images.ts`), used while nothing is uploaded.
 
-| Slot | Where it shows | What to show | Size |
+| Slot | Where to add it | What to show | Size |
 | --- | --- | --- | --- |
-| Hero photo 2 (`hero-circle`) | Homepage top, small circle bottom-left of the main photo | Close-up of two or three friends laughing over tea or coffee | 800 × 800 px, square |
-| Hero photo 3 (`hero-pill`) | Homepage top, tilted pill top-right of the main photo | An outdoor moment: a sea swim, a hill walk or a picnic | 600 × 900 px, portrait |
-| Host photo (`host-photo`) | Homepage "Want to host an event?" panel, circle | A host welcoming people at a small meetup, smiling at the camera | 900 × 900 px, square |
+| Hero photo 2 (`hero-circle`) | Top banner › Round photo | Close-up of two or three friends laughing over tea or coffee | 800 × 800 px, square |
+| Hero photo 3 (`hero-pill`) | Top banner › Tall photo | An outdoor moment: a sea swim, a hill walk or a picnic | 600 × 900 px, portrait |
+| Host photo (`host-photo`) | Invitation to host › Photo in the circle | A host welcoming people at a small meetup, smiling at the camera | 900 × 900 px, square |
 
 ## Photos you can add yourself in the admin
 

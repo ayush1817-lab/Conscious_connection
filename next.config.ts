@@ -20,6 +20,15 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        // The admin's website preview is shown in a frame on the content
+        // editor, so it may be framed by this site only (later rules win).
+        source: "/admin/preview/:path*",
+        headers: [
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+          { key: "Content-Security-Policy", value: "frame-ancestors 'self'" },
+        ],
+      },
+      {
         // Private host links carry a secret token in the address; never send it to other sites.
         source: "/host/:path*",
         headers: [

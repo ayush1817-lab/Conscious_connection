@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth/admin";
 import { IMAGE_TARGETS, isUploadedImagePath, newImagePath, type ImageTarget } from "@/lib/content/images";
 import { PHOTO_BUCKET } from "@/lib/host/photos";
-import { sectionDef } from "@/lib/content/sections";
+import { linesOf, PAGE_AREAS, sectionDef, type ContentPage, type SectionDef } from "@/lib/content/sections";
 import { slugify } from "@/lib/content/slug";
 import { AUDIO_BUCKET, isAudioPath } from "@/lib/content/podcast-audio";
 import type { PodcastSource } from "@/lib/content/podcast-media";
@@ -15,7 +15,7 @@ import { setFlash } from "@/lib/flash";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
-export type FormState = { error?: string };
+export type FormState = { error?: string; savedAt?: number };
 
 type Client = Awaited<ReturnType<typeof createClient>>;
 
@@ -51,38 +51,63 @@ async function done(message = SAVED) {
 }
 
 // ---------------------------------------------------------------------------
-// Homepage and About sections
+// Homepage, About, Other pages and Guidelines
 // ---------------------------------------------------------------------------
 
-export async function saveSection(id: string, _prev: FormState, formData: FormData): Promise<FormState> {
-  await requireAdmin();
-  const supabase = await createClient();
-  const { data: section } = await supabase.from("site_sections").select("page, key, image_path").eq("id", id).maybeSingle();
-  if (!section) return { error: "This section can't be found. Please reload the page." };
-  const def = sectionDef(section.page, section.key);
+type SectionUpdate = { heading: string; body: string; image_path: string | null; image_alt: string | null };
 
-  const heading = def?.heading === "none" ? "" : text(formData, "heading");
-  const body = def && !def.body ? "" : text(formData, "body");
-  const image = def && !def.image ? { path: null } : imagePath(formData, "image_path", section.image_path, IMAGE_TARGETS.sections);
-  const alt = image.path ? text(formData, "image_alt") : "";
+// One section's fields from the form (named "<key>.heading", "<key>.body"...),
+// checked against its definition. Returns the update or a plain-language error.
+function readSection(def: SectionDef, key: string, current: string | null, formData: FormData): { update: SectionUpdate } | { error: string } {
+  const field = (name: string) => text(formData, `${key}.${name}`);
+  const heading = def.heading === "none" ? "" : field("heading").replace(/\s*\n\s*/g, " ");
+  let body = def.body ? field("body") : "";
+  if (def.bodyKind === "line") body = body.replace(/\s*\n\s*/g, " ");
+  if (def.bodyKind === "lines") body = linesOf(body).join("\n");
+  const image = def.image ? imagePath(formData, `${key}.image_path`, current, IMAGE_TARGETS.sections) : { path: null };
+  const alt = image.path ? field("image_alt") : "";
+  const label = (name: string) => `“${name}”`;
   const error =
-    (!heading && def?.heading !== "optional" && def?.heading !== "none" ? "Please add a heading." : null) ??
-    tooLong(heading, 150, "The heading") ??
-    tooLong(body, def?.maxBody ?? 3000, "The text") ??
+    (!heading && def.heading === "required" ? `Please fill in ${label(def.headingLabel ?? "Heading")}.` : null) ??
+    tooLong(heading, 150, label(def.headingLabel ?? "The heading")) ??
+    (def.body && !body && def.bodyKind && def.bodyKind !== "rich" ? `Please fill in ${label(def.bodyLabel ?? "Text")}.` : null) ??
+    tooLong(body, def.bodyKind === "line" ? 150 : (def.maxBody ?? 3000), label(def.bodyLabel ?? "The text")) ??
     ("error" in image ? image.error! : null) ??
-    (image.path && !alt ? "Please describe the image, for people who use screen readers." : null) ??
+    (image.path && !alt ? `Please describe ${label(def.imageLabel ?? "the image")}, for people who use screen readers.` : null) ??
     tooLong(alt, 300, "The image description");
   if (error) return { error };
+  return { update: { heading, body, image_path: image.path ?? null, image_alt: alt || null } };
+}
 
-  const { error: dbError } = await supabase
-    .from("site_sections")
-    .update({ heading, body, image_path: image.path ?? null, image_alt: alt || null })
-    .eq("id", id);
-  if (dbError) return { error: "Your changes couldn't be saved. Please try again." };
-  if (section.image_path !== image.path) await removeImage(supabase, IMAGE_TARGETS.sections, section.image_path);
+// Saves one part of a page (Website content > Homepage, About...): every
+// section in that part at once, so one Save button covers what you see.
+export async function saveArea(page: ContentPage, areaKey: string, _prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdmin();
+  const area = PAGE_AREAS[page]?.find((a) => a.key === areaKey);
+  if (!area) return { error: "This part of the page can't be found. Please reload the page." };
+  const supabase = await createClient();
+  const { data: rows } = await supabase.from("site_sections").select("id, key, image_path").eq("page", page).in("key", area.rows);
+
+  const updates: { id: string; old: string | null; update: SectionUpdate }[] = [];
+  for (const key of area.rows) {
+    const def = sectionDef(page, key);
+    const row = rows?.find((r) => r.key === key);
+    if (!def || !row) return { error: "Part of this section can't be found. Please reload the page." };
+    const result = readSection(def, key, row.image_path, formData);
+    if ("error" in result) return { error: area.rows.length > 1 ? `${def.title}: ${result.error}` : result.error };
+    updates.push({ id: row.id, old: row.image_path, update: result.update });
+  }
+
+  for (const { id, update } of updates) {
+    const { error } = await supabase.from("site_sections").update(update).eq("id", id);
+    if (error) return { error: "Your changes couldn't be saved. Please try again." };
+  }
+  for (const { old, update } of updates) {
+    if (old !== update.image_path) await removeImage(supabase, IMAGE_TARGETS.sections, old);
+  }
 
   await done();
-  return {};
+  return { savedAt: Date.now() };
 }
 
 // ---------------------------------------------------------------------------

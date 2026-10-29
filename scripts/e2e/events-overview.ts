@@ -33,12 +33,12 @@ async function main() {
     await page.getByRole("heading", { name: /Welcome/ }).waitFor();
 
     console.log("A1 – Admin home");
-    const eventsCard = await page.getByRole("link", { name: /Events/ }).innerText();
+    const eventsCard = await page.getByRole("main").getByRole("link", { name: /Events/ }).innerText();
     check(eventsCard.includes("2 new requests · 3 need attention"), "Events card shows the counts", eventsCard);
-    check(await page.getByRole("link", { name: /Website content/ }).isVisible(), "Website content card is shown");
+    check(await page.getByRole("main").getByRole("link", { name: /Website content/ }).isVisible(), "Website content card is shown");
 
     console.log("\nA2 – Events overview");
-    await page.getByRole("link", { name: /Events/ }).click();
+    await page.getByRole("main").getByRole("link", { name: /Events/ }).click();
     await page.getByRole("heading", { name: "Events overview" }).waitFor();
     check((await countTile(page, "live events")) === "7", "7 live (upcoming) events");
     check((await countTile(page, "new requests")) === "2", "2 new requests");
@@ -91,7 +91,7 @@ async function main() {
     await page.waitForFunction(() => document.body.innerText.includes("Attention items (2)"));
     check((await countTile(page, "attention items")) === "2", "attention count updates to 2");
     await page.goto(`${BASE_URL}/admin`);
-    const home = await page.getByRole("link", { name: /Events/ }).innerText();
+    const home = await page.getByRole("main").getByRole("link", { name: /Events/ }).innerText();
     check(home.includes("2 new requests · 2 need attention"), "admin home counts update", home);
 
     console.log("\nMobile (360px)");

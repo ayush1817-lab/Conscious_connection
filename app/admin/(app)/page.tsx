@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { Doodle } from "@/components/public/doodles";
+import { Illustration, type IllustrationName } from "@/components/public/illustrations";
+import { Eyebrow } from "@/components/public/section-heading";
 import { requireAdmin } from "@/lib/auth/admin";
 import { getEventsOverview } from "@/lib/events/overview";
 import { emailConfig } from "@/lib/email/service";
@@ -20,17 +23,23 @@ export default async function AdminHome() {
   const notSending = emailConfig().mode === "missing_key";
 
   return (
-    <div className="py-4 sm:py-8">
-      <div className="text-center">
-        <h1 className="text-3xl font-semibold">Welcome, {admin.displayName}</h1>
-        <p className="mt-2 text-muted">What would you like to do today?</p>
-      </div>
+    <div className="space-y-8">
+      <section className="admin-welcome">
+        <Doodle name="sparkle" tone="primary" className="admin-welcome-spark" />
+        <Doodle name="heart" tone="orchid" className="admin-welcome-heart" />
+        <div className="admin-welcome-copy">
+          <Eyebrow>Admin</Eyebrow>
+          <h1 className="font-heading text-3xl font-semibold md:text-4xl">Welcome, {admin.displayName}</h1>
+          <p className="mt-2 text-lg text-muted">What would you like to do today?</p>
+        </div>
+        <Illustration name="community" className="admin-welcome-art" />
+      </section>
 
-      <div className="mx-auto mt-8 grid max-w-3xl gap-4 sm:grid-cols-2">
-        <HomeCard href="/admin/events" title="Events" icon={<CalendarIcon />}>
+      <ul className="admin-home-cards grid gap-5 md:grid-cols-3">
+        <HomeCard href="/admin/events" title="Events" art="map" tone={1}>
           {plural(newRequests, "new request")} · {attention} need{attention === 1 ? "s" : ""} attention
         </HomeCard>
-        <HomeCard href="/admin/content" title="Website content" icon={<PageIcon />}>
+        <HomeCard href="/admin/content" title="Website content" art="story" tone={2}>
           {storiesWaiting || photosWaiting ? (
             <span className="font-medium text-text">
               {[storiesWaiting ? plural(storiesWaiting, "shared story", "shared stories") : null, photosWaiting ? plural(photosWaiting, "photo") : null]
@@ -39,10 +48,10 @@ export default async function AdminHome() {
               to review.
             </span>
           ) : (
-            "Update homepage, stories, podcasts, gallery and about."
+            "Change the words and photos on every page, with a live preview."
           )}
         </HomeCard>
-        <HomeCard href="/admin/email" title="Emails" icon={<MailIcon />}>
+        <HomeCard href="/admin/email" title="Emails" art="hearts" tone={3}>
           {notSending ? (
             <span className="font-medium text-danger">Emails aren&apos;t being sent. Open to fix.</span>
           ) : failedEmails ? (
@@ -51,50 +60,23 @@ export default async function AdminHome() {
             "Check emails are working and send a test."
           )}
         </HomeCard>
-      </div>
+      </ul>
     </div>
   );
 }
 
-function HomeCard({ href, title, icon, children }: { href: string; title: string; icon: React.ReactNode; children: React.ReactNode }) {
+// Tinted cards with a drawing, like the "What we're about" cards on the website.
+function HomeCard({ href, title, art, tone, children }: { href: string; title: string; art: IllustrationName; tone: 1 | 2 | 3; children: React.ReactNode }) {
   return (
-    <Link
-      href={href}
-      className="group flex items-center gap-4 rounded-card border border-border bg-surface p-6 shadow-sm transition-colors hover:border-primary"
-    >
-      <span className="text-primary">{icon}</span>
-      <span className="flex-1">
-        <span className="block text-xl font-semibold">{title}</span>
-        <span className="mt-1 block text-muted">{children}</span>
-      </span>
-      <span aria-hidden className="text-2xl text-muted group-hover:text-primary">›</span>
-    </Link>
-  );
-}
-
-function CalendarIcon() {
-  return (
-    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
-      <rect x="3" y="5" width="18" height="16" rx="2" />
-      <path d="M3 10h18M8 3v4M16 3v4" />
-    </svg>
-  );
-}
-
-function MailIcon() {
-  return (
-    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
-      <rect x="3" y="5" width="18" height="14" rx="2" />
-      <path d="m3 7 9 6 9-6" />
-    </svg>
-  );
-}
-
-function PageIcon() {
-  return (
-    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
-      <path d="M6 3h9l4 4v14H6z" />
-      <path d="M9 11h7M9 15h7M9 7h4" />
-    </svg>
+    <li>
+      <Link href={href} className={`admin-home-card home-value home-value-${tone} group`}>
+        <Illustration name={art} className="home-value-art" />
+        <span className="flex items-center justify-between gap-2">
+          <span className="font-heading text-xl font-semibold">{title}</span>
+          <span aria-hidden className="admin-home-card-arrow">→</span>
+        </span>
+        <span className="text-text">{children}</span>
+      </Link>
+    </li>
   );
 }

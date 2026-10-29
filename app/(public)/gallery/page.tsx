@@ -13,7 +13,7 @@ export default async function GalleryPage() {
   const [images, intro] = await Promise.all([getGallery(), getPageIntro("gallery")]);
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
-      <PageIntro title={intro.heading} intro={intro.body} eyebrow="Snapshots" illustration="camera" />
+      <PageIntro title={intro.heading} intro={intro.body} eyebrow={intro.eyebrow} illustration="camera" />
       {images.length ? (
         <GalleryLightbox
           photos={images.map((img) => ({ id: img.id, src: publicImageUrl("gallery", img.image_path), caption: img.caption }))}

@@ -1,12 +1,12 @@
 import "server-only";
-import { PAGE_SECTIONS, PHOTO_KEYS, type ContentPage } from "@/lib/content/sections";
+import { withDefaults, type ContentPage, type SectionValues } from "@/lib/content/sections";
 import { createPublicClient } from "@/lib/supabase/public";
 import { isMissingSchema, warnMissingSchema } from "./schema-guard";
 
 // Read-only queries for the public content pages. All go through the anon
 // client, so RLS guarantees only published content is returned.
 
-export type Section = { key: string; heading: string; body: string; image_path: string | null; image_alt: string };
+export type Section = SectionValues;
 
 // Every section of a page, in order, with the built-in wording filling any gap.
 type SectionRow = { key: string; heading: string; body: string; image_path: string | null; image_alt?: string | null };
@@ -26,32 +26,27 @@ async function sectionRows(page: ContentPage): Promise<SectionRow[]> {
 }
 
 export async function getSections(page: ContentPage) {
-  const rows = new Map((await sectionRows(page)).map((s) => [s.key, s]));
-  return Object.fromEntries(
-    PAGE_SECTIONS[page].map((def) => {
-      const row = rows.get(def.key);
-      const section: Section = {
-        key: def.key,
-        heading: row?.heading?.trim() || def.defaults.heading,
-        body: row?.body?.trim() || def.defaults.body,
-        image_path: def.image ? (row?.image_path ?? null) : null,
-        image_alt: row?.image_alt?.trim() ?? "",
-      };
-      return [def.key, section];
-    }),
-  ) as Record<string, Section>;
+  return withDefaults(page, await sectionRows(page));
+}
+
+// The line under the name in the footer. The footer is on every page, error
+// pages included, so a failed read falls back to the built-in line.
+export async function getFooterText() {
+  try {
+    return (await getSections("home")).footer.heading;
+  } catch {
+    return undefined;
+  }
 }
 
 // The title and introduction of one of the other public pages (Website content > Other pages).
-export async function getPageIntro(key: string): Promise<Section> {
+// `eyebrow` is the small line above the title (empty for pages without one).
+export async function getPageIntro(key: string): Promise<Section & { eyebrow: string }> {
   const sections = await getSections("pages");
-  return sections[key];
+  return { ...sections[key], eyebrow: sections[`${key}_eyebrow`]?.heading ?? "" };
 }
 
-// The photo slots that have a photo, in order.
-export function photosOf(sections: Record<string, Section>) {
-  return PHOTO_KEYS.map((k) => sections[k]).filter((s): s is Section => Boolean(s?.image_path));
-}
+export { photosOf } from "@/lib/content/sections";
 
 export async function getStories(limit?: number) {
   let query = createPublicClient()

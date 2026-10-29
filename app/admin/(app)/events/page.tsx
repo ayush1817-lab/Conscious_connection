@@ -3,6 +3,7 @@ import Link from "next/link";
 import { PosterThumb } from "@/components/events/poster-thumb";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
+import { AdminPageHeader } from "@/components/admin/page-header";
 import { requireAdmin } from "@/lib/auth/admin";
 import { getEventsOverview, type AttentionRow, type EventCard, type OtherStatus } from "@/lib/events/overview";
 import { STATUS_LABELS } from "@/lib/events/status";
@@ -30,7 +31,9 @@ export default async function EventsOverviewPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-semibold sm:text-3xl">Events overview</h1>
+        <AdminPageHeader eyebrow="Events" title="Events overview">
+          New requests to review, live events and anything that needs you.
+        </AdminPageHeader>
         <dl className="grid grid-cols-3 gap-2 sm:flex sm:gap-3">
           <CountTile value={counts.live} label="live events" />
           <CountTile value={counts.newRequests} label="new requests" />
@@ -121,7 +124,7 @@ export default async function EventsOverviewPage() {
 
 function CountTile({ value, label }: { value: number; label: string }) {
   return (
-    <div className="flex flex-col-reverse items-center rounded-card border border-border bg-surface px-4 py-2 text-center sm:min-w-28">
+    <div className="count-tile flex flex-col-reverse items-center rounded-card px-4 py-2 text-center sm:min-w-28">
       <dt className="text-sm text-muted">{label}</dt>
       <dd className="text-2xl font-semibold">{value}</dd>
     </div>
@@ -140,7 +143,7 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className={`rounded-card border border-border p-4 ${muted ? "bg-background" : "bg-surface"}`}>
+    <section className={`admin-card rounded-card border border-border p-4 sm:p-5 ${muted ? "bg-background" : "bg-surface"}`}>
       <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-lg font-semibold">{title}</h2>
         {note ? <p className="text-sm text-muted">{note}</p> : null}

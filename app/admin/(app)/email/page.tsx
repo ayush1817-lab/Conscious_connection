@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { AdminPageHeader } from "@/components/admin/page-header";
 import { Badge } from "@/components/ui/badge";
 import { requireAdmin } from "@/lib/auth/admin";
 import { emailStatus } from "@/lib/email/status";
@@ -41,10 +41,9 @@ export default async function EmailPage() {
 
   return (
     <div className="space-y-6">
-      <Link href="/admin" className="inline-flex min-h-tap items-center text-primary underline-offset-4 hover:underline">
-        ‹ Admin home
-      </Link>
-      <h1 className="text-3xl font-semibold">Emails</h1>
+      <AdminPageHeader eyebrow="Emails" title="Emails">
+        Check the website can send emails, and see what was sent recently.
+      </AdminPageHeader>
 
       <section aria-labelledby="setup-heading" className="space-y-3 rounded-card border border-border bg-surface p-5">
         <h2 id="setup-heading" className="text-xl font-semibold">

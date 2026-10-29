@@ -1,6 +1,6 @@
-// Photo slots that are part of the design (not edited in the admin).
-// Each slot shows a labelled placeholder until its photo is added:
-// put the file in public/images/brand/ and set `file` to its name.
+// Photo slots that are part of the design. The admin uploads them in
+// Website content › Homepage; until then a file here is used if `file` is set
+// (put it in public/images/brand/), otherwise a labelled placeholder.
 // The list for whoever supplies photos is docs/brand-images.md.
 
 export type BrandImage = {
