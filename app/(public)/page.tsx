@@ -5,7 +5,7 @@ import { Doodle, Ribbon } from "@/components/public/doodles";
 import { BrandPhoto, PhotoPlaceholder } from "@/components/public/image-slot";
 import { Illustration } from "@/components/public/illustrations";
 import { BackgroundWaves } from "@/components/public/background-waves";
-import { EventCard } from "@/components/public/event-card";
+import { EventCard, HostInviteCard } from "@/components/public/event-card";
 import { PhotoGrid } from "@/components/public/photo-grid";
 import { Eyebrow, SectionHeading } from "@/components/public/section-heading";
 import { StoryCard, StoryRow } from "@/components/public/story-card";
@@ -143,7 +143,7 @@ export default async function HomePage() {
       <section aria-labelledby="events-heading" className="home-section home-events mx-auto max-w-6xl px-4 py-8">
         <SectionHeading id="events-heading" eyebrow="What's on" title="Upcoming events" link={{ href: "/events", label: "View all events" }} />
         {events.length ? (
-          <ul className="events-grid grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="events-grid home-events-grid grid gap-6">
             {events.map((event) => {
               const badge = placesBadge(places.get(event.id));
               return (
@@ -152,6 +152,12 @@ export default async function HomePage() {
                 </li>
               );
             })}
+            {/* With fewer than three events, an invitation to host fills the row. */}
+            {events.length < 3 ? (
+              <li className={events.length === 1 ? "events-grid-invite-wide" : undefined}>
+                <HostInviteCard />
+              </li>
+            ) : null}
           </ul>
         ) : (
           <p className="rounded-card border border-border bg-surface p-6 text-muted">

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { EventForm } from "@/components/public/event-form";
 import { CheckCircleIcon } from "@/components/public/icons";
+import { Doodle } from "@/components/public/doodles";
+import { Illustration } from "@/components/public/illustrations";
 import { PageIntro } from "@/components/public/section-heading";
 import { buttonClass } from "@/components/ui/button";
 import { EMPTY_EVENT_FORM } from "@/lib/public/event-form";
@@ -17,8 +19,8 @@ export const metadata: Metadata = {
 export default async function SubmitEventPage() {
   const intro = await getPageIntro("submit_event");
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10">
-      <PageIntro title={intro.heading} intro={intro.body}>
+    <div className="mx-auto max-w-6xl px-4 py-10">
+      <PageIntro title={intro.heading} intro={intro.body} eyebrow="Bring people together" illustration="host">
         <p>
           Please read our{" "}
           <Link href="/guidelines#events" className="font-medium text-primary underline underline-offset-4">
@@ -27,13 +29,43 @@ export default async function SubmitEventPage() {
           before you submit.
         </p>
       </PageIntro>
-      <EventForm
-        action={submitEvent}
-        initial={EMPTY_EVENT_FORM}
-        submitLabel="Submit event for review"
-        pendingLabel="Sending…"
-        done={<Submitted />}
-      />
+      <div className="submit-layout">
+        <aside className="submit-aside" aria-labelledby="how-heading">
+          <div className="submit-steps">
+            <Doodle name="sparkle" tone="primary" className="submit-steps-spark" />
+            <h2 id="how-heading" className="font-heading text-xl font-semibold">How it works</h2>
+            <ol className="mt-4 space-y-4">
+              {[
+                ["Tell us about it", "Fill in the public details, then the private ones only our team sees."],
+                ["We take a look", "Our team reviews every event before it goes on the website."],
+                ["It goes live", "We email you when it's approved, with a link to edit or cancel."],
+              ].map(([title, text], i) => (
+                <li key={title} className="submit-step">
+                  <span className="submit-step-num" aria-hidden>{i + 1}</span>
+                  <span>
+                    <span className="block font-semibold">{title}</span>
+                    <span className="block text-sm text-muted">{text}</span>
+                  </span>
+                </li>
+              ))}
+            </ol>
+          </div>
+          <div className="submit-tips">
+            <Illustration name="gathering" className="submit-tips-art" />
+            <p className="font-semibold">Small is perfect</p>
+            <p className="text-sm text-muted">A coffee, a walk or a book swap is plenty. A clear title, a friendly description and a photo help people say yes.</p>
+          </div>
+        </aside>
+        <div className="min-w-0">
+          <EventForm
+            action={submitEvent}
+            initial={EMPTY_EVENT_FORM}
+            submitLabel="Submit event for review"
+            pendingLabel="Sending…"
+            done={<Submitted />}
+          />
+        </div>
+      </div>
     </div>
   );
 }

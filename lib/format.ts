@@ -48,3 +48,17 @@ export function timeAgo(iso: string, now = Date.now()) {
 export function plural(n: number, one: string, many = `${one}s`) {
   return `${n} ${n === 1 ? one : many}`;
 }
+
+const partsFmt = new Intl.DateTimeFormat("en-IE", { timeZone: TZ, weekday: "short", day: "numeric", month: "short" });
+const monthFmt = new Intl.DateTimeFormat("en-IE", { timeZone: TZ, month: "long", year: "numeric" });
+
+// { weekday: "Sat", day: "14", month: "Jun" } for a calendar-style date tile.
+export function dateParts(iso: string) {
+  const parts = Object.fromEntries(partsFmt.formatToParts(new Date(iso)).map((p) => [p.type, p.value]));
+  return { weekday: parts.weekday ?? "", day: parts.day ?? "", month: parts.month ?? "" };
+}
+
+// "June 2025", for grouping lists by month.
+export function formatMonth(iso: string) {
+  return monthFmt.format(new Date(iso));
+}
