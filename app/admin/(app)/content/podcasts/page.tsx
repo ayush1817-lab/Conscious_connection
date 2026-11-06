@@ -13,7 +13,7 @@ export default async function PodcastsPage() {
   const supabase = await createClient();
   const { data: podcasts } = await supabase
     .from("podcasts")
-    .select("id, title, source, youtube_url, spotify_url, audio_path, published, published_at, created_at")
+    .select("id, title, source, youtube_url, spotify_url, audio_path, link_url, published, published_at, created_at")
     .order("created_at", { ascending: false });
 
   return (
@@ -23,7 +23,10 @@ export default async function PodcastsPage() {
         <ul className="divide-y divide-border rounded-card border border-border bg-surface px-4">
           {podcasts.map((p) => {
             const media = podcastMedia(p);
-            const where = p.source === "audio" ? "Uploaded audio file" : `${SOURCE_LABELS[p.source]} link: ${p.source === "youtube" ? p.youtube_url : p.spotify_url}`;
+            const where =
+              p.source === "audio"
+                ? "Uploaded audio file"
+                : `${SOURCE_LABELS[p.source]}${p.source === "link" ? "" : " link"}: ${p.source === "youtube" ? p.youtube_url : p.source === "spotify" ? p.spotify_url : p.link_url}`;
             return (
               <ItemRow
                 key={p.id}
