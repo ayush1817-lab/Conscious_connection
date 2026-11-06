@@ -13,7 +13,7 @@ export default async function PodcastsPage() {
   const supabase = await createClient();
   const { data: podcasts } = await supabase
     .from("podcasts")
-    .select("id, title, source, youtube_url, spotify_url, audio_path, link_url, published, published_at, created_at")
+    .select("id, title, source, youtube_url, spotify_url, audio_path, link_url, thumbnail_path, published, published_at, created_at")
     .order("created_at", { ascending: false });
 
   return (
@@ -35,7 +35,7 @@ export default async function PodcastsPage() {
                 published={p.published}
                 date={p.published && p.published_at ? formatDate(p.published_at) : null}
                 detail={where}
-                thumb={<Thumb src={media?.kind === "youtube" ? youtubeThumbnailUrl(media.videoId) : null} label={media ? SOURCE_LABELS[p.source] : "Missing"} />}
+                thumb={<Thumb src={media?.cover ?? (media?.kind === "youtube" ? youtubeThumbnailUrl(media.videoId) : null)} label={media ? SOURCE_LABELS[p.source] : "Missing"} />}
               />
             );
           })}

@@ -89,6 +89,11 @@ export function GalleryStrip({ gallery }: Pick<HomeData, "gallery">) {
       {gallery.map((img) => (
         <li key={img.id} className="gallery-strip-item relative aspect-square overflow-hidden bg-band">
           <Image src={publicImageUrl("gallery", img.image_path)} alt={img.caption ?? ""} fill sizes="(min-width: 768px) 180px, 33vw" className="object-cover" />
+          {img.caption ? (
+            <span className="gallery-strip-label" aria-hidden>
+              {img.caption}
+            </span>
+          ) : null}
         </li>
       ))}
     </ul>

@@ -63,7 +63,12 @@ export function GalleryLightbox({ photos }: { photos: GalleryPhoto[] }) {
                   className="object-cover transition-transform duration-300 group-hover:scale-105 motion-reduce:transition-none motion-reduce:group-hover:scale-100"
                 />
               </button>
-              {img.caption ? <figcaption className="mt-1 text-sm text-muted">{img.caption}</figcaption> : null}
+              {img.caption ? (
+                <figcaption className="gallery-label">
+                  <span className="gallery-label-dot" aria-hidden />
+                  {img.caption}
+                </figcaption>
+              ) : null}
             </figure>
           </li>
         ))}

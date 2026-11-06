@@ -307,7 +307,17 @@ button:not(:disabled), a { transition: background-color 160ms ease, color 160ms 
 .polaroid:nth-child(2) { transform: rotate(1.5deg) translateY(0.5rem); }
 .polaroid:nth-child(3) { transform: rotate(-0.5deg); }
 .polaroid-photo { border-radius: 0.25rem; aspect-ratio: 4 / 3; width: 100%; }
-.polaroid figcaption { text-align: center; }
+.polaroid { position: relative; }
+.polaroid::before { content: ""; position: absolute; z-index: 1; top: -0.6rem; left: 50%; width: 5.5rem; height: 1.4rem; transform: translateX(-50%) rotate(-3deg); background: color-mix(in srgb, var(--color-lilac, #c9b6f0) 70%, transparent); border-radius: 2px; box-shadow: 0 1px 2px color-mix(in srgb, var(--color-text) 10%, transparent); }
+.polaroid:nth-child(2)::before { transform: translateX(-50%) rotate(4deg); }
+.polaroid-caption { display: flex; align-items: center; justify-content: center; gap: 0.4rem; min-height: 2.25rem; margin-top: 0.6rem; padding-inline: 0.25rem; text-align: center; font-family: var(--font-heading); font-weight: 500; font-style: italic; font-size: 0.95rem; line-height: 1.3; color: var(--color-primary); }
+.polaroid .doodle.polaroid-caption-mark { position: static; flex: none; width: 0.9rem; height: 0.9rem; }
+.polaroid-caption-empty { color: var(--color-muted); font-weight: 400; }
+.gallery-strip-label { position: absolute; inset-inline: 0.5rem; bottom: 0.5rem; overflow: hidden; padding: 0.2rem 0.6rem; border-radius: 999px; background: color-mix(in srgb, var(--color-surface) 90%, transparent); color: var(--color-text); font-size: 0.75rem; font-weight: 500; text-align: center; white-space: nowrap; text-overflow: ellipsis; }
+.gallery-strip-item:nth-child(3n) .gallery-strip-label { inset-inline: 18%; bottom: 14%; }
+.gallery-label { position: relative; z-index: 1; display: inline-flex; align-items: center; gap: 0.4rem; max-width: calc(100% - 1rem); margin: -1rem 0 0 0.5rem; padding: 0.3rem 0.75rem; border: 2px solid var(--color-text); border-radius: 999px; background: var(--color-surface); font-size: 0.85rem; font-weight: 500; line-height: 1.3; transform: rotate(-2deg); box-shadow: 3px 3px 0 var(--color-primary); }
+li:nth-child(even) > figure > .gallery-label { transform: rotate(1.5deg); }
+.gallery-label-dot { flex: none; width: 0.5rem; height: 0.5rem; border-radius: 999px; background: var(--color-primary); }
 
 /* Event cards and the poster stand-in */
 .event-card { border-radius: 1.75rem; }
@@ -381,6 +391,7 @@ button:not(:disabled), a { transition: background-color 160ms ease, color 160ms 
 .home-podcast-panel { grid-template-columns: minmax(0, 1fr); }
 .podcast-doodle { right: 2rem; top: 1.5rem; width: 4rem; height: 4rem; }
 .podcast-link-doodle { right: 1rem; top: 1rem; width: 2rem; height: 2rem; }
+.podcast-play-badge { position: absolute; left: 50%; top: 50%; display: grid; place-items: center; width: 3.25rem; height: 3.25rem; margin: -1.625rem 0 0 -1.625rem; border-radius: 999px; background: var(--color-primary); color: var(--color-on-primary); box-shadow: 0 6px 18px color-mix(in srgb, var(--color-text) 30%, transparent); }
 
 /* Gallery strip: soft alternating shapes */
 .gallery-strip-item { border-radius: 1.5rem; }

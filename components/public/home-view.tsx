@@ -131,6 +131,7 @@ export function HomePhotos({ s }: { s: Sections }) {
                 where={`${WHERE} › Event photo ${n}`}
                 className="polaroid-photo"
               />
+              <p className="polaroid-caption polaroid-caption-empty">Caption goes here (optional)</p>
             </li>
           ))}
         </ul>

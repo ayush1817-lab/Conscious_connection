@@ -30,5 +30,6 @@ export type ImageTarget = { bucket: Bucket; folder: string };
 export const IMAGE_TARGETS = {
   sections: { bucket: "content", folder: "sections" },
   stories: { bucket: "content", folder: "stories" },
+  podcasts: { bucket: "content", folder: "podcasts" },
   gallery: { bucket: "gallery", folder: "uploads" },
 } satisfies Record<string, ImageTarget>;

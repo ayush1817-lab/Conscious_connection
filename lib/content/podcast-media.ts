@@ -11,13 +11,16 @@ export type PodcastMediaFields = {
   spotify_url: string | null;
   audio_path: string | null;
   link_url?: string | null;
+  thumbnail_path?: string | null;
 };
 
-export type PodcastMedia =
+// cover: the optional cover photo's URL, shown with web links and audio files.
+export type PodcastMedia = { cover: string | null } & (
   | { kind: "youtube"; videoId: string }
   | { kind: "spotify"; episodeId: string }
   | { kind: "audio"; url: string; type: string }
-  | { kind: "link"; url: string; host: string };
+  | { kind: "link"; url: string; host: string }
+);
 
 export const SOURCE_LABELS: Record<PodcastSource, string> = {
   youtube: "YouTube",
@@ -42,18 +45,24 @@ export function podcastLink(value: string): { url: string; host: string } | null
 
 // What to play for an episode, or null if its link or file is missing or broken.
 export function podcastMedia(p: PodcastMediaFields): PodcastMedia | null {
+  const cover = p.thumbnail_path ? publicImageUrl("content", p.thumbnail_path) : null;
   if (p.source === "youtube") {
     const videoId = p.youtube_url ? youtubeVideoId(p.youtube_url) : null;
-    return videoId ? { kind: "youtube", videoId } : null;
+    return videoId ? { kind: "youtube", videoId, cover } : null;
   }
   if (p.source === "spotify") {
     const episodeId = p.spotify_url ? spotifyEpisodeId(p.spotify_url) : null;
-    return episodeId ? { kind: "spotify", episodeId } : null;
+    return episodeId ? { kind: "spotify", episodeId, cover } : null;
   }
   if (p.source === "link") {
     const link = p.link_url ? podcastLink(p.link_url) : null;
-    return link ? { kind: "link", ...link } : null;
+    return link ? { kind: "link", ...link, cover } : null;
   }
   if (!p.audio_path) return null;
-  return { kind: "audio", url: publicImageUrl(AUDIO_BUCKET, p.audio_path), type: p.audio_path.endsWith(".m4a") ? "audio/mp4" : "audio/mpeg" };
+  return {
+    kind: "audio",
+    url: publicImageUrl(AUDIO_BUCKET, p.audio_path),
+    type: p.audio_path.endsWith(".m4a") ? "audio/mp4" : "audio/mpeg",
+    cover,
+  };
 }
