@@ -12,11 +12,11 @@ export default async function HomePage() {
       <HomeHero s={s} />
       <HomeRibbon s={s} />
       <HomeIntro s={s} />
-      <HomePhotos s={s} />
       <HomeEvents s={s}>
         <UpcomingEventsList events={events} places={places} />
       </HomeEvents>
       <HomeHost s={s} />
+      <HomePhotos s={s} />
       {stories.length ? (
         <HomeStories s={s}>
           <LatestStories stories={stories} />
