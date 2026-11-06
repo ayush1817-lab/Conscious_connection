@@ -2,6 +2,7 @@
 
 import { useActionState, useId, useRef, useState } from "react";
 import { AUDIO_BUCKET, AUDIO_CONTENT_TYPE, AUDIO_FOLDER, audioKind, audioProblem } from "@/lib/content/podcast-audio";
+import { PodcastLinkCard } from "@/components/public/podcast-player";
 import { podcastMedia, type PodcastSource } from "@/lib/content/podcast-media";
 import { spotifyEmbedUrl } from "@/lib/content/spotify";
 import { youtubeEmbedUrl } from "@/lib/content/youtube";
@@ -17,20 +18,22 @@ type Podcast = {
   youtube_url: string | null;
   spotify_url: string | null;
   audio_path: string | null;
+  link_url?: string | null;
 };
 type Action = (prev: { error?: string }, formData: FormData) => Promise<{ error?: string }>;
 
-const EMPTY: Podcast = { title: "", description: "", source: "youtube", youtube_url: "", spotify_url: "", audio_path: null };
+const EMPTY: Podcast = { title: "", description: "", source: "youtube", youtube_url: "", spotify_url: "", audio_path: null, link_url: "" };
 const field = "min-h-tap w-full rounded-control border border-control-border bg-surface px-3";
 
 const SOURCES: { value: PodcastSource; label: string; hint: string }[] = [
   { value: "youtube", label: "YouTube", hint: "Paste a video link" },
   { value: "spotify", label: "Spotify", hint: "Paste an episode link" },
   { value: "audio", label: "Audio file", hint: "Upload an MP3 or M4A" },
+  { value: "link", label: "Other link", hint: "Linktree, Apple Podcasts, any website" },
 ];
 
 // A8 Podcasts: title, short description, and where the episode is: a YouTube
-// link, a Spotify episode link or an uploaded audio file. The player is
+// link, a Spotify episode link, an uploaded audio file or any other web link. The player is
 // previewed as soon as the link or file is valid.
 export function PodcastEditor({ podcast = EMPTY, action, saveLabel }: { podcast?: Podcast; action: Action; saveLabel: string }) {
   const [title, setTitle] = useState(podcast.title);
@@ -38,6 +41,7 @@ export function PodcastEditor({ podcast = EMPTY, action, saveLabel }: { podcast?
   const [source, setSource] = useState<PodcastSource>(podcast.source);
   const [youtubeUrl, setYoutubeUrl] = useState(podcast.youtube_url ?? "");
   const [spotifyUrl, setSpotifyUrl] = useState(podcast.spotify_url ?? "");
+  const [linkUrl, setLinkUrl] = useState(podcast.link_url ?? "");
   const [audioPath, setAudioPath] = useState<string | null>(podcast.audio_path);
   const [audioName, setAudioName] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -52,11 +56,12 @@ export function PodcastEditor({ podcast = EMPTY, action, saveLabel }: { podcast?
     source !== podcast.source ||
     youtubeUrl !== (podcast.youtube_url ?? "") ||
     spotifyUrl !== (podcast.spotify_url ?? "") ||
+    linkUrl !== (podcast.link_url ?? "") ||
     audioPath !== podcast.audio_path;
   useUnsavedChanges(dirty || uploading);
 
-  const media = podcastMedia({ source, youtube_url: youtubeUrl, spotify_url: spotifyUrl, audio_path: audioPath });
-  const typed = source === "youtube" ? youtubeUrl : source === "spotify" ? spotifyUrl : "";
+  const media = podcastMedia({ source, youtube_url: youtubeUrl, spotify_url: spotifyUrl, audio_path: audioPath, link_url: linkUrl });
+  const typed = source === "youtube" ? youtubeUrl : source === "spotify" ? spotifyUrl : source === "link" ? linkUrl : "";
   const badLink = source !== "audio" && typed.trim() !== "" && !media;
 
   async function upload(file: File | undefined) {
@@ -112,7 +117,7 @@ export function PodcastEditor({ podcast = EMPTY, action, saveLabel }: { podcast?
 
         <fieldset>
           <legend className="mb-2 font-medium">Where is the episode?</legend>
-          <div className="grid gap-2 sm:grid-cols-3">
+          <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
             {SOURCES.map((s) => (
               <label
                 key={s.value}
@@ -152,6 +157,19 @@ export function PodcastEditor({ podcast = EMPTY, action, saveLabel }: { podcast?
             bad={badLink}
             hint="In Spotify, open the episode, press Share and choose Copy link to episode."
             badHint="That doesn't look like a Spotify episode link. It should start with https://open.spotify.com/episode/"
+          />
+        ) : null}
+        {source === "link" ? (
+          <LinkField
+            id="podcast-link-url"
+            name="link_url"
+            label="Link to the episode"
+            placeholder="https://…"
+            value={linkUrl}
+            onChange={setLinkUrl}
+            bad={badLink}
+            hint="Any web page where people can listen: Linktree, Apple Podcasts, SoundCloud, your website. The site shows a Listen button that opens it."
+            badHint="That doesn't look like a web link. It should start with https://"
           />
         ) : null}
         {source === "audio" ? (
@@ -220,9 +238,11 @@ export function PodcastEditor({ podcast = EMPTY, action, saveLabel }: { podcast?
           />
         ) : media?.kind === "audio" ? (
           <audio controls preload="metadata" className="w-full" aria-label={`Listen: ${title || "podcast preview"}`} src={publicImageUrl(AUDIO_BUCKET, audioPath!)} />
+        ) : media?.kind === "link" ? (
+          <PodcastLinkCard url={media.url} host={media.host} title={title || "podcast preview"} />
         ) : (
           <div className="flex aspect-video items-center justify-center rounded-card border border-dashed border-border bg-background px-4 text-center text-muted">
-            {source === "audio" ? "Upload an audio file to listen to it here." : `Paste a ${source === "youtube" ? "YouTube" : "Spotify"} link to see the player here.`}
+            {source === "audio" ? "Upload an audio file to listen to it here." : `Paste a ${source === "youtube" ? "YouTube" : source === "spotify" ? "Spotify" : "web"} link to see the player here.`}
           </div>
         )}
       </div>

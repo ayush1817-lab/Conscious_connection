@@ -4,12 +4,14 @@
  * Needs the app running. Re-seeds first. Checks: Spotify episode links are read
  * (with or without ?si=), the admin can add a Spotify episode and an uploaded
  * MP3, both play on the public Podcasts page, wrong files are refused, and a
- * replaced audio file is removed from storage.
+ * replaced audio file is removed from storage. Nov 2026: an episode can also be
+ * any web link (Linktree...), shown as a Listen button.
  */
 import { execSync } from "node:child_process";
 import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { podcastLink } from "../../lib/content/podcast-media";
 import { spotifyEpisodeId } from "../../lib/content/spotify";
 import { env, serviceClient } from "../lib/env";
 import { axe } from "./axe";
@@ -34,6 +36,11 @@ async function main() {
   check(spotifyEpisodeId(`spotify:episode:${EPISODE}`) === EPISODE, "a Spotify URI is read");
   check(spotifyEpisodeId("https://open.spotify.com/show/5LuIfZKKssTiQBRsgqFMVC") === null, "a show link (not an episode) is refused");
   check(spotifyEpisodeId("https://evil.example.com/episode/5LuIfZKKssTiQBRsgqFMVC") === null, "other sites are refused");
+
+  console.log("\nReading web links");
+  check(podcastLink("https://linktr.ee/consciousconnectionskm")?.host === "linktr.ee", "a Linktree link is read");
+  check(podcastLink("  https://www.example.ie/podcast  ")?.host === "example.ie", "spaces and www. are dropped from the site name");
+  check(podcastLink("javascript:alert(1)") === null && podcastLink("linktr.ee/x") === null, "non-web addresses are refused");
 
   execSync("npm run seed", { stdio: "ignore" });
   const browser = await launch();
@@ -86,6 +93,22 @@ async function main() {
     await page.getByRole("button", { name: "Publish" }).click();
     await page.waitForURL(`${BASE_URL}/admin/content/podcasts`);
 
+    console.log("\nWeb link");
+    await page.goto(`${BASE_URL}/admin/content/podcasts/new`);
+    await page.getByLabel("Title").fill("Marching Forward");
+    await page.getByRole("radio", { name: /Other link/ }).check();
+    await page.getByLabel("Link to the episode").fill("linktr.ee/consciousconnectionskm");
+    check(await page.getByText("That doesn't look like a web link.").isVisible(), "a link without https:// is flagged");
+    await page.getByLabel("Link to the episode").fill("https://linktr.ee/consciousconnectionskm");
+    check(await page.getByText("Opens on linktr.ee").isVisible(), "the preview shows the Listen card");
+    await axe(page, "podcast editor (link)");
+    await page.getByRole("button", { name: "Save draft" }).click();
+    await page.waitForURL(/\/admin\/content\/podcasts\/[0-9a-f-]{36}$/);
+    await page.getByRole("button", { name: "Publish" }).click();
+    await page.waitForURL(`${BASE_URL}/admin/content/podcasts`);
+    const { data: linked } = await service.from("podcasts").select("source, link_url, youtube_url, published").eq("title", "Marching Forward").single();
+    check(linked?.source === "link" && linked.link_url === "https://linktr.ee/consciousconnectionskm" && linked.youtube_url === null && linked.published, "saved and published as a web link");
+
     console.log("\nPublic Podcasts page");
     const visitor = await browser.newPage({ viewport: { width: 360, height: 800 } });
     await visitor.goto(`${BASE_URL}/podcasts`);
@@ -99,9 +122,14 @@ async function main() {
     const src = await audio.locator("source").getAttribute("src");
     const served = await fetch(src!);
     check(served.status === 200 && served.headers.get("content-type") === "audio/mpeg", "the file is served as MP3", `${served.status} ${served.headers.get("content-type")}`);
+    const listen = visitor.getByRole("link", { name: /Listen now: Marching Forward/ });
+    check((await listen.getAttribute("href")) === "https://linktr.ee/consciousconnectionskm" && (await listen.getAttribute("target")) === "_blank", "the web link opens in a new tab");
+    await visitor.goto(`${BASE_URL}/`);
+    check(await visitor.locator(".home-podcast").getByRole("link", { name: /Listen now: Marching Forward/ }).isVisible(), "the newest episode (the link) is on the homepage");
+    await visitor.goto(`${BASE_URL}/podcasts`);
     const width = await visitor.evaluate(() => document.documentElement.scrollWidth);
     check(width <= 360, "the page fits a phone", `${width}px`);
-    await axe(visitor, "podcasts page with Spotify and audio");
+    await axe(visitor, "podcasts page with Spotify, audio and a link");
 
     console.log("\nSwitching the audio episode to YouTube");
     await page.goto(editUrl);

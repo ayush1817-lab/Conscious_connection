@@ -55,11 +55,23 @@ export function Doodle({
 
 // A moving ribbon of the kinds of things people host, between sections.
 // The words are repeated so the loop is seamless; screen readers get them once.
+//
+// Rough width of one ribbon item in px (text + gap + doodle + padding), used
+// to repeat the items until one row is wider than very wide screens. Each row
+// must be wider than the screen, or the loop shows a gap and visibly restarts.
+const itemWidth = (item: string) => item.length * 9 + 56;
+const MIN_ROW_WIDTH = 2800;
+const SPEED = 30; // px per second, about the same pace as before
+
 export function Ribbon({ items }: { items: string[] }) {
+  const width = items.reduce((sum, item) => sum + itemWidth(item), 0) || 1;
+  const repeats = Math.max(1, Math.ceil(MIN_ROW_WIDTH / width));
+  const loop = Array.from({ length: repeats }, () => items).flat();
+  const duration = Math.round((width * repeats) / SPEED);
   const row = (hidden: boolean) => (
     <ul className="ribbon-row" aria-hidden={hidden || undefined}>
-      {items.map((item, i) => (
-        <li key={i}>
+      {loop.map((item, i) => (
+        <li key={i} aria-hidden={(!hidden && i >= items.length) || undefined}>
           <span>{item}</span>
           <Doodle name={i % 2 ? "heart" : "sparkle"} tone="lilac" className="ribbon-mark" />
         </li>
@@ -68,7 +80,7 @@ export function Ribbon({ items }: { items: string[] }) {
   );
   return (
     <div className="ribbon" role="region" aria-label="The kinds of events our community hosts">
-      <div className="ribbon-track">
+      <div className="ribbon-track" style={{ animationDuration: `${duration}s` }}>
         {row(false)}
         {row(true)}
       </div>
