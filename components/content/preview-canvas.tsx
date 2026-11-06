@@ -108,14 +108,14 @@ export function PreviewCanvas({
         <div data-area="intro">
           <HomeIntro s={s} />
         </div>
-        <div data-area="photos">
-          <HomePhotos s={s} />
-        </div>
         <div data-area="events">
           <HomeEvents s={s}>{slots?.events}</HomeEvents>
         </div>
         <div data-area="host">
           <HomeHost s={s} />
+        </div>
+        <div data-area="photos">
+          <HomePhotos s={s} />
         </div>
         <div data-area="stories">
           <HomeStories s={s}>{slots?.stories ?? <Auto>Hidden on the website until a story or poem is published.</Auto>}</HomeStories>
