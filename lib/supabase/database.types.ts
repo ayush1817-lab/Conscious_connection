@@ -405,6 +405,7 @@ export type Database = {
           created_at: string;
           description: string;
           id: string;
+          link_url: string | null;
           published: boolean;
           published_at: string | null;
           source: Database["public"]["Enums"]["podcast_source"];
@@ -419,6 +420,7 @@ export type Database = {
           created_at?: string;
           description?: string;
           id?: string;
+          link_url?: string | null;
           published?: boolean;
           published_at?: string | null;
           source?: Database["public"]["Enums"]["podcast_source"];
@@ -432,6 +434,7 @@ export type Database = {
           created_at?: string;
           description?: string;
           id?: string;
+          link_url?: string | null;
           published?: boolean;
           published_at?: string | null;
           source?: Database["public"]["Enums"]["podcast_source"];
@@ -748,7 +751,7 @@ export type Database = {
       attention_type: "host_edited" | "host_cancelled" | "contact_request";
       contact_request_status: "requested" | "shared" | "declined";
       email_provider: "console" | "resend";
-      podcast_source: "youtube" | "spotify" | "audio";
+      podcast_source: "youtube" | "spotify" | "audio" | "link";
       event_status: "pending" | "needs_changes" | "declined" | "live" | "cancelled" | "taken_down";
     };
     CompositeTypes: {

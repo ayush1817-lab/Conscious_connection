@@ -8,7 +8,7 @@ import { PHOTO_BUCKET } from "@/lib/host/photos";
 import { linesOf, PAGE_AREAS, sectionDef, type ContentPage, type SectionDef } from "@/lib/content/sections";
 import { slugify } from "@/lib/content/slug";
 import { AUDIO_BUCKET, isAudioPath } from "@/lib/content/podcast-audio";
-import type { PodcastSource } from "@/lib/content/podcast-media";
+import { podcastLink, type PodcastSource } from "@/lib/content/podcast-media";
 import { spotifyEpisodeId, spotifyEpisodeUrl } from "@/lib/content/spotify";
 import { youtubeVideoId } from "@/lib/content/youtube";
 import { setFlash } from "@/lib/flash";
@@ -209,15 +209,17 @@ export async function deleteStory(id: string, _prev: FormState, _formData: FormD
 // Podcasts
 // ---------------------------------------------------------------------------
 
-// Exactly one of the three sources is kept; the other two are cleared.
+// Exactly one of the four sources is kept; the others are cleared.
 async function podcastFields(formData: FormData) {
   const title = text(formData, "title");
   const description = text(formData, "description");
   const sourceValue = text(formData, "source") || "youtube";
-  const source: PodcastSource = sourceValue === "spotify" || sourceValue === "audio" ? sourceValue : "youtube";
+  const source: PodcastSource = sourceValue === "spotify" || sourceValue === "audio" || sourceValue === "link" ? sourceValue : "youtube";
   const youtubeUrl = text(formData, "youtube_url");
   const spotifyUrl = text(formData, "spotify_url");
   const audioPath = text(formData, "audio_path");
+  const linkUrl = text(formData, "link_url");
+  const link = podcastLink(linkUrl);
   const episodeId = spotifyEpisodeId(spotifyUrl);
 
   let error =
@@ -233,6 +235,12 @@ async function podcastFields(formData: FormData) {
     error =
       (!spotifyUrl ? "Please paste the Spotify episode link." : null) ??
       (episodeId ? null : "That doesn't look like a Spotify episode link. It should start with https://open.spotify.com/episode/");
+  }
+  if (!error && source === "link") {
+    error =
+      (!linkUrl ? "Please paste the link to the episode." : null) ??
+      tooLong(linkUrl, 2000, "The link") ??
+      (link ? null : "That doesn't look like a web link. It should start with https://");
   }
   if (!error && source === "audio") {
     if (!audioPath) error = "Please upload the audio file.";
@@ -250,6 +258,7 @@ async function podcastFields(formData: FormData) {
     // Stored without the ?si= share code.
     spotify_url: source === "spotify" && episodeId ? spotifyEpisodeUrl(episodeId) : null,
     audio_path: source === "audio" ? audioPath : null,
+    link_url: source === "link" && link ? link.url : null,
     error,
   };
 }

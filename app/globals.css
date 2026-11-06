@@ -283,11 +283,11 @@ button:not(:disabled), a { transition: background-color 160ms ease, color 160ms 
 
 /* Ribbon of event kinds */
 .ribbon { position: relative; z-index: 2; overflow: hidden; background: var(--color-primary); color: var(--color-on-primary); border-block: 2px solid var(--color-text); }
-.ribbon-track { display: flex; width: max-content; animation: ribbon-scroll 40s linear infinite; }
+.ribbon-track { display: flex; width: max-content; animation: ribbon-scroll 40s linear infinite; will-change: transform; }
 .ribbon-row { display: flex; flex: none; margin: 0; padding: 0; list-style: none; }
 .ribbon-row li { display: flex; align-items: center; gap: 1.25rem; padding: 0.7rem 0 0.7rem 1.25rem; font-weight: 500; font-size: 1rem; white-space: nowrap; }
 .ribbon .doodle.ribbon-mark { position: static; width: 1rem; height: 1rem; }
-.ribbon:hover .ribbon-track { animation-play-state: paused; }
+@media (hover: hover) and (pointer: fine) { .ribbon:hover .ribbon-track { animation-play-state: paused; } }
 @keyframes ribbon-scroll { to { transform: translateX(-50%); } }
 
 /* What we're about: three tinted cards with illustrations */
@@ -380,6 +380,7 @@ button:not(:disabled), a { transition: background-color 160ms ease, color 160ms 
 .home-podcast-head { margin-bottom: 1.25rem; }
 .home-podcast-panel { grid-template-columns: minmax(0, 1fr); }
 .podcast-doodle { right: 2rem; top: 1.5rem; width: 4rem; height: 4rem; }
+.podcast-link-doodle { right: 1rem; top: 1rem; width: 2rem; height: 2rem; }
 
 /* Gallery strip: soft alternating shapes */
 .gallery-strip-item { border-radius: 1.5rem; }
