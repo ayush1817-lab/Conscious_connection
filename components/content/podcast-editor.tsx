@@ -3,12 +3,14 @@
 import { useActionState, useId, useRef, useState } from "react";
 import { AUDIO_BUCKET, AUDIO_CONTENT_TYPE, AUDIO_FOLDER, audioKind, audioProblem } from "@/lib/content/podcast-audio";
 import { PodcastLinkCard } from "@/components/public/podcast-player";
+import { IMAGE_TARGETS } from "@/lib/content/images";
 import { podcastMedia, type PodcastSource } from "@/lib/content/podcast-media";
 import { spotifyEmbedUrl } from "@/lib/content/spotify";
 import { youtubeEmbedUrl } from "@/lib/content/youtube";
 import { publicImageUrl } from "@/lib/storage";
 import { createClient } from "@/lib/supabase/browser";
 import { FormError, SaveButton, UnsavedNote } from "./form-bits";
+import { ImagePicker } from "./image-picker";
 import { useUnsavedChanges } from "./use-unsaved-changes";
 
 type Podcast = {
@@ -19,10 +21,11 @@ type Podcast = {
   spotify_url: string | null;
   audio_path: string | null;
   link_url?: string | null;
+  thumbnail_path?: string | null;
 };
 type Action = (prev: { error?: string }, formData: FormData) => Promise<{ error?: string }>;
 
-const EMPTY: Podcast = { title: "", description: "", source: "youtube", youtube_url: "", spotify_url: "", audio_path: null, link_url: "" };
+const EMPTY: Podcast = { title: "", description: "", source: "youtube", youtube_url: "", spotify_url: "", audio_path: null, link_url: "", thumbnail_path: null };
 const field = "min-h-tap w-full rounded-control border border-control-border bg-surface px-3";
 
 const SOURCES: { value: PodcastSource; label: string; hint: string }[] = [
@@ -42,6 +45,7 @@ export function PodcastEditor({ podcast = EMPTY, action, saveLabel }: { podcast?
   const [youtubeUrl, setYoutubeUrl] = useState(podcast.youtube_url ?? "");
   const [spotifyUrl, setSpotifyUrl] = useState(podcast.spotify_url ?? "");
   const [linkUrl, setLinkUrl] = useState(podcast.link_url ?? "");
+  const [thumbnailPath, setThumbnailPath] = useState<string | null>(podcast.thumbnail_path ?? null);
   const [audioPath, setAudioPath] = useState<string | null>(podcast.audio_path);
   const [audioName, setAudioName] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -57,10 +61,11 @@ export function PodcastEditor({ podcast = EMPTY, action, saveLabel }: { podcast?
     youtubeUrl !== (podcast.youtube_url ?? "") ||
     spotifyUrl !== (podcast.spotify_url ?? "") ||
     linkUrl !== (podcast.link_url ?? "") ||
+    thumbnailPath !== (podcast.thumbnail_path ?? null) ||
     audioPath !== podcast.audio_path;
   useUnsavedChanges(dirty || uploading);
 
-  const media = podcastMedia({ source, youtube_url: youtubeUrl, spotify_url: spotifyUrl, audio_path: audioPath, link_url: linkUrl });
+  const media = podcastMedia({ source, youtube_url: youtubeUrl, spotify_url: spotifyUrl, audio_path: audioPath, link_url: linkUrl, thumbnail_path: thumbnailPath });
   const typed = source === "youtube" ? youtubeUrl : source === "spotify" ? spotifyUrl : source === "link" ? linkUrl : "";
   const badLink = source !== "audio" && typed.trim() !== "" && !media;
 
@@ -213,6 +218,15 @@ export function PodcastEditor({ podcast = EMPTY, action, saveLabel }: { podcast?
           </div>
         ) : null}
 
+        <ImagePicker
+          label="Cover photo (optional)"
+          hint="Helps people see what the episode is about. Shown on the Listen card for web links and beside the audio player. Square works best."
+          name="thumbnail_path"
+          target={IMAGE_TARGETS.podcasts}
+          value={thumbnailPath}
+          onChange={setThumbnailPath}
+        />
+
         <FormError error={state.error} />
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
           <SaveButton dirty={dirty && !uploading} label={saveLabel} />
@@ -237,9 +251,15 @@ export function PodcastEditor({ podcast = EMPTY, action, saveLabel }: { podcast?
             allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
           />
         ) : media?.kind === "audio" ? (
-          <audio controls preload="metadata" className="w-full" aria-label={`Listen: ${title || "podcast preview"}`} src={publicImageUrl(AUDIO_BUCKET, audioPath!)} />
+          <div className="flex items-center gap-4">
+            {media.cover ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={media.cover} alt="" className="h-20 w-20 shrink-0 rounded-control object-cover" />
+            ) : null}
+            <audio controls preload="metadata" className="w-full" aria-label={`Listen: ${title || "podcast preview"}`} src={publicImageUrl(AUDIO_BUCKET, audioPath!)} />
+          </div>
         ) : media?.kind === "link" ? (
-          <PodcastLinkCard url={media.url} host={media.host} title={title || "podcast preview"} />
+          <PodcastLinkCard url={media.url} host={media.host} cover={media.cover} title={title || "podcast preview"} />
         ) : (
           <div className="flex aspect-video items-center justify-center rounded-card border border-dashed border-border bg-background px-4 text-center text-muted">
             {source === "audio" ? "Upload an audio file to listen to it here." : `Paste a ${source === "youtube" ? "YouTube" : source === "spotify" ? "Spotify" : "web"} link to see the player here.`}

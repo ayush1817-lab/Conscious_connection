@@ -210,7 +210,7 @@ export async function deleteStory(id: string, _prev: FormState, _formData: FormD
 // ---------------------------------------------------------------------------
 
 // Exactly one of the four sources is kept; the others are cleared.
-async function podcastFields(formData: FormData) {
+async function podcastFields(formData: FormData, currentThumbnail: string | null = null) {
   const title = text(formData, "title");
   const description = text(formData, "description");
   const sourceValue = text(formData, "source") || "youtube";
@@ -221,11 +221,14 @@ async function podcastFields(formData: FormData) {
   const linkUrl = text(formData, "link_url");
   const link = podcastLink(linkUrl);
   const episodeId = spotifyEpisodeId(spotifyUrl);
+  const thumbnail = imagePath(formData, "thumbnail_path", currentThumbnail, IMAGE_TARGETS.podcasts);
 
   let error =
     (!title ? "Please add a title." : null) ??
     tooLong(title, 150, "The title") ??
-    tooLong(description, 500, "The description");
+    tooLong(description, 500, "The description") ??
+    thumbnail.error ??
+    null;
   if (!error && source === "youtube") {
     error =
       (!youtubeUrl ? "Please paste the YouTube link." : null) ??
@@ -259,6 +262,7 @@ async function podcastFields(formData: FormData) {
     spotify_url: source === "spotify" && episodeId ? spotifyEpisodeUrl(episodeId) : null,
     audio_path: source === "audio" ? audioPath : null,
     link_url: source === "link" && link ? link.url : null,
+    thumbnail_path: thumbnail.path ?? null,
     error,
   };
 }
@@ -276,16 +280,17 @@ export async function createPodcast(_prev: FormState, formData: FormData): Promi
 
 export async function savePodcast(id: string, _prev: FormState, formData: FormData): Promise<FormState> {
   await requireAdmin();
-  const { error: invalid, ...fields } = await podcastFields(formData);
-  if (invalid) return { error: invalid };
   const supabase = await createClient();
-  const { data: before } = await supabase.from("podcasts").select("audio_path").eq("id", id).maybeSingle();
+  const { data: before } = await supabase.from("podcasts").select("audio_path, thumbnail_path").eq("id", id).maybeSingle();
+  const { error: invalid, ...fields } = await podcastFields(formData, before?.thumbnail_path ?? null);
+  if (invalid) return { error: invalid };
   const { data, error } = await supabase.from("podcasts").update(fields).eq("id", id).select("published").maybeSingle();
   if (error || !data) return { error: "Your changes couldn't be saved. Please try again." };
   // A replaced or no-longer-used audio file is removed from storage.
   if (before?.audio_path && before.audio_path !== fields.audio_path) {
     await supabase.storage.from(AUDIO_BUCKET).remove([before.audio_path]);
   }
+  if (before?.thumbnail_path !== fields.thumbnail_path) await removeImage(supabase, IMAGE_TARGETS.podcasts, before?.thumbnail_path ?? null);
   await done(data.published ? SAVED : "Saved. This podcast is still a draft.");
   return {};
 }
@@ -315,8 +320,9 @@ export async function setPodcastPublished(id: string, published: boolean) {
 export async function deletePodcast(id: string, _prev: FormState, _formData: FormData): Promise<FormState> {
   await requireAdmin();
   const supabase = await createClient();
-  const { data: gone } = await supabase.from("podcasts").delete().eq("id", id).select("audio_path").maybeSingle();
+  const { data: gone } = await supabase.from("podcasts").delete().eq("id", id).select("audio_path, thumbnail_path").maybeSingle();
   if (gone?.audio_path) await supabase.storage.from(AUDIO_BUCKET).remove([gone.audio_path]);
+  await removeImage(supabase, IMAGE_TARGETS.podcasts, gone?.thumbnail_path ?? null);
   await done("Podcast deleted.");
   redirect("/admin/content/podcasts");
 }

@@ -22,6 +22,8 @@ const SPOTIFY = "https://open.spotify.com/episode/5LuIfZKKssTiQBRsgqFMVC?si=a1b2
 const EPISODE = "5LuIfZKKssTiQBRsgqFMVC";
 
 // A few bytes that look like an MP3 frame header: enough for upload and serving.
+// A 1×1 PNG for the cover photo.
+const TINY_PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==", "base64");
 const fakeMp3 = Buffer.concat([Buffer.from([0xff, 0xfb, 0x90, 0x64]), Buffer.alloc(4096)]);
 
 async function audioStored(path: string) {
@@ -74,7 +76,7 @@ async function main() {
     await page.goto(`${BASE_URL}/admin/content/podcasts/new`);
     await page.getByLabel("Title").fill("Episode 8: Recorded at the meetup");
     await page.getByRole("radio", { name: /Audio file/ }).check();
-    const file = page.locator('input[type="file"]');
+    const file = page.locator('input[type="file"][accept^=".mp3"]');
     await file.setInputFiles({ name: "episode.wav", mimeType: "audio/wav", buffer: Buffer.alloc(1024) });
     check(await page.getByText("Please choose an MP3 or M4A audio file.").isVisible(), "a WAV file is refused");
     const huge = join(mkdtempSync(join(tmpdir(), "podcast-")), "huge.mp3");
@@ -101,13 +103,17 @@ async function main() {
     check(await page.getByText("That doesn't look like a web link.").isVisible(), "a link without https:// is flagged");
     await page.getByLabel("Link to the episode").fill("https://linktr.ee/consciousconnectionskm");
     check(await page.getByText("Opens on linktr.ee").isVisible(), "the preview shows the Listen card");
+    await page.locator('input[type="file"][accept^="image"]').setInputFiles({ name: "cover.png", mimeType: "image/png", buffer: TINY_PNG });
+    await page.getByRole("button", { name: "Change image" }).waitFor();
+    check((await page.locator(".podcast-link-cover img").count()) === 1, "the cover photo shows on the Listen card preview");
     await axe(page, "podcast editor (link)");
     await page.getByRole("button", { name: "Save draft" }).click();
     await page.waitForURL(/\/admin\/content\/podcasts\/[0-9a-f-]{36}$/);
     await page.getByRole("button", { name: "Publish" }).click();
     await page.waitForURL(`${BASE_URL}/admin/content/podcasts`);
-    const { data: linked } = await service.from("podcasts").select("source, link_url, youtube_url, published").eq("title", "Marching Forward").single();
+    const { data: linked } = await service.from("podcasts").select("source, link_url, youtube_url, published, thumbnail_path").eq("title", "Marching Forward").single();
     check(linked?.source === "link" && linked.link_url === "https://linktr.ee/consciousconnectionskm" && linked.youtube_url === null && linked.published, "saved and published as a web link");
+    check(/^podcasts\/[0-9a-f-]{36}\.(png|jpg|webp)$/.test(linked?.thumbnail_path ?? ""), "the cover photo is saved", linked?.thumbnail_path ?? "");
 
     console.log("\nPublic Podcasts page");
     const visitor = await browser.newPage({ viewport: { width: 360, height: 800 } });

@@ -410,6 +410,7 @@ export type Database = {
           published_at: string | null;
           source: Database["public"]["Enums"]["podcast_source"];
           spotify_url: string | null;
+          thumbnail_path: string | null;
           title: string;
           updated_at: string | null;
           youtube_url: string | null;
@@ -425,6 +426,7 @@ export type Database = {
           published_at?: string | null;
           source?: Database["public"]["Enums"]["podcast_source"];
           spotify_url?: string | null;
+          thumbnail_path?: string | null;
           title: string;
           updated_at?: string | null;
           youtube_url?: string | null;
@@ -439,6 +441,7 @@ export type Database = {
           published_at?: string | null;
           source?: Database["public"]["Enums"]["podcast_source"];
           spotify_url?: string | null;
+          thumbnail_path?: string | null;
           title?: string;
           updated_at?: string | null;
           youtube_url?: string | null;

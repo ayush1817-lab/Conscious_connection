@@ -95,27 +95,28 @@ export async function getPodcasts(limit?: number) {
     spotify_url: string | null;
     audio_path: string | null;
     link_url: string | null;
+    thumbnail_path: string | null;
     published_at: string | null;
   };
-  const { data, error } = await podcasts("id, title, description, source, youtube_url, spotify_url, audio_path, link_url, published_at");
-  if (!isMissingSchema(error)) {
+  const EMPTY = { source: "youtube", spotify_url: null, audio_path: null, link_url: null, thumbnail_path: null } as const;
+  // Newest columns first; each later set works before one more database
+  // update has been applied (missing columns are filled with empty values).
+  const attempts: [string, string][] = [
+    ["podcasts.thumbnail_path", "source, youtube_url, spotify_url, audio_path, link_url, thumbnail_path"],
+    ["podcasts.link_url", "source, youtube_url, spotify_url, audio_path, link_url"],
+    ["podcasts.source", "source, youtube_url, spotify_url, audio_path"],
+    ["", "youtube_url"], // Before the podcast update, every episode is a YouTube link.
+  ];
+  for (const [i, [where, columns]] of attempts.entries()) {
+    const { data, error } = await podcasts(`id, title, description, ${columns}, published_at`);
+    if (i < attempts.length - 1 && isMissingSchema(error)) {
+      warnMissingSchema(where, error);
+      continue;
+    }
     if (error) throw error;
-    return (data ?? []) as unknown as Podcast[];
+    return ((data ?? []) as unknown as Partial<Podcast>[]).map((p) => ({ ...EMPTY, ...p }) as Podcast);
   }
-  // Before the podcast-links update, there is no link_url column.
-  warnMissingSchema("podcasts.link_url", error);
-  const noLinks = await podcasts("id, title, description, source, youtube_url, spotify_url, audio_path, published_at");
-  if (!isMissingSchema(noLinks.error)) {
-    if (noLinks.error) throw noLinks.error;
-    return ((noLinks.data ?? []) as unknown as Omit<Podcast, "link_url">[]).map((p): Podcast => ({ ...p, link_url: null }));
-  }
-  // Before the podcast update, every episode is a YouTube link.
-  warnMissingSchema("podcasts.source", error);
-  const old = await podcasts("id, title, description, youtube_url, published_at");
-  if (old.error) throw old.error;
-  return ((old.data ?? []) as unknown as Omit<Podcast, "source" | "spotify_url" | "audio_path" | "link_url">[]).map(
-    (p): Podcast => ({ ...p, source: "youtube", spotify_url: null, audio_path: null, link_url: null }),
-  );
+  return [];
 }
 
 export async function getGallery(limit?: number) {
